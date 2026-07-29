@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#E3F2FD">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="洛的工作台">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>洛的工作台</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <div class="sidebar-logo">🌸</div>
+          <div>
+            <div class="sidebar-title">洛的工作台</div>
+            <div class="sidebar-sub">创作 · 学习 · 生活 · 成长</div>
+          </div>
+        </div>
+      </div>
+      <div class="nav-list" id="navList"></div>
+      <div class="sidebar-footer">
+        <button class="sync-btn" onclick="syncCloud()">🔄 同步到手机</button>
+        <div class="sync-hint">完成一项打卡，进度一目了然 ✨</div>
+      </div>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <div id="main">
+      <div class="header">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="brand">
+          <div class="brand-title">洛的工作台</div>
+          <div class="brand-sub">创作 · 学习 · 生活 · 成长</div>
+        </div>
+        <div class="date-group">
+          <div class="date-day" id="topDate"></div>
+          <div class="date-week" id="topWeek"></div>
+        </div>
+      </div>
+
+      <div class="content" id="contentArea">
+        <!-- Daily Plan -->
+        <div class="page active" id="page-daily">
+          <div class="section-title"><div class="icon">📅</div>每日计划</div>
+          <div class="section-sub">汇总全平台待办，清晰展示每日全部任务</div>
+          <div class="stats-row">
+            <div class="stat-card"><div class="stat-icon blue">⚡</div><div><div class="stat-num" id="statActive">0</div><div class="stat-label">进行中</div></div></div>
+            <div class="stat-card"><div class="stat-icon orange">📈</div><div><div class="stat-num" id="statRate">0%</div><div class="stat-label">完成率</div></div></div>
+            <div class="stat-card"><div class="stat-icon pink">🏆</div><div><div class="stat-num" id="statPoints">0</div><div class="stat-label">今日积分</div></div></div>
+            <div class="stat-card"><div class="stat-icon green">🌟</div><div><div class="stat-num" id="statLevel">Lv1</div><div class="stat-label">累计等级</div></div></div>
+          </div>
+
+          <div class="reward-card">
+            <div class="reward-title">🎯 今日完成情况评估</div>
+            <div class="reward-row">
+              <div class="reward-cell"><div class="reward-num" id="rewardRate">0%</div><div class="reward-label">完成率</div></div>
+              <div class="reward-cell"><div class="reward-num" id="rewardScore">0</div><div class="reward-label">获得积分</div></div>
+              <div class="reward-cell"><div class="reward-num" id="rewardTitle">新手</div><div class="reward-label">今日称号</div></div>
+            </div>
+            <div class="reward-eval" id="rewardEval">完成今日任务，即可生成评价与改善建议。</div>
+          </div>
+
+          <div class="card card-gradient-blue">
+            <div class="font-bold mb-2">🔥 每日必打卡</div>
+            <div id="mustDoList"></div>
+          </div>
+
+          <div class="tabs" id="dailyTabs">
+            <div class="tab active" data-filter="all">全部</div>
+            <div class="tab" data-filter="high">高优先</div>
+            <div class="tab" data-filter="mid">中优先</div>
+            <div class="tab" data-filter="low">低优先</div>
+          </div>
+          <div id="todoList"></div>
+          <div class="add-box">
+            <input type="text" id="todoInput" placeholder="输入新任务…" maxlength="40">
+            <select id="todoPriority"><option value="high">高</option><option value="mid" selected>中</option><option value="low">低</option></select>
+            <button class="btn btn-primary" onclick="addTodo()">+</button>
+          </div>
+        </div>
+
+        <!-- Content Review -->
+        <div class="page" id="page-review">
+          <div class="section-title"><div class="icon">📊</div>内容复盘</div>
+          <div class="section-sub">录入已发布短视频，沉淀复盘记录</div>
+          <div class="card">
+            <div class="form-group"><label class="form-label">视频标题 / 平台</label><input class="form-input" id="revTitle" placeholder="例如：英语口语vlog第4期 · 抖音"></div>
+            <div class="form-group"><label class="form-label">数据表现</label><input class="form-input" id="revData" placeholder="例如：1.2w播放 / 560赞 / 80评"></div>
+            <div class="form-group"><label class="form-label">优点亮点</label><textarea class="form-textarea" id="revPros" placeholder="写出这条视频表现好的地方"></textarea></div>
+            <div class="form-group"><label class="form-label">不足与优化方向</label><textarea class="form-textarea" id="revCons" placeholder="下次如何改进"></textarea></div>
+            <button class="btn btn-primary" style="width:100%" onclick="addReview()">保存复盘</button>
+          </div>
+          <div id="reviewList"></div>
+        </div>
+
+        <!-- English -->
+        <div class="page" id="page-english">
+          <div class="section-title"><div class="icon">🌍</div>英语学习</div>
+          <div class="section-sub">四六级+日常口语，单词与测试双模块</div>
+          <div class="tabs" id="engTabs">
+            <div class="tab active" data-eng="words">单词背诵</div>
+            <div class="tab" data-eng="quiz">随堂测试</div>
+            <div class="tab" data-eng="videos">配套视频</div>
+          </div>
+          <div id="engWordsPanel">
+            <div class="word-card"><div class="word-en" id="wordEn">abundant</div><div class="word-pho" id="wordPho">/əˈbʌndənt/</div><div class="word-cn" id="wordCn">丰富的；充裕的</div></div>
+            <div class="flex-between mb-3"><button class="btn btn-outline" onclick="prevWord()">上一个</button><span class="text-muted text-sm" id="wordIdx">1 / 10</span><button class="btn btn-primary" onclick="nextWord()">下一个</button></div>
+            <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="wordProgress" style="width:10%"></div></div><div class="progress-text">今日单词进度</div></div>
+            <button class="btn btn-orange" style="width:100%" onclick="markWordLearned()">标记已掌握</button>
+            <div class="card mt-2"><div class="font-bold mb-2">📚 每日必备单词</div><div class="word-grid" id="wordGrid"></div></div>
+          </div>
+          <div id="engQuizPanel" style="display:none">
+            <div class="card"><div class="font-bold mb-3" id="quizQuestion">Question</div><div id="quizOptions"></div><div class="quiz-result" id="quizResult"></div><button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="nextQuiz()">下一题</button></div>
+          </div>
+          <div id="engVideoPanel" style="display:none"><div id="englishVideoList"></div></div>
+        </div>
+
+        <!-- Civil Service -->
+        <div class="page" id="page-exam">
+          <div class="section-title"><div class="icon">📚</div>考公考编学习</div>
+          <div class="section-sub">免费网课、行测申论刷题、招聘公告</div>
+          <div id="examVideoList"></div>
+          <div class="card"><div class="font-bold mb-2">✏️ 行测随堂练习</div><div id="examQuiz"></div></div>
+          <div class="card"><div class="font-bold mb-2">📰 适配招聘公告</div><div id="examJobs"></div></div>
+        </div>
+
+        <!-- Medical -->
+        <div class="page" id="page-medical">
+          <div class="section-title"><div class="icon">🩺</div>医学专业知识学习</div>
+          <div class="section-sub">本科全日制医学学位 · 专业课程、笔记与打卡</div>
+          <div id="medicalVideoList"></div>
+          <div class="card">
+            <div class="font-bold mb-2">📝 学习笔记</div>
+            <textarea class="form-textarea" id="medNote" placeholder="记录今日医学学习要点"></textarea>
+            <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="saveMedicalNote()">保存笔记</button>
+          </div>
+        </div>
+
+        <!-- Inspiration -->
+        <div class="page" id="page-inspiration">
+          <div class="section-title"><div class="icon">💡</div>选题每日灵感</div>
+          <div class="section-sub">每日自动生成短视频选题、文案创意、镜头思路</div>
+          <div id="inspirationList"></div>
+          <button class="btn btn-orange" style="width:100%;margin-top:8px" onclick="refreshInspiration()">🎲 换一批灵感</button>
+        </div>
+
+        <!-- Viral Videos -->
+        <div class="page" id="page-viral">
+          <div class="section-title"><div class="icon">🔥</div>爆款热点视频/二创</div>
+          <div class="section-sub">每日采集抖音、得物、小红书爆款，逐条拆解改编思路</div>
+          <div class="card card-gradient-orange">
+            <div class="flex-between mb-2"><span class="font-bold">⏰ 自动采集任务</span><span class="tag tag-low">每日 9:00</span></div>
+            <p class="text-sm text-muted mb-3">点击按钮模拟抓取当日热点视频，分析爆点并输出二创脚本。</p>
+            <button class="btn btn-orange" style="width:100%" onclick="mockCrawl()">立即模拟采集</button>
+          </div>
+          <div id="viralList"></div>
+        </div>
+
+        <!-- Video Editing -->
+        <div class="page" id="page-edit">
+          <div class="section-title"><div class="icon">🎬</div>拍摄剪辑学习</div>
+          <div class="section-sub">零基础短视频拍摄+剪辑系统教程，每日推送一节</div>
+          <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="editProgress" style="width:0%"></div></div><div class="progress-text" id="editProgressText">学习进度 0%</div></div>
+          <div id="editList"></div>
+        </div>
+
+        <!-- Recruitment -->
+        <div class="page" id="page-recruit">
+          <div class="section-title"><div class="icon">💼</div>招聘信息</div>
+          <div class="section-sub">个人画像：本科全日制医学学位</div>
+          <div class="card card-gradient-blue">
+            <div class="font-bold mb-2">🎯 个人画像</div>
+            <div class="text-sm text-muted">学历：本科全日制医学学位</div>
+            <div class="text-sm text-muted">适配方向：医院临床/医技岗、疾控中心、卫健委、医学院校教辅、医学编辑、医药企业</div>
+          </div>
+          <div id="recruitList"></div>
+        </div>
+
+        <!-- Fitness -->
+        <div class="page" id="page-fitness">
+          <div class="section-title"><div class="icon">💪</div>每日健身</div>
+          <div class="section-sub">帕梅拉+动漫跟练 · 腹肌 · 手臂（不练斜方肌）· 网球</div>
+          <div id="fitnessVideoList"></div>
+          <div class="card card-gradient-green">
+            <div class="font-bold mb-2">💧 今日喝水打卡</div>
+            <div id="waterList"></div>
+          </div>
+        </div>
+
+        <!-- Finance -->
+        <div class="page" id="page-finance">
+          <div class="section-title"><div class="icon">💰</div>理财基金金融学习</div>
+          <div class="section-sub">零基础理财入门 + 每日记账</div>
+          <div class="tabs" id="financeTabs">
+            <div class="tab active" data-fin="course">课程资源</div>
+            <div class="tab" data-fin="bill">今日记账</div>
+          </div>
+          <div id="financeCoursePanel"><div id="financeVideoList"></div></div>
+          <div id="financeBillPanel" style="display:none">
+            <div class="bill-summary">
+              <div class="bill-cell"><div class="bill-num text-green" id="billIn">0</div><div class="bill-label">收入</div></div>
+              <div class="bill-cell"><div class="bill-num text-orange" id="billOut">0</div><div class="bill-label">支出</div></div>
+              <div class="bill-cell"><div class="bill-num" id="billNet">0</div><div class="bill-label">结余</div></div>
+            </div>
+            <div class="card">
+              <div class="form-group"><label class="form-label">类型</label><select class="form-select" id="billType"><option value="out">支出</option><option value="in">收入</option></select></div>
+              <div class="form-group"><label class="form-label">金额</label><input class="form-input" id="billAmount" type="number" placeholder="0.00"></div>
+              <div class="form-group"><label class="form-label">备注</label><input class="form-input" id="billNote" placeholder="例如：午餐"></div>
+              <button class="btn btn-primary" style="width:100%" onclick="addBill()">记一笔</button>
+            </div>
+            <div id="billList"></div>
+          </div>
+        </div>
+
+        <!-- Novel / TV Drama -->
+        <div class="page" id="page-novel">
+          <div class="section-title"><div class="icon">✍️</div>爆款小说拆分 / 电视剧拉片</div>
+          <div class="section-sub">小说写作教学、热门作品拆解、拉片模板</div>
+          <div class="tabs" id="novelTabs">
+            <div class="tab active" data-novel="split">爆款拆分</div>
+            <div class="tab" data-novel="teach">写作教学</div>
+            <div class="tab" data-novel="script">拉片模板</div>
+          </div>
+          <div id="novelSplitPanel"><div id="novelSplitList"></div></div>
+          <div id="novelTeachPanel" style="display:none"><div id="novelTeachList"></div></div>
+          <div id="novelScriptPanel" style="display:none">
+            <div class="card">
+              <div class="font-bold mb-2">🎬 电视剧拉片表</div>
+              <div class="form-group"><label class="form-label">剧名 / 集数</label><input class="form-input" id="scriptName" placeholder="例如：狂飙 第1集"></div>
+              <div class="form-group"><label class="form-label">开场钩子</label><input class="form-input" id="scriptHook" placeholder="前3分钟如何吸引观众"></div>
+              <div class="form-group"><label class="form-label">冲突/转折</label><input class="form-input" id="scriptConflict" placeholder="本集核心冲突"></div>
+              <div class="form-group"><label class="form-label">可迁移写法</label><textarea class="form-textarea" id="scriptLearn" placeholder="应用到小说里的技巧"></textarea></div>
+              <button class="btn btn-primary" style="width:100%" onclick="addScript()">保存拉片</button>
+            </div>
+            <div id="scriptList"></div>
+          </div>
+        </div>
+
+        <!-- Image Management -->
+        <div class="page" id="page-image">
+          <div class="section-title"><div class="icon">🪞</div>形象管理</div>
+          <div class="section-sub">少年感中性风：妆容、穿搭、电子衣柜、改善建议</div>
+          <div class="tabs" id="imageTabs">
+            <div class="tab active" data-img="makeup">妆容教学</div>
+            <div class="tab" data-img="outfit">穿搭教学</div>
+            <div class="tab" data-img="wardrobe">电子衣柜</div>
+            <div class="tab" data-img="advice">穿搭建议</div>
+          </div>
+          <div id="imageMakeupPanel"><div id="makeupVideoList"></div></div>
+          <div id="imageOutfitPanel" style="display:none"><div id="outfitVideoList"></div></div>
+          <div id="imageWardrobePanel" style="display:none">
+            <div class="card">
+              <div class="font-bold mb-2">👕 我的电子衣柜</div>
+              <p class="text-sm text-muted mb-3">点击格子拍照上传单品（模拟），后续可查看搭配建议。</p>
+              <div class="wardrobe-grid" id="wardrobeGrid"></div>
+            </div>
+          </div>
+          <div id="imageAdvicePanel" style="display:none">
+            <div class="card card-gradient-pink">
+              <div class="font-bold mb-2">🎯 少年感中性风改善建议</div>
+              <div class="text-sm" id="outfitAdvice">
+                1. 上衣选圆领/ Polo 基础款，避免复杂印花；<br>
+                2. 下装以直筒裤、工装裤为主，拉长比例；<br>
+                3. 妆容以干净底妆+自然眉形+淡色唇釉为主；<br>
+                4. 配饰从简：棒球帽、帆布包、银饰小件；<br>
+                5. 配色多用白/灰/藏蓝/卡其，低饱和更耐看。
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Books -->
+        <div class="page" id="page-books">
+          <div class="section-title"><div class="icon">📖</div>有价值书籍推荐 / 拆书学习</div>
+          <div class="section-sub">热门书籍推荐、写作拆分、书摘记录</div>
+          <div id="bookVideoList"></div>
+          <div class="card">
+            <div class="font-bold mb-2">📝 我的书摘</div>
+            <div class="form-group"><input class="form-input" id="bookTitle" placeholder="书名"></div>
+            <div class="form-group"><textarea class="form-textarea" id="bookExcerpt" placeholder="摘录触动你的句子或段落"></textarea></div>
+            <button class="btn btn-primary" style="width:100%" onclick="addBookExcerpt()">保存书摘</button>
+          </div>
+          <div id="bookExcerptList"></div>
+        </div>
+
+        <!-- Drawing -->
+        <div class="page" id="page-drawing">
+          <div class="section-title"><div class="icon">🎨</div>实用绘画教学</div>
+          <div class="section-sub">QQ人、CP产粮 2D 画风零基础入门</div>
+          <div id="drawingVideoList"></div>
+        </div>
+
+        <!-- Guitar -->
+        <div class="page" id="page-guitar">
+          <div class="section-title"><div class="icon">🎸</div>吉他实用简要教学</div>
+          <div class="section-sub">乐谱知识、指法练习、每日弹唱打卡</div>
+          <div id="guitarVideoList"></div>
+          <div class="card">
+            <div class="font-bold mb-2">⏱️ 今日练习计时</div>
+            <div class="flex-between mb-3"><span class="text-muted text-sm">目标：1 小时</span><span class="font-bold" id="guitarTime">00:00</span></div>
+            <button class="btn btn-primary" style="width:100%" id="guitarTimerBtn" onclick="toggleGuitarTimer()">开始练习</button>
+          </div>
+        </div>
+
+        <!-- Kitchen -->
+        <div class="page" id="page-kitchen">
+          <div class="section-title"><div class="icon">🍳</div>厨房小白 / 烹饪家常菜</div>
+          <div class="section-sub">买菜物价、备菜流程、家常菜、简单甜品、空气炸锅/烤箱/微波炉小吃</div>
+          <div class="tabs" id="kitchenTabs">
+            <div class="tab active" data-kit="cook">家常菜</div>
+            <div class="tab" data-kit="dessert">简单甜品</div>
+            <div class="tab" data-kit="snack">快手小吃</div>
+            <div class="tab" data-kit="prep">买菜备菜</div>
+          </div>
+          <div id="kitchenCookPanel"><div id="cookVideoList"></div></div>
+          <div id="kitchenDessertPanel" style="display:none"><div id="dessertVideoList"></div></div>
+          <div id="kitchenSnackPanel" style="display:none"><div id="snackVideoList"></div></div>
+          <div id="kitchenPrepPanel" style="display:none">
+            <div class="card">
+              <div class="font-bold mb-2">🛒 买菜物价参考</div>
+              <div class="text-sm text-muted">常见食材人均每餐参考：鸡蛋 1-2 元、鸡胸肉 5-8 元、青菜 2-4 元、豆腐 3-5 元、米面 1-2 元。</div>
+            </div>
+            <div class="card">
+              <div class="font-bold mb-2">📋 一周备菜流程</div>
+              <div class="text-sm text-muted">
+                1. 周末集中采购肉类，分装冷冻；<br>
+                2. 蔬菜买 2-3 天量，洗净沥干分盒；<br>
+                3. 主食可一次性煮杂粮饭分装；<br>
+                4. 调料预调：蒜蓉、姜葱、酱汁；<br>
+                5. 工作日只需解冻+炒制 15 分钟。
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Self-media -->
+        <div class="page" id="page-media">
+          <div class="section-title"><div class="icon">📱</div>自媒体干货学习</div>
+          <div class="section-sub">平台运营、涨粉、变现、内容策略</div>
+          <div id="mediaVideoList"></div>
+        </div>
+
+        <!-- Travel -->
+        <div class="page" id="page-travel">
+          <div class="section-title"><div class="icon">✈️</div>旅行攻略分享</div>
+          <div class="section-sub">预留自己的攻略记录空间，收藏实用旅行视频</div>
+          <div id="travelVideoList"></div>
+          <div class="card">
+            <div class="font-bold mb-2">🗺️ 我的旅行攻略</div>
+            <div class="form-group"><input class="form-input" id="travelDest" placeholder="目的地"></div>
+            <div class="form-group"><input class="form-input" id="travelDays" placeholder="天数 / 预算"></div>
+            <div class="form-group"><textarea class="form-textarea" id="travelPlan" placeholder="行程、住宿、交通、打卡点"></textarea></div>
+            <button class="btn btn-primary" style="width:100%" onclick="addTravelPlan()">保存攻略</button>
+          </div>
+          <div id="travelPlanList"></div>
+        </div>
+
+        <!-- Office Skills -->
+        <div class="page" id="page-office">
+          <div class="section-title"><div class="icon">💻</div>办公技能学习</div>
+          <div class="section-sub">WPS、计算机二级 Excel/PPT/Word 实用技巧</div>
+          <div id="officeVideoList"></div>
+        </div>
+
+        <!-- EQ -->
+        <div class="page" id="page-eq">
+          <div class="section-title"><div class="icon">💬</div>情商提升</div>
+          <div class="section-sub">高情商视频学习、社交技能、沟通话术</div>
+          <div id="eqVideoList"></div>
+        </div>
+
+        <!-- AI Prompts -->
+        <div class="page" id="page-ai">
+          <div class="section-title"><div class="icon">🤖</div>AI 口令 / 数据分析</div>
+          <div class="section-sub">学习组织 AI 提示词，解决生活中的数据分析问题</div>
+          <div id="aiPromptList"></div>
+        </div>
+      </div>
+
+      <div class="bottom-nav">
+        <button class="bnav-item active" data-page="daily" onclick="goPage('daily')">
+          <div class="bnav-icon">📅</div><span>计划</span>
+        </button>
+        <button class="bnav-item" data-page="daily" onclick="goPage('daily')">
+          <div class="bnav-icon">✅</div><span>任务</span>
+        </button>
+        <button class="bnav-item" data-page="recruit" onclick="goPage('recruit')">
+          <div class="bnav-icon">💼</div><span>招聘</span>
+        </button>
+        <button class="bnav-item" data-page="english" onclick="goPage('english')">
+          <div class="bnav-icon">🎬</div><span>英语</span>
+        </button>
+        <button class="bnav-item" onclick="toggleSidebar()">
+          <div class="bnav-icon">⋯</div><span>更多</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').then(() => {
+        console.log('Service Worker registered');
+      }).catch(err => {
+        console.error('Service Worker registration failed', err);
+      });
+    }
+  </script>
+</body>
+</html>
