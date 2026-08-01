@@ -132,7 +132,16 @@ function toggleSidebar(force) {
 /* ================= Storage ================= */
 const store = {
   get: (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
-  set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+  set: (k, v) => {
+    try {
+      localStorage.setItem(k, JSON.stringify(v));
+      return true;
+    } catch (e) {
+      console.error('store.set 失败（可能本地存储已满）:', k, e);
+      if (typeof toast === 'function') toast('⚠️ 本地存储空间不足，本次内容未能保存，请删除一些带照片的菜谱/笔记后再试');
+      return false;
+    }
+  }
 };
 
 /* ================= Helpers ================= */
@@ -906,9 +915,22 @@ function uploadWardrobe(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    wardrobe.push({ id: Date.now(), name: '单品 ' + (wardrobe.length + 1), img: e.target.result });
-    store.set('luo_wardrobe', wardrobe);
-    renderWardrobe();
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1000;
+      let { width, height } = img;
+      if (width > height && width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
+      else if (height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+      wardrobe.push({ id: Date.now(), name: '单品 ' + (wardrobe.length + 1), img: dataUrl });
+      store.set('luo_wardrobe', wardrobe);
+      renderWardrobe();
+    };
+    img.onerror = () => toast('图片读取失败');
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -1061,7 +1083,23 @@ function uploadRecipePhoto(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => { pendingRecipePhoto = e.target.result; document.getElementById('recipePhotoPreview').innerHTML = `<img src="${pendingRecipePhoto}" style="max-width:100%;border-radius:10px;margin-top:8px">`; };
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1000;
+      let { width, height } = img;
+      if (width > height && width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
+      else if (height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.75); // 压缩后存储，避免 localStorage 爆满导致卡顿/白屏
+      pendingRecipePhoto = dataUrl;
+      document.getElementById('recipePhotoPreview').innerHTML = `<img src="${dataUrl}" style="max-width:100%;border-radius:10px;margin-top:8px">`;
+    };
+    img.onerror = () => toast('图片读取失败');
+    img.src = e.target.result;
+  };
   reader.readAsDataURL(file);
 }
 function addRecipe() {
