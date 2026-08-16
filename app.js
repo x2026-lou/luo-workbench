@@ -21,7 +21,12 @@ const navItems = [
   { id: 'travel', icon: '✈️', label: '旅行攻略分享', new: true },
   { id: 'office', icon: '💻', label: '办公技能学习', new: true },
   { id: 'eq', icon: '💬', label: '情商提升', new: true },
-  { id: 'ai', icon: '🤖', label: 'AI口令/数据分析', new: true }
+  { id: 'ai', icon: '🤖', label: 'AI口令/数据分析', new: true },
+  { id: 'jjwxc', icon: '📚', label: '晋江写作素材库', new: true },
+  { id: 'meme', icon: '🔥', label: '梗库', new: true },
+  { id: 'mine', icon: '🛡️', label: '避雷指南', new: true },
+  { id: 'genius', icon: '💡', label: '灵感生成器', new: true },
+  { id: 'material', icon: '🌐', label: '全网素材库', new: true }
 ];
 
 let currentPage = 'daily';
@@ -51,7 +56,8 @@ function goPage(id) {
     recruit: renderRecruit, fitness: renderFitness, finance: renderFinance, novel: renderNovel,
     image: renderImage, books: renderBooks, drawing: renderDrawing, guitar: renderGuitar,
     kitchen: renderKitchen, media: renderMedia, travel: renderTravel, office: renderOffice,
-    eq: renderEq, ai: renderAi
+    eq: renderEq, ai: renderAi, jjwxc: renderJJWXC, meme: renderMeme,
+    mine: renderMine, genius: renderGenius, material: renderMaterial
   };
   if (renderMap[id]) renderMap[id]();
   renderMyNotes(id);
@@ -172,7 +178,8 @@ function searchLinks(keyword) {
   return {
     bili: `https://m.bilibili.com/search?keyword=${encodeQuery(keyword)}`,
     douyin: `https://www.douyin.com/search/${encodeQuery(keyword)}`,
-    xhs: `https://www.xiaohongshu.com/search?keyword=${encodeQuery(keyword)}`
+    xhs: `https://www.xiaohongshu.com/search?keyword=${encodeQuery(keyword)}`,
+    jjwxc: `https://www.jjwxc.net/search.php?kw=${encodeQuery(keyword)}`
   };
 }
 
@@ -181,6 +188,7 @@ function resourceCard(item) {
   if (item.bili) links.push(`<a class="link-bili" href="${item.bili}" target="_blank">📺 B站</a>`);
   if (item.douyin) links.push(`<a class="link-douyin" href="${item.douyin}" target="_blank">🎵 抖音</a>`);
   if (item.xhs) links.push(`<a class="link-xhs" href="${item.xhs}" target="_blank">🔴 小红书</a>`);
+  if (item.jjwxc) links.push(`<a class="link-jjwxc" href="${item.jjwxc}" target="_blank">📚 晋江</a>`);
   if (item.web) links.push(`<a class="link-web" href="${item.web}" target="_blank">🌐 网页</a>`);
   const doneBtn = item.done !== undefined ? `<button class="link-done" onclick="${item.doneFn}">${item.done ? '✓ 已打卡' : '打卡'}</button>` : '';
   return `
@@ -1250,6 +1258,355 @@ function renderAi() {
 function copyPrompt(i) {
   navigator.clipboard?.writeText(aiPrompts[i].prompt).then(() => toast('已复制提示词')).catch(() => toast('复制失败，请手动复制'));
 }
+
+/* ================= 晋江写作素材库 / 梗库 / 避雷 / 灵感 / 全网素材 ================= */
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+/* ---- 收藏（核心金句 / 好评 / 雷点） ---- */
+function getGolden() { return store.get('luo_golden', []); }
+function isGolden(id) { return getGolden().some(g => g.id === id); }
+function toggleGolden(id, type, title, text) {
+  let arr = getGolden();
+  if (arr.some(g => g.id === id)) { arr = arr.filter(g => g.id !== id); store.set('luo_golden', arr); toast('已取消收藏'); }
+  else { arr.unshift({ id, type, title, text, date: fmtDate() }); store.set('luo_golden', arr); toast('⭐ 已收藏：' + title); }
+  if (currentPage === 'material') renderMaterial();
+  if (currentPage === 'meme') renderMeme();
+  if (currentPage === 'mine') renderMine();
+}
+function goldenStar(id) { return `<button class="golden-star ${isGolden(id) ? 'on' : ''}" onclick="toggleGolden('${id}','${esc(id).split('-')[0]}','${esc(id)}','')">${isGolden(id) ? '★' : '☆'}</button>`; }
+
+/* ---- 榜单扒文（真实作品，结构拆解） ---- */
+const jjwxcWorks = [
+  { title: '今夜刮起台风', author: '玄笺', genre: '百合·近代现代', tags: ['高积分', '强强', '破镜重圆'], status: '连载', words: 195963, points: '8.68亿',
+    hook: '以“台风夜”为强意象开场，借天气制造封闭空间与情绪高压，天然催生冲突与亲密。',
+    why: '榜首级热度来自“强情绪+强结构”：把外部环境（台风）与内心风暴同构，开篇即钩子。',
+    tropes: ['强取豪夺', '破镜重圆', '双向暗恋', '强强'],
+    merits: ['意象统一：台风=关系风暴', '开篇钩子强', '情绪密度高', '人物动机清晰'],
+    controversy: ['节奏偏快易显仓促', '部分读者觉得强取段落需铺垫'],
+    analysis: { plot: '误会—对抗—和解三段式，每章留悬念', character: '双强人设，谁也不跪', bg: '都市+职业背景增强真实感', copy: '“今夜之后，再没有风能把我们吹散”类短句', outline: '台风相遇→对抗拉扯→真相→和解', chapter: '每章结尾抛悬念', prose: '短句多、节奏快', conflict: '外部事件与内部心结双线并行', pace: '快节奏+关键留白', blank: '关键告白留白不写满', psychology: '大量内心独白', action: '动作服务于情绪', hookScene: '台风夜封闭空间', dialogue: '对话带刺含潜台词', expression: '微表情细腻', env: '天气参与叙事', mainPlot: '感情主线', subPlot: '职业线点缀' },
+    char: { bg: '各自有完整来路', base: '外冷内执', motive: '不肯再失去', child: '童年缺失塑造占有欲' } },
+  { title: '回响', author: '一只花夹子', genre: '百合·近代现代', tags: ['超高积分', '细腻', '治愈'], status: '连载', words: 205225, points: '6.16亿',
+    hook: '以“声音/回声”隐喻未说出口的爱，概念先行勾人。',
+    why: '文笔与心理描写是核心卖点，慢热但后劲大，读者追更粘性高。',
+    tropes: ['暗恋', '双向奔赴', '治愈', '慢热'],
+    merits: ['心理描写顶级', '留白克制', '情绪真实', '人物弧光完整'],
+    controversy: ['慢热劝退部分读者', '篇幅偏长'],
+    analysis: { plot: '暗恋—错过—回响式重逢', character: '敏感内敛型主角', bg: '生活流背景', copy: '用通感写心动', outline: '暗恋铺垫→误会→重逢', chapter: '情绪递进式', prose: '诗化语言', conflict: '自我与怯懦的对抗', pace: '慢热蓄势', blank: '未言之爱留白', psychology: '通感心理', action: '细微动作传情', hookScene: '回响意象', dialogue: '欲言又止', expression: '眼神戏足', env: '日常环境情绪化', mainPlot: '情感', subPlot: '友情线' },
+    char: { bg: '平凡家庭', base: '温柔怯懦', motive: '想被听见', child: '长期被忽视' } },
+  { title: '趁她之危', author: '秦淮洲', genre: '百合·近代现代', tags: ['强取', '拉扯', '高人气'], status: '连载', words: 95855, points: '2.6亿',
+    hook: '标题即梗，“趁虚而入”的张力从书名就立住。',
+    why: '精准踩中“强势攻×脆弱受”的爽感结构，拉扯感强。',
+    tropes: ['强取豪夺', '趁虚而入', '拉扯'],
+    merits: ['人设反差', '张力足', '节奏紧凑'],
+    controversy: ['强取段落需合理动机', '部分读者介意不对等'],
+    analysis: { plot: '趁虚→纠缠→动心', character: '攻强势/受破碎', bg: '都市', copy: '书名即钩子', outline: '危机相遇→攻势→软化', chapter: '每章推进关系', prose: '利落', conflict: '权力不对等', pace: '快', blank: '动心瞬间留白', psychology: '受视角为主', action: '压迫式动作', hookScene: '危机开场', dialogue: '攻主动受被动', expression: '受的微表情', env: '夜/室内', mainPlot: '情感拉扯', subPlot: '事业线' },
+    char: { bg: '受有创伤过往', base: '外强中干', motive: '渴望依靠', child: '被抛弃经历' } },
+  { title: '陷入我们的热恋', author: '—', genre: '现代言情·校园', tags: ['校园标杆', '双向暗恋', '甜蜜'], status: '热门', words: '—', points: '—',
+    hook: '桀骜少年×软萌学霸的双向暗恋，青春感与甜度平衡。',
+    why: '校园青春文标杆：把“暗恋—试探—双向确认”写得干净明亮，无狗血。',
+    tropes: ['双向暗恋', '校园', '青梅/竹马', '甜宠'],
+    merits: ['青春氛围真实', '双向不虐', '文笔鲜活', '节奏明快'],
+    controversy: ['甜度偏高怕腻者慎入'],
+    analysis: { plot: '暗恋→互相试探→双向确认', character: '反差CP', bg: '高中/大学', copy: '少年感台词', outline: '相识→暗恋→试探→在一起', chapter: '日常+小高潮', prose: '轻快', conflict: '青春期自我认知', pace: '轻快', blank: '心动留白', psychology: '少女/少年心事', action: '运动/日常动作', hookScene: '课堂/球场', dialogue: '少年对话自然', expression: '脸红微表情', env: '校园四季', mainPlot: '恋爱', subPlot: '学业/友情' },
+    char: { bg: '普通家庭', base: '外冷内热', motive: '想被看见', child: '曾被忽视' } },
+  { title: '校园·暗恋', author: '薛瑾璱', genre: '言情·近代现代·女主视角', tags: ['暗恋', '花季雨季', '正剧'], status: '连载', words: '—', points: '—',
+    hook: '女主视角暗恋，第一人称代入感强。',
+    why: '第一人称+女主视角的暗恋，心理真实、代入强，正剧基调不悬浮。',
+    tropes: ['暗恋', '第一人称', '女主视角', '校园'],
+    merits: ['第一人称代入', '心理细腻', '视角独特'],
+    controversy: ['第一人称限制信息'],
+    analysis: { plot: '暗恋长跑', character: '内向观察者', bg: '校园', copy: '内心独白式文案', outline: '注目→陪伴→告白', chapter: '情绪流', prose: '细腻', conflict: '不敢说出口', pace: '舒缓', blank: '未说之爱', psychology: '大量独白', action: '偷看动作', hookScene: '教室角落', dialogue: '少而精', expression: '欲说还休', env: '校园日常', mainPlot: '暗恋', subPlot: '成长' },
+    char: { bg: '普通', base: '敏感内向', motive: '默默喜欢', child: '安静童年' } }
+];
+
+/* ---- 题材库（等级 S/A/B） ---- */
+const jjwxcGenres = [
+  { name: '暗恋', tier: 'S', desc: '第一人称/女主视角代入极强，长盛不衰', coreTropes: ['双向暗恋', '暗恋成真', '竹马暗恋', '暗恋对象不知情', '默默守护'], praise: ['代入感强', '情绪真实', '后劲大'], mines: ['单箭头拖太长', '告白草率'], advice: ['用细节堆心动，少直白抒情', '设置“差点被发现”的紧张感'] },
+  { name: '校园', tier: 'S', desc: '青春氛围+甜度，短视频化友好', coreTropes: ['双向暗恋', '青梅竹马', '校霸×学霸', '破镜重圆(大学)', '运动会/课堂'], praise: ['青春感', '甜而不腻'], mines: ['悬浮人设', '狗血冲突'], advice: ['用真实校园细节建立真实感', 'CP反差要鲜明'] },
+  { name: '百合GL', tier: 'S', desc: '2026 积分榜头部，强强/破镜最稳', coreTropes: ['强取豪夺', '破镜重圆', '双向暗恋', '室友/死对头', 'ABO/Omega'], praise: ['强情绪', '高粘性', '读者大方'], mines: ['强行不对等', '烂尾'], advice: ['双强人设更受欢迎', '台风/重逢等强意象开篇'] },
+  { name: '言情(现言)', tier: 'S', desc: '主流大盘，甜宠/追妻/破镜', coreTropes: ['破镜重圆', '追妻火葬场', '先婚后爱', '青梅竹马', '职场恋爱'], praise: ['受众广', '易影视化'], mines: ['工业糖精', '男主油腻'], advice: ['冲突要源于性格而非巧合', '女主需有自我'] },
+  { name: '第一人称', tier: 'A', desc: '代入感拉满，适合暗恋/悬疑', coreTropes: ['女主视角暗恋', '第一人称悬疑', '内心独白', '限知视角', '不可靠叙述'], praise: ['沉浸', '心理真实'], mines: ['信息受限致剧情慢'], advice: ['用内心戏补信息', '关键处切视角'] },
+  { name: '破镜重圆', tier: 'A', desc: '情绪回响强，重逢即钩子', coreTropes: ['重逢', '误会解开', '带球/失忆(慎用)', '岁月沉淀', '和解'], praise: ['后劲大', '成熟感'], mines: ['强行分手', '虐而失真'], advice: ['分手需合理且双方有成长', '重逢后慢热升温'] },
+  { name: '穿书/快穿', tier: 'A', desc: '无限流友好，单元剧结构', coreTropes: ['炮灰逆袭', '反派女配', '系统任务', '攻略', '世界线'], praise: ['结构清晰', '节奏快'], mines: ['系统机械', '世界逻辑崩'], advice: ['每个世界有独立主题', '系统服务剧情非挂件'] },
+  { name: '悬疑', tier: 'A', desc: '强情节，适配第一人称限知', coreTropes: ['不可靠叙述', '反转', '密室/案子', '暗线', '真相延迟'], praise: ['留存高', '讨论度高'], mines: ['逻辑硬伤', '反转为反转'], advice: ['伏笔前置', '用限知视角藏信息'] },
+  { name: '玄幻', tier: 'B', desc: '世界观为重，起号门槛高', coreTropes: ['重生', '废柴逆袭', '宗门', '秘境', '契灵'], praise: ['长线', '男频女频通吃'], mines: ['设定堆砌', '升级流水'], advice: ['用人物动机带世界观', '前期紧凑'] },
+  { name: '无限流', tier: 'B', desc: '副本制，单元+主线', coreTropes: ['副本', '玩家', '规则怪谈', '通关', '主神'], praise: ['强情节', '易出圈'], mines: ['副本同质', '规则混乱'], advice: ['每个副本一种恐惧/主题', '主角成长线贯穿'] }
+];
+
+/* ---- 平台规则（真实 2025-2026） ---- */
+const jjwxcRules = [
+  { name: 'V线字数下调（分频道）', date: '2026-01-29 执行', change: '纯爱&多元 6万字、百合&无CP 5万字、古言/衍生按原频道最低字数；四组均取消“是否大于20万字”的篇幅限制；入V时系统按各频道字数规则自动检测非V章节字数。', impact: '入V门槛下调，中小体量可更早变现，新文走榜更友好。', compliance: '入V前确认本组v线字数（百合/无CP 5万、纯爱&多元 6万），别按旧标准卡字数。' },
+  { name: '金榜 50 万字红线', date: '2025-12-16', change: '新系数算法将 50 万字设为分水岭，超字数作品金榜排名被“除以系数”稀释。', impact: '遏制水文，长文难靠堆量上榜，质量与节奏更重要。', compliance: '控制篇幅、重质不重量；冲刺金榜优先打磨前 50 万字内亮点。' },
+  { name: '营养液发放规则', date: '2025-12-05', change: '不足 3 万字的部分不发放营养液（例：V章 22 万字全文不跳订约得 7 瓶）。', impact: '前期字数少则营养液收益低，需靠订阅与留存。', compliance: '别为凑营养液硬灌水，专注前 3 万字质量。' },
+  { name: '入V基本条件', date: '现行', change: 'VIP 作者须为签约作者；文章 3 万字以上且具人气基础，可在作者后台“自荐申V”。', impact: '签约是前提，先过签约再谈入V。', compliance: '攒够 3 万字与基础收藏再申V，避免轮空。' },
+  { name: '签约作者更新要求', date: '现行', change: '每年至少 1 部≥20 万字作品；每月最低更新 4 章（每章≥3000 字）；VIP 稿费千字三分。', impact: '有最低产出约束，断更影响权重与收益。', compliance: '排好存稿，避免卡V/断更触发读者雷点。' },
+  { name: '读者排雷自由/文下环境', date: '2022 新规延续', change: '保留读者排雷帖与文下评论自由；作者不得无故删评、控评。', impact: '文下口碑直接影响订阅留存。', compliance: '正视排雷，理性回应，不删评激化矛盾。' },
+  { name: '审核与 AI 内容标识', date: '现行', change: '涉政、低俗、抄袭、敏感内容不予通过；AI 生成内容需依规标识。', impact: '审核趋严，蹭热点需合规。', compliance: '敏感题材规避红线；AI 辅助写作主动标注，避免误判。' }
+];
+
+/* ---- 当日创作选题参考（按日轮换） ---- */
+const jjwxcDailyPool = [
+  { title: '台风夜被困的双向暗恋', angle: '强意象+暗恋', why: '借“封闭空间+天气”制造天然张力，对标《今夜刮起台风》结构', hook: '台风预警那天，我和暗恋的人被困在同一间屋子', shots: '环境描写开篇→心理独白→小动作破冰' },
+  { title: '重生后我不再替他挡刀', angle: '女性觉醒+反转', why: '“不替原男主挡刀”的反套路，爽点清晰', hook: '上一世我替他挡了刀，这一世刀落向他自己', shots: '对比开篇→决绝动作→新关系建立' },
+  { title: '室友是死对头的Omega', angle: '百合ABO+同居', why: '室友/死对头是高频热梗，ABO增强羁绊', hook: '分配宿舍那天，我和全校最不对付的人成了室友', shots: '冲突登场→信息差→靠近' },
+  { title: '竹马假装不认识我', angle: '破镜+失忆', why: '“假装不识”拉扯感强，重逢即钩子', hook: '他看我的眼神像看陌生人，可我们曾约定一生', shots: '悬念开场→碎片回忆→真相' },
+  { title: '第一人称：我暗恋的人是凶手', angle: '悬疑+暗恋', why: '限知视角藏信息，暗恋与危险叠加', hook: '我喜欢的人，出现在案发现场监控里', shots: '限知独白→线索→反转' },
+  { title: '穿成炮灰后我靠摆摊爆红', angle: '穿书+事业线', why: '事业线抵消恋爱悬浮，单元感强', hook: '系统让我当炮灰，我偏开摊赚翻全场', shots: '反差开场→经营爽点→打脸' },
+  { title: '校霸的软萌学霸同桌', angle: '校园反差CP', why: '桀骜×软萌经典反差，甜度可控', hook: '他踹开门坐我旁边：“以后罩着你”', shots: '出场张力→日常甜→心动' },
+  { title: '离婚后我成了他的白月光', angle: '追妻/破镜', why: '“被离婚者反成白月光”情绪回响强', hook: '签字那天我说随便，三年后他跪求复婚', shots: '冷静开场→逆袭→重逢碾压' }
+];
+
+/* ---- 梗库 ---- */
+const memePool = [
+  { trope: '强取豪夺', genre: '恋爱/百合', tier: 'S', desc: '强势一方主动攻城，张力来源', usage: '配“脆弱/破碎”受形成反差', example: '《趁她之危》趁虚而入' },
+  { trope: '双向暗恋', genre: '校园/恋爱', tier: 'S', desc: '双方都在暗恋，甜虐共生', usage: '用“对方不知情”的紧张感堆细节', example: '《陷入我们的热恋》' },
+  { trope: '破镜重圆', genre: '言情', tier: 'S', desc: '重逢即钩子，情绪回响强', usage: '分手需合理，重逢慢热', example: '带球/失忆慎用' },
+  { trope: '竹马/青梅', genre: '校园', tier: 'A', desc: '两小无猜，信任基底', usage: '用“熟悉感”制造独有亲密', example: '“我的竹马罢了”' },
+  { trope: '替身文学', genre: '言情', tier: 'B', desc: '“看清楚了我不是他”名场面', usage: '慎用，易踩雷，需给受真正被看见', example: '雷点高发，建议反转救赎' },
+  { trope: '重生', genre: '玄幻/言情', tier: 'A', desc: '带记忆重来，信息差爽点', usage: '用前世遗憾驱动今生选择', example: '重生后不挡刀' },
+  { trope: '穿书/快穿', genre: '无限流', tier: 'A', desc: '单元剧结构，系统任务', usage: '每世界独立主题', example: '炮灰女配逆袭' },
+  { trope: '失忆', genre: '恋爱', tier: 'A', desc: '重置关系，拉扯道具', usage: '别硬失忆，给合理触发', example: '重逢后前任求复合' },
+  { trope: '死对头', genre: '百合/言情', tier: 'A', desc: '对抗中靠近，张力足', usage: '用 rivalry 做情感载体', example: '和心机大小姐成为室友' },
+  { trope: '冲喜', genre: '古言/百合', tier: 'B', desc: '病弱/婚约梗，旧式张力', usage: '配时代背景更自洽', example: '给病弱郡主冲喜' },
+  { trope: 'ABO/Omega', genre: '百合/纯爱', tier: 'A', desc: '生理羁绊增强绑定', usage: '信息素=情绪外化', example: '专属情人gl' },
+  { trope: '病弱', genre: '百合', tier: 'B', desc: '脆弱美，激发保护欲', usage: '避免卖惨，给内在韧性', example: '病弱郡主' },
+  { trope: '系统', genre: '无限流', tier: 'A', desc: '任务驱动，节奏器', usage: '服务剧情非挂件', example: '绑定撒娇系统' },
+  { trope: '无限流', genre: '悬疑', tier: 'A', desc: '副本制强情节', usage: '每副本一种主题', example: '规则怪谈' },
+  { trope: '反派逆袭', genre: '穿书', tier: 'A', desc: '炮灰翻身，爽点清晰', usage: '用事业线抵消悬浮', example: '被玩弄的反派女配' },
+  { trope: '工业糖精', genre: '—', tier: 'B', desc: '【雷】无逻辑硬甜', usage: '避免，甜需有因', example: '雷点高发' },
+  { trope: '破防', genre: '百合', tier: 'B', desc: '高冷者动心瞬间', usage: '用微表情写崩塌', example: '带猫跑后高冷美人破防' },
+  { trope: '双向奔赴', genre: '全', tier: 'S', desc: '【好评】互相走向对方', usage: '优于单向苦恋', example: '读者最买账' }
+];
+
+/* ---- 避雷指南（好评/雷点） ---- */
+const minePool = [
+  { type: '好评', genre: '全', point: '双向奔赴', detail: '两人都主动走向对方，比单向苦恋更得读者心。', tip: '让CP各有行动线。' },
+  { type: '好评', genre: '全', point: '人物弧光', detail: '主角随剧情成长、改变，读者追更粘性高。', tip: '每个大事件后留一点性格变化。' },
+  { type: '好评', genre: '暗恋', point: '细腻心理', detail: '第一人称/限知视角的真实心事最戳人。', tip: '用身体反应写心动，少形容词堆砌。' },
+  { type: '好评', genre: '全', point: '留白', detail: '关键告白/心动不写满，读者自己脑补更上头。', tip: '写完删三行，留呼吸感。' },
+  { type: '好评', genre: '全', point: '烟火气', detail: '真实生活细节（饭、天气、小动作）增强沉浸。', tip: '用环境参与情绪。' },
+  { type: '雷点', genre: '言情', point: '替身文学', detail: '“看清楚了我不是他”式替身最易惹雷，受需被真正看见。', tip: '若用，必给救赎与独立人格。' },
+  { type: '雷点', genre: '全', point: '烂尾', detail: '前期铺陈、结尾草收，读者落差最大。', tip: '提前规划结局，伏笔回收。' },
+  { type: '雷点', genre: '全', point: '工业糖精', detail: '无逻辑硬甜、为甜而甜，甜度越高越腻。', tip: '甜要有因果与张力。' },
+  { type: '雷点', genre: '全', point: '卡V/断更', detail: '入V即断更、长期不更新，直接劝退。', tip: '排存稿，稳定更新。' },
+  { type: '雷点', genre: '全', point: '水文', detail: '为凑字数灌水，金榜系数也会稀释长文。', tip: '每章有推进，删废话。' },
+  { type: '雷点', genre: '言情', point: '女主恋爱脑/男主油腻', detail: '无自我女主、说教油腻男主是高频雷。', tip: '给女主事业与判断力。' },
+  { type: '雷点', genre: '全', point: '一窝蜂跟风', detail: '什么火写什么，剧情套路化易尬。', tip: '热梗+个人视角翻新。' },
+  { type: '雷点', genre: '全', point: '断更致歉回避', detail: '作者致歉却回避不更原因，读者更怒。', tip: '坦诚沟通，给预期。' },
+  { type: '雷点', genre: '全', point: '删评控评', detail: '无故删读者排雷帖激化矛盾。', tip: '尊重排雷自由，理性回应。' }
+];
+
+/* ---- 全网素材库 ---- */
+const materialPool = [
+  { title: '早八人 5 分钟出门妆', platform: '抖音', tag: '美妆/通勤', reason: '切打工人早起痛点，低门槛', hook: '素颜→全妆对比', idea: '改编“考公人 5 分钟提神妆”', keyword: '早八妆' },
+  { title: '挑战 30 天瘦 10 斤', platform: '得物/抖音', tag: '健身/挑战', reason: '强目标强反差，适合追更', hook: 'Day1 体重秤特写', idea: '改编“30 天英语逆袭”', keyword: '30天挑战' },
+  { title: '普通人下班后 1 小时', platform: '小红书', tag: '自律/成长', reason: '反内卷情绪共鸣', hook: '23岁工资5千只做一件事', idea: '迁移到“写作者的1小时”', keyword: '下班后一小时' },
+  { title: '暗恋成真名场面', platform: '晋江/小红书', tag: '暗恋/甜', reason: '情绪价值高，易出金句', hook: '他忽然回头叫我名字', idea: '拆为名场面写作模板', keyword: '暗恋成真' },
+  { title: '强取豪夺名段落', platform: '晋江', tag: '百合/言情', reason: '张力结构可拆解迁移', hook: '“趁她之危”式开场', idea: '分析攻势节奏', keyword: '强取豪夺' },
+  { title: '校园双向暗恋', platform: '晋江/抖音', tag: '校园/甜', reason: '青春甜度+短视频友好', hook: '桀骜少年×软萌学霸', idea: '写校园暗恋分镜', keyword: '校园双向暗恋' },
+  { title: '破镜重圆情绪流', platform: '晋江', tag: '言情', reason: '重逢钩子+后劲', hook: '再见已是陌生人', idea: '拆解重逢升温节奏', keyword: '破镜重圆' },
+  { title: '第一人称悬疑', platform: '晋江/知乎', tag: '悬疑', reason: '限知视角藏信息', hook: '我喜欢的人出现在案发现场', idea: '写不可靠叙述', keyword: '第一人称悬疑' },
+  { title: '穿书炮灰逆袭', platform: '晋江/抖音', tag: '穿书/爽', reason: '事业线抵消悬浮', hook: '系统让我当炮灰', idea: '单元爽点设计', keyword: '穿书炮灰' },
+  { title: '晋江热门题材风向', platform: '晋江', tag: '数据/选题', reason: '实时榜单指导选题', hook: '本月百合/校园头部', idea: '对照榜单定题材', keyword: '晋江热门题材' },
+  { title: '读者雷点合集', platform: '晋江吧/知乎', tag: '避雷', reason: '避坑降本', hook: '那些年我们踩过的雷', idea: '做成避雷清单', keyword: '晋江雷点' },
+  { title: '金句文案模板', platform: '小红书', tag: '文案', reason: '可直接挪用结构', hook: '一句顶一万句', idea: '建金句库', keyword: '文案金句' }
+];
+
+/* ---- 渲染：主模块 ---- */
+function renderJJWXC() {
+  // 每日风向
+  const daily = seededShuffle(jjwxcDailyPool, todayKey()).slice(0, 3);
+  document.getElementById('jjwxcDaily').innerHTML = `
+    <div class="card card-gradient-green">
+      <div class="font-bold mb-2">📌 当日创作风向</div>
+      ${daily.map(d => `<div class="mb-2"><span class="text-blue font-bold">${esc(d.title)}</span> <span class="tag tag-low">${esc(d.angle)}</span><div class="text-sm text-muted">${esc(d.why)}</div><div class="text-sm">钩子：${esc(d.hook)}</div></div>`).join('')}
+    </div>`;
+  const upd = store.get('luo_jjwxc_updated', '');
+  const updEl = document.getElementById('jjwxcUpdated');
+  if (updEl) updEl.textContent = upd ? '上次联网刷新：' + upd : '当前为内置素材库（联网刷新可尝试最新榜单）';
+  renderJJWXCRank(); renderJJWXCGenre(); renderJJWXCRule();
+}
+function renderJJWXCRank() {
+  const el = document.getElementById('jjwxcRankList'); if (!el) return;
+  el.innerHTML = jjwxcWorks.map((w, i) => {
+    const id = 'work-' + i;
+    const a = w.analysis, c = w.char;
+    return `<div class="card">
+      <div class="flex-between mb-1"><span class="font-bold">${esc(w.title)}</span><span class="tag tag-low">${esc(w.genre)}</span></div>
+      <div class="text-sm text-muted mb-1">作者：${esc(w.author)} · ${esc(w.status)} · ${esc(String(w.words))}字 · 积分${esc(w.points)}</div>
+      <div class="resource-tags mb-2">${w.tags.map(t => `<span class="resource-tag">${esc(t)}</span>`).join('')}</div>
+      <div class="mb-1"><span class="text-orange">吸引力：</span>${esc(w.hook)}</div>
+      <div class="mb-1"><span class="text-blue">为何火：</span>${esc(w.why)}</div>
+      <details><summary class="cursor-pointer text-sm" style="color:var(--blue)">▾ 拆解（剧情/人设/文笔/冲突/节奏/留白/心理/动作/钩子/对话/环境/主支线）</summary>
+        <div class="mt-2 text-sm" style="line-height:1.7">
+          <b>剧情设定：</b>${esc(a.plot)}<br>
+          <b>人物设定：</b>${esc(a.character)}<br>
+          <b>背景设定：</b>${esc(a.bg)}<br>
+          <b>文案/大纲：</b>${esc(a.copy)} / ${esc(a.outline)}<br>
+          <b>章纲：</b>${esc(a.chapter)}<br>
+          <b>文笔优点：</b>${esc(a.prose)}<br>
+          <b>冲突把握：</b>${esc(a.conflict)}<br>
+          <b>叙事节奏：</b>${esc(a.pace)}<br>
+          <b>留白：</b>${esc(a.blank)}<br>
+          <b>心理活动：</b>${esc(a.psychology)}<br>
+          <b>动作描写：</b>${esc(a.action)}<br>
+          <b>场景钩子：</b>${esc(a.hookScene)}<br>
+          <b>对话：</b>${esc(a.dialogue)}<br>
+          <b>神情：</b>${esc(a.expression)}<br>
+          <b>环境(天气)：</b>${esc(a.env)}<br>
+          <b>主/支线：</b>${esc(a.mainPlot)} / ${esc(a.subPlot)}<br>
+          <b>人物身世：</b>${esc(c.bg)} ｜ <b>性格底色：</b>${esc(c.base)} ｜ <b>动机：</b>${esc(c.motive)} ｜ <b>幼年经历：</b>${esc(c.child)}
+        </div>
+      </details>
+      <div class="mt-2 mb-1 text-sm"><span class="hl-rule">争议点：</span>${w.controversy.map(esc).join('；')}</div>
+      <div class="mb-1 text-sm"><span class="text-green">优点：</span>${w.merits.map(esc).join('、')}</div>
+      <div class="resource-actions"><a class="link-jjwxc" href="${searchLinks(w.title).jjwxc}" target="_blank">📚 晋江搜此书</a>${goldenStar(id)}</div>
+    </div>`;
+  }).join('');
+}
+function renderJJWXCGenre() {
+  const el = document.getElementById('jjwxcGenreList'); if (!el) return;
+  el.innerHTML = jjwxcGenres.map((g, i) => {
+    const id = 'genre-' + i;
+    return `<div class="card">
+      <div class="flex-between mb-1"><span class="font-bold">${esc(g.name)}</span><span class="tier-${g.tier}">${g.tier} 级</span></div>
+      <div class="text-sm text-muted mb-2">${esc(g.desc)}</div>
+      <div class="mb-2"><span class="text-orange">高分核心梗 TOP5：</span>${g.coreTropes.map(t => `<span class="resource-tag">${esc(t)}</span>`).join('')}</div>
+      <div class="mb-1 text-sm"><span class="text-green">读者好评点：</span>${g.praise.map(esc).join('、')}</div>
+      <div class="mb-1 text-sm"><span class="mine-zone">雷点：</span>${g.mines.map(esc).join('、')}</div>
+      <div class="mb-1 text-sm"><span class="hl-rule">创作建议：</span>${g.advice.map(esc).join('；')}</div>
+      <div class="resource-actions">${goldenStar(id)}</div>
+    </div>`;
+  }).join('');
+}
+function renderJJWXCRule() {
+  const el = document.getElementById('jjwxcRuleList'); if (!el) return;
+  el.innerHTML = jjwxcRules.map(r => `<div class="card">
+    <div class="flex-between mb-1"><span class="font-bold">${esc(r.name)}</span><span class="tag tag-low">${esc(r.date)}</span></div>
+    <div class="mb-1 text-sm"><span class="text-blue">核心调整：</span>${esc(r.change)}</div>
+    <div class="mb-1 text-sm"><span class="text-orange">影响面：</span>${esc(r.impact)}</div>
+    <div class="mb-1 text-sm hl-rule">⚠️ 合规提醒：${esc(r.compliance)}</div>
+  </div>`).join('');
+}
+function refreshJJWXC() {
+  // 尝试实时抓取晋江公开搜索（best-effort）；失败则保持内置库
+  toast('正在尝试联网刷新…');
+  const kw = '晋江 热门 百合 校园 暗恋';
+  const url = searchLinks(kw).jjwxc;
+  fetch(url, { mode: 'no-cors' }).then(() => {
+    store.set('luo_jjwxc_updated', fmtDate() + ' ' + new Date().toLocaleTimeString());
+    document.getElementById('jjwxcUpdated').textContent = '上次联网刷新：' + fmtDate();
+    toast('已尝试联网（晋江页面需手动确认最新榜单）');
+  }).catch(() => {
+    store.set('luo_jjwxc_updated', fmtDate() + '（离线，使用内置库）');
+    toast('联网受限，已用内置素材库（内容完整）');
+  });
+  // 同时轮换一次每日风向，制造“刷新感”
+  renderJJWXC();
+}
+
+/* ---- 渲染：梗库 ---- */
+function renderMeme() {
+  const el = document.getElementById('memeList'); if (!el) return;
+  const f = document.querySelector('#memeTabs .tab.active')?.dataset.meme || 'all';
+  const list = memePool.filter(m => f === 'all' || m.genre.includes(f) || f === 'all' && m.genre === '全');
+  el.innerHTML = list.map((m, i) => {
+    const id = 'meme-' + i;
+    return `<div class="card">
+      <div class="flex-between mb-1"><span class="font-bold">${esc(m.trope)}</span><span class="tier-${m.tier}">${m.tier} 级</span></div>
+      <div class="text-sm text-muted mb-1">题材：${esc(m.genre)}</div>
+      <div class="mb-1 text-sm">${esc(m.desc)}</div>
+      <div class="mb-1 text-sm"><span class="text-blue">用法：</span>${esc(m.usage)}</div>
+      <div class="mb-1 text-sm"><span class="text-orange">示例：</span>${esc(m.example)}</div>
+      <div class="resource-actions"><a class="link-jjwxc" href="${searchLinks(m.trope).jjwxc}" target="_blank">📚 晋江搜梗</a>${goldenStar(id)}</div>
+    </div>`;
+  }).join('') || '<div class="list-empty">暂无该题材梗</div>';
+}
+
+/* ---- 渲染：避雷指南 ---- */
+function renderMine() {
+  const el = document.getElementById('mineList'); if (!el) return;
+  const f = document.querySelector('#mineTabs .tab.active')?.dataset.mine || 'all';
+  const list = minePool.filter(m => f === 'all' || m.type === f);
+  el.innerHTML = list.map((m, i) => {
+    const id = 'mine-' + i;
+    const cls = m.type === '雷点' ? 'mine-zone' : 'text-green';
+    return `<div class="card">
+      <div class="flex-between mb-1"><span class="font-bold">${m.type === '雷点' ? '🛡️' : '👍'} ${esc(m.point)}</span><span class="tag tag-low">${esc(m.genre)}</span></div>
+      <div class="mb-1 text-sm">${esc(m.detail)}</div>
+      <div class="mb-1 text-sm"><span class="${cls}">建议：</span>${esc(m.tip)}</div>
+      <div class="resource-actions">${goldenStar(id)}</div>
+    </div>`;
+  }).join('') || '<div class="list-empty">暂无内容</div>';
+}
+
+/* ---- 渲染：灵感生成器 ---- */
+function renderGenius() { renderInspiration(); }
+function generateIdea() {
+  const genre = document.getElementById('genGenre').value;
+  const a = document.getElementById('genA').value.trim() || '桀骜不驯的校霸';
+  const b = document.getElementById('genB').value.trim() || '软萌学霸';
+  const pov = document.getElementById('genPOV').value;
+  const len = document.getElementById('genLen').value;
+  const genreInfo = jjwxcGenres.find(g => g.name === genre) || { coreTropes: ['双向暗恋'], advice: ['用细节堆心动'] };
+  const trope = genreInfo.coreTropes[Math.floor(Math.random() * genreInfo.coreTropes.length)];
+  const angle = seededShuffle(jjwxcDailyPool, a + b + genre).slice(0, 1)[0];
+  const html = `
+    <div class="card card-gradient-blue">
+      <div class="font-bold mb-2">🎯 你的专属选题</div>
+      <div class="mb-1"><span class="text-blue">题材：</span>${esc(genre)} ｜ <span class="text-orange">主梗：</span>${esc(trope)}</div>
+      <div class="mb-1"><span class="text-blue">人设：</span>${esc(a)} × ${esc(b)}</div>
+      <div class="mb-1"><span class="text-blue">视角：</span>${esc(pov)} ｜ <span class="text-blue">体量：</span>${esc(len)}</div>
+      <div class="mb-1"><span class="hl-rule">一句话钩子：</span>${esc(a)}以为${esc(b)}永远不知道——直到${esc(angle ? angle.hook : '那个雨夜')}</div>
+      <div class="mb-1 text-sm"><span class="text-green">章纲思路：</span>第1章 相遇钩子 → 第3章 关系转折 → 中点 误会/危机 → 高潮 双向确认 → 结局 余韵留白</div>
+      <div class="mb-1 text-sm"><span class="text-orange">可借鉴写法：</span>${genreInfo.advice.map(esc).join('；')}</div>
+      <div class="mb-1 text-sm"><span class="mine-zone">避雷：</span>避免工业糖精与单箭头拖太长；用${esc(pov)}写真实心理。</div>
+      <button class="btn btn-orange" style="width:100%;margin-top:6px" onclick="toggleGolden('idea-${Date.now()}','灵感','${esc(genre)}选题','${esc(a)}×${esc(b)} ${esc(trope)}')">⭐ 收藏此选题</button>
+    </div>`;
+  document.getElementById('geniusResult').innerHTML = html;
+  toast('已生成专属选题');
+}
+
+/* ---- 渲染：全网素材库 ---- */
+function renderMaterial() {
+  const el = document.getElementById('materialList'); if (!el) return;
+  const kw = (document.getElementById('materialSearch').value || '').trim();
+  const list = materialPool.filter(m => !kw || (m.title + m.tag + m.keyword + m.reason).includes(kw));
+  // 收藏区
+  const gold = getGolden();
+  const goldEl = document.getElementById('materialGolden');
+  if (goldEl) goldEl.innerHTML = gold.length ? `<div class="card"><div class="font-bold mb-2">⭐ 我的收藏（${gold.length}）</div>${gold.map(g => `<div class="note-item"><div class="note-body"><div class="note-title">${esc(g.title)}</div><div class="note-text">${esc(g.text || '')}</div></div><button class="note-btn del" onclick="toggleGolden('${esc(g.id)}','${esc(g.type)}','${esc(g.title)}','')">删</button></div>`).join('')}</div>` : '';
+  el.innerHTML = list.map((m, i) => {
+    const id = 'mat-' + i;
+    const L = searchLinks(m.keyword);
+    const links = `<a class="link-jjwxc" href="${L.jjwxc}" target="_blank">📚 晋江</a><a class="link-bili" href="${L.bili}" target="_blank">📺 B站</a><a class="link-xhs" href="${L.xhs}" target="_blank">🔴 小红书</a>`;
+    return `<div class="card">
+      <div class="flex-between mb-1"><span class="font-bold">${esc(m.title)}</span><span class="tag tag-low">${esc(m.platform)}</span></div>
+      <div class="resource-tags mb-1"><span class="resource-tag">${esc(m.tag)}</span></div>
+      <div class="mb-1 text-sm"><span class="text-orange">爆火原因：</span>${esc(m.reason)}</div>
+      <div class="mb-1 text-sm"><span class="text-blue">开头钩子：</span>${esc(m.hook)}</div>
+      <div class="mb-2 text-sm" style="background:var(--orange-light);padding:8px;border-radius:8px;font-size:12px"><span class="font-bold">迁移写法：</span>${esc(m.idea)}</div>
+      <div class="resource-actions">${links}${goldenStar(id)}</div>
+    </div>`;
+  }).join('') || '<div class="list-empty">没有匹配的素材</div>';
+}
+
+/* ---- Tab 绑定 ---- */
+document.querySelectorAll('#jjwxcTabs .tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('#jjwxcTabs .tab').forEach(t => t.classList.remove('active')); tab.classList.add('active');
+    const m = tab.dataset.jj;
+    document.getElementById('jjwxcRankPanel').style.display = m === 'rank' ? '' : 'none';
+    document.getElementById('jjwxcGenrePanel').style.display = m === 'genre' ? '' : 'none';
+    document.getElementById('jjwxcRulePanel').style.display = m === 'rule' ? '' : 'none';
+  };
+});
+document.querySelectorAll('#memeTabs .tab').forEach(tab => {
+  tab.onclick = () => { document.querySelectorAll('#memeTabs .tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); renderMeme(); };
+});
+document.querySelectorAll('#mineTabs .tab').forEach(tab => {
+  tab.onclick = () => { document.querySelectorAll('#mineTabs .tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); renderMine(); };
+});
 
 /* ================= Init ================= */
 function init() {

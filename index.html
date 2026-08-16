@@ -421,6 +421,81 @@
           <div class="section-sub">学习组织 AI 提示词，解决生活中的数据分析问题</div>
           <div id="aiPromptList"></div>
         </div>
+
+        <!-- 晋江写作素材库 (主模块) -->
+        <div class="page" id="page-jjwxc">
+          <div class="section-title"><div class="icon">📚</div>晋江写作素材库</div>
+          <div class="section-sub">榜单扒文 · 题材库 · 平台规则 · 每日风向（联网可刷新，离线用内置库）</div>
+          <div class="card card-gradient-blue">
+            <div class="flex-between mb-2"><span class="font-bold">🔄 联网刷新风向</span><button class="btn btn-primary" style="padding:4px 12px;font-size:12px" onclick="refreshJJWXC()">立即刷新</button></div>
+            <p class="text-sm text-muted">尝试抓取晋江公开榜单/搜索，失败则自动用内置素材库，永不白屏。</p>
+            <div id="jjwxcUpdated" class="text-sm text-muted mb-1"></div>
+          </div>
+          <div id="jjwxcDaily" class="mb-3"></div>
+          <div class="tabs" id="jjwxcTabs">
+            <div class="tab active" data-jj="rank">榜单扒文</div>
+            <div class="tab" data-jj="genre">题材库</div>
+            <div class="tab" data-jj="rule">平台规则</div>
+          </div>
+          <div id="jjwxcRankPanel"><div id="jjwxcRankList"></div></div>
+          <div id="jjwxcGenrePanel" style="display:none"><div id="jjwxcGenreList"></div></div>
+          <div id="jjwxcRulePanel" style="display:none"><div id="jjwxcRuleList"></div></div>
+        </div>
+
+        <!-- 梗库 -->
+        <div class="page" id="page-meme">
+          <div class="section-title"><div class="icon">🔥</div>梗库</div>
+          <div class="section-sub">高热创作梗分级标注，按题材筛选，可⭐收藏金句</div>
+          <div class="tabs" id="memeTabs">
+            <div class="tab active" data-meme="all">全部</div>
+            <div class="tab" data-meme="恋爱">恋爱</div>
+            <div class="tab" data-meme="百合">百合GL</div>
+            <div class="tab" data-meme="校园">校园</div>
+            <div class="tab" data-meme="言情">言情</div>
+            <div class="tab" data-meme="悬疑">悬疑</div>
+          </div>
+          <div id="memeList"></div>
+        </div>
+
+        <!-- 避雷指南 -->
+        <div class="page" id="page-mine">
+          <div class="section-sub">读者真实雷点 / 吐槽分区，重要规则高亮提醒（可⭐收藏）</div>
+          <div class="tabs" id="mineTabs">
+            <div class="tab active" data-mine="all">全部</div>
+            <div class="tab" data-mine="好评">好评点</div>
+            <div class="tab" data-mine="雷点">雷点避雷</div>
+          </div>
+          <div id="mineList"></div>
+        </div>
+
+        <!-- 灵感生成器 -->
+        <div class="page" id="page-genius">
+          <div class="section-title"><div class="icon">💡</div>灵感生成器</div>
+          <div class="section-sub">输入题材/人设/视角/字数，生成专属创作选题与章纲思路</div>
+          <div class="card">
+            <div class="form-group"><label class="form-label">题材（核心）</label><select class="form-select" id="genGenre">
+              <option>暗恋</option><option>校园</option><option>恋爱</option><option>百合GL</option><option>言情</option><option>第一人称</option><option>破镜重圆</option><option>穿书/快穿</option><option>悬疑</option><option>玄幻</option></select></div>
+            <div class="form-group"><label class="form-label">人设 A（主角）</label><input class="form-input" id="genA" placeholder="例如：桀骜不驯的校霸"></div>
+            <div class="form-group"><label class="form-label">人设 B（对手/CP）</label><input class="form-input" id="genB" placeholder="例如：软萌学霸"></div>
+            <div class="form-group"><label class="form-label">视角</label><select class="form-select" id="genPOV"><option>第一人称</option><option>第三人称限知</option><option>上帝视角</option></select></div>
+            <div class="form-group"><label class="form-label">目标字数</label><select class="form-select" id="genLen"><option>短篇 ≤10万</option><option>中篇 10-30万</option><option>长篇 ≥30万</option></select></div>
+            <button class="btn btn-primary" style="width:100%" onclick="generateIdea()">🎲 生成选题</button>
+          </div>
+          <div id="geniusResult"></div>
+          <button class="btn btn-orange" style="width:100%;margin-top:8px" onclick="refreshInspiration()">🎲 换一批灵感</button>
+          <div id="inspirationList"></div>
+        </div>
+
+        <!-- 全网素材库 -->
+        <div class="page" id="page-material">
+          <div class="section-title"><div class="icon">🌐</div>全网素材库</div>
+          <div class="section-sub">整合爆款拆解 / 热点二创 / 拆书，可搜可⭐收藏</div>
+          <div class="card">
+            <div class="form-group"><label class="form-label">搜索关键词</label><input class="form-input" id="materialSearch" placeholder="例如：暗恋 / 强取豪夺 / 校园" oninput="renderMaterial()"></div>
+          </div>
+          <div id="materialGolden"></div>
+          <div id="materialList"></div>
+        </div>
       </div>
 
       <div class="bottom-nav">
