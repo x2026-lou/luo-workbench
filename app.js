@@ -610,9 +610,8 @@ const inspirationPool = [
   { title: '面试被问“你最大的缺点”', angle: '职场干货', script: '千万别说“我太追求完美”，正确答法是…', shots: '口播+字幕重点+情景演绎' },
   { title: '一个人也要好好吃饭', angle: '治愈+美食', script: '独居第365天，我学会了10分钟搞定一餐…', shots: '备菜快剪+热气腾腾特写+餐具' }
 ];
-function renderInspiration() {
-  const shuffled = seededShuffle(inspirationPool, todayKey()).slice(0, 3);
-  document.getElementById('inspirationList').innerHTML = shuffled.map(item => `
+function paintInspiration(shuffled) {
+  const html = shuffled.map(item => `
     <div class="card">
       <div class="font-bold mb-2">${item.title}</div>
       <div class="text-sm text-muted mb-2">角度：${item.angle}</div>
@@ -620,17 +619,18 @@ function renderInspiration() {
       <div class="text-sm"><span class="text-orange">镜头思路：</span>${item.shots}</div>
     </div>
   `).join('');
+  const list1 = document.getElementById('inspirationList');
+  const list2 = document.getElementById('geniusInspirationList');
+  if (list1) list1.innerHTML = html;
+  if (list2) list2.innerHTML = html;
+}
+function renderInspiration() {
+  const shuffled = seededShuffle(inspirationPool, todayKey()).slice(0, 3);
+  paintInspiration(shuffled);
 }
 function refreshInspiration() {
   const shuffled = [...inspirationPool].sort(() => Math.random() - 0.5).slice(0, 3);
-  document.getElementById('inspirationList').innerHTML = shuffled.map(item => `
-    <div class="card">
-      <div class="font-bold mb-2">${item.title}</div>
-      <div class="text-sm text-muted mb-2">角度：${item.angle}</div>
-      <div class="mb-2"><span class="text-blue">文案钩子：</span>${item.script}</div>
-      <div class="text-sm"><span class="text-orange">镜头思路：</span>${item.shots}</div>
-    </div>
-  `).join('');
+  paintInspiration(shuffled);
   toast('灵感已换一批');
 }
 
