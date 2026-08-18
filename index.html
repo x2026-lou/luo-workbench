@@ -137,6 +137,7 @@
           <div id="examVideoList"></div>
           <div class="card"><div class="font-bold mb-2">✏️ 行测随堂练习</div><div id="examQuiz"></div></div>
           <div class="card"><div class="font-bold mb-2">📰 适配招聘公告</div><div id="examJobs"></div></div>
+          <div id="examDailyBox"></div>
         </div>
 
         <!-- Medical -->
@@ -190,6 +191,7 @@
             <div class="text-sm text-muted">适配方向：医院临床/医技岗、疾控中心、卫健委、医学院校教辅、医学编辑、医药企业</div>
           </div>
           <div id="recruitList"></div>
+          <div id="recruitLiveBox"></div>
         </div>
 
         <!-- Fitness -->
@@ -496,6 +498,90 @@
           <div id="materialGolden"></div>
           <div id="materialList"></div>
         </div>
+
+        <!-- 单词背诵 -->
+        <div class="page" id="page-vocab">
+          <div class="section-title"><div class="icon">🔤</div>单词背诵（四六级）</div>
+          <div class="section-sub">考频标注 · 分组背诵 · 背完换下一批 · 随堂测试 · 语法+口语</div>
+          <div id="vocabBox"></div>
+        </div>
+
+        <!-- 小说创作进阶 -->
+        <div class="page" id="page-novelcraft">
+          <div class="section-title"><div class="icon">✨</div>小说创作进阶</div>
+          <div class="section-sub">逻辑 / 钩子 / 文案 / 叙事节奏 / 读者共鸣</div>
+          <div id="novelCraftBox" data-cat="全部"></div>
+        </div>
+
+        <!-- 视频脚本灵感 -->
+        <div class="page" id="page-videoscr">
+          <div class="section-title"><div class="icon">🎥</div>视频脚本灵感</div>
+          <div class="section-sub">大学生 Cos / 追女明星 / 旅游 · 可直接落地的原创脚本</div>
+          <div id="videoScrBox" data-cat="全部"></div>
+        </div>
+
+        <!-- 剪辑打卡 -->
+        <div class="page" id="page-editcheck">
+          <div class="section-title"><div class="icon">✂️</div>剪辑打卡</div>
+          <div class="section-sub">转场 / 变速 / 调色 / 卡点 · 每日任务与连续打卡</div>
+          <div id="editCheckBox"></div>
+        </div>
+
+        <!-- 好物记录 -->
+        <div class="page" id="page-goods">
+          <div class="section-title"><div class="icon">🛍️</div>好物记录</div>
+          <div class="section-sub">购物搜索关键词 + 自用好物记录（可搜可⭐收藏）</div>
+          <div id="goodsBox"></div>
+        </div>
+
+        <!-- 奖励·每日评价 -->
+        <div class="page" id="page-rewards">
+          <div class="section-title"><div class="icon">🏆</div>奖励 · 每日评价</div>
+          <div class="section-sub">积分 / 徽章 / 连续天数 · 跨模块客观评价与改善建议</div>
+          <div id="rewardsBox"></div>
+        </div>
+
+        <!-- 每日复盘 -->
+        <div class="page" id="page-dailyreview">
+          <div class="section-title"><div class="icon">🔁</div>每日复盘</div>
+          <div class="section-sub">按日期自动归档，长期保留</div>
+          <div id="dailyReviewBox"></div>
+        </div>
+
+        <!-- 书摘收藏 -->
+        <div class="page" id="page-booknotes">
+          <div class="section-title"><div class="icon">📑</div>书摘收藏</div>
+          <div class="section-sub">读过的好句子、好段落，长期留存</div>
+          <div id="bookNotesBox"></div>
+        </div>
+
+        <!-- 拉片笔记 -->
+        <div class="page" id="page-film">
+          <div class="section-title"><div class="icon">🎞️</div>拉片笔记</div>
+          <div class="section-sub">逐场拆解电影 / 电视剧，长期留存</div>
+          <div id="filmBox"></div>
+        </div>
+
+        <!-- 每日记账 -->
+        <div class="page" id="page-accounting">
+          <div class="section-title"><div class="icon">🧾</div>每日记账</div>
+          <div class="section-sub">每笔留存，自动统计本月支出</div>
+          <div id="accountingBox"></div>
+        </div>
+
+        <!-- 时令菜品 -->
+        <div class="page" id="page-seasonaldish">
+          <div class="section-title"><div class="icon">🥗</div>时令菜品推荐</div>
+          <div class="section-sub">按季节自动推荐，附物价参考与备菜流程</div>
+          <div id="seasonalBox"></div>
+        </div>
+
+        <!-- 好书拆分 -->
+        <div class="page" id="page-booklearn">
+          <div class="section-title"><div class="icon">📚</div>好书拆分学习</div>
+          <div class="section-sub">有价值书籍推荐 + 逐章拆分打卡</div>
+          <div id="bookLearnBox"></div>
+        </div>
       </div>
 
       <div class="bottom-nav">
@@ -521,6 +607,7 @@
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
   <script src="app.js"></script>
+  <script src="expansion.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then(reg => {

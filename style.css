@@ -1,6 +1,9 @@
 :root {
   --bg: #F5F9FF;
+  --bg-soft: #EEF4FB;
+  --line: #E2E8F0;
   --surface: #FFFFFF;
+  --text-strong: #1A202C;
   --blue-light: #E3F2FD;
   --blue-soft: #A0C4FF;
   --blue-main: #6C9DFF;
@@ -445,6 +448,57 @@ details[open] summary { margin-bottom:6px; }
 .text-blue { color: var(--blue-dark); }
 .text-green { color: var(--green-main); }
 .font-bold { font-weight: 700; }
+
+/* ===== 扩展模块样式 ===== */
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.stat-card { background: var(--bg-soft); border-radius: 12px; padding: 10px 6px; text-align: center; }
+.stat-num { font-size: 18px; font-weight: 800; color: var(--blue-dark); }
+.stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.stat-grid2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat-mini { background: var(--bg-soft); border-radius: 10px; padding: 8px 4px; text-align: center; }
+.stat-mini b { display: block; font-size: 15px; color: var(--blue-dark); }
+.stat-mini span { font-size: 11px; color: var(--text-muted); }
+
+.word-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.word-list .word-card { text-align: left; padding: 10px 12px; margin-bottom: 0; border-radius: 12px; cursor: pointer; }
+.word-list .word-card.done { opacity: .6; }
+.word-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.word-w { font-size: 16px; font-weight: 800; color: var(--blue-dark); }
+.word-ph { font-size: 12px; color: var(--text-muted); margin: 2px 0; }
+.word-cn { font-size: 13px; color: var(--text-strong); }
+.word-ex { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.word-done { font-size: 11px; color: var(--green-main); margin-top: 4px; }
+
+.quiz-q { margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed var(--line); }
+.quiz-word { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+.quiz-fb { font-size: 13px; margin-top: 8px; }
+
+.craft-list { display: flex; flex-direction: column; gap: 10px; }
+.recruit-live-item { padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.rl-tag { display: inline-block; font-size: 11px; font-weight: 700; color: #fff; background: var(--orange-soft); border-radius: 8px; padding: 1px 8px; margin-right: 6px; }
+
+.edit-task-list { display: flex; flex-direction: column; gap: 8px; }
+.edit-task { display: flex; gap: 10px; align-items: flex-start; background: var(--surface); border-radius: 12px; padding: 12px; box-shadow: var(--shadow-soft); cursor: pointer; }
+.edit-task.done { opacity: .6; }
+.et-body { flex: 1; min-width: 0; }
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-block; background: var(--bg-soft); border: 1px solid var(--line); border-radius: 20px; padding: 6px 12px; font-size: 13px; color: var(--blue-dark); text-decoration: none; }
+.chip:active { background: var(--blue-light); }
+.form-row { display: flex; gap: 8px; }
+.form-row .form-input { flex: 1; }
+
+.reward-hero { background: linear-gradient(135deg, var(--orange-light), var(--blue-light)); border-radius: 16px; padding: 18px; text-align: center; }
+.reward-lv { font-size: 20px; font-weight: 800; color: var(--blue-dark); }
+.reward-pts { font-size: 28px; font-weight: 900; margin: 4px 0; }
+.reward-streak { font-size: 13px; color: var(--text-muted); }
+.badge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.badge { background: var(--bg-soft); border: 1px dashed var(--line); border-radius: 12px; padding: 10px 4px; text-align: center; font-size: 12px; color: var(--text-muted); }
+.badge.on { background: #FFF8E1; border: 1px solid #FFD54F; color: #F57F17; font-weight: 700; }
+
+.season-banner { background: var(--green-light); border-radius: 12px; padding: 10px 14px; font-size: 14px; margin-bottom: 8px; }
+.learn-item { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; margin: 6px 0; color: var(--text-strong); }
 
 @media (min-width: 600px) {
   #app { max-width: 430px; margin: 0 auto; border-left: 1px solid var(--blue-light); border-right: 1px solid var(--blue-light); }

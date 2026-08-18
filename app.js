@@ -26,7 +26,19 @@ const navItems = [
   { id: 'meme', icon: '🔥', label: '梗库', new: true },
   { id: 'mine', icon: '🛡️', label: '避雷指南', new: true },
   { id: 'genius', icon: '💡', label: '灵感生成器', new: true },
-  { id: 'material', icon: '🌐', label: '全网素材库', new: true }
+  { id: 'material', icon: '🌐', label: '全网素材库', new: true },
+  { id: 'vocab', icon: '🔤', label: '单词背诵', new: true },
+  { id: 'novelcraft', icon: '✨', label: '小说创作进阶', new: true },
+  { id: 'videoscr', icon: '🎥', label: '视频脚本灵感', new: true },
+  { id: 'editcheck', icon: '✂️', label: '剪辑打卡', new: true },
+  { id: 'goods', icon: '🛍️', label: '好物记录', new: true },
+  { id: 'rewards', icon: '🏆', label: '奖励·每日评价', new: true },
+  { id: 'dailyreview', icon: '🔁', label: '每日复盘', new: true },
+  { id: 'booknotes', icon: '📑', label: '书摘收藏', new: true },
+  { id: 'film', icon: '🎞️', label: '拉片笔记', new: true },
+  { id: 'accounting', icon: '🧾', label: '每日记账', new: true },
+  { id: 'seasonaldish', icon: '🥗', label: '时令菜品', new: true },
+  { id: 'booklearn', icon: '📚', label: '好书拆分', new: true }
 ];
 
 let currentPage = 'daily';
@@ -56,8 +68,13 @@ function goPage(id) {
     recruit: renderRecruit, fitness: renderFitness, finance: renderFinance, novel: renderNovel,
     image: renderImage, books: renderBooks, drawing: renderDrawing, guitar: renderGuitar,
     kitchen: renderKitchen, media: renderMedia, travel: renderTravel, office: renderOffice,
-    eq: renderEq, ai: renderAi, jjwxc: renderJJWXC, meme: renderMeme,
-    mine: renderMine, genius: renderGenius, material: renderMaterial
+    eq: renderEq, ai: renderAi,     jjwxc: renderJJWXC, meme: renderMeme,
+    mine: renderMine, genius: renderGenius, material: renderMaterial,
+    vocab: renderVocab, novelcraft: renderNovelCraft, videoscr: renderVideoScr,
+    editcheck: renderEditCheck, goods: renderGoods, rewards: renderRewards,
+    dailyreview: renderDailyReview, booknotes: renderBookNotes, film: renderFilm,
+    accounting: renderAccounting, seasonaldish: renderSeasonalDish, booklearn: renderBookLearn,
+    exam: renderExamWrap, recruit: renderRecruitWrap
   };
   if (renderMap[id]) renderMap[id]();
   renderMyNotes(id);
