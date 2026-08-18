@@ -630,6 +630,81 @@ function answerExam(i) { if (eqAnswered) return; eqAnswered = true; const q = ex
 function nextExamQuiz() { eqIdx = (eqIdx + 1) % examQuizData.length; renderExam(); }
 
 /* ================= Medical ================= */
+/* 医学专业课复习资料（按科目：高频考点/易错/难点/口诀，名词·特性加粗，供自主复习） */
+const medicalData = [
+  { subject: '生理学', high: [
+    { t: '① 名词解释：<b>稳态</b>', c: '内环境理化性质维持相对恒定的状态，是机体自我调节的核心目标。' },
+    { t: '② 名词解释：<b>动作电位</b>', c: '可兴奋细胞受刺激后膜电位发生的快速、可传导的<b>去极化反转</b>，是兴奋的标志。' },
+    { t: '③ 简答：<b>心肌细胞</b>动作电位分期', c: '0期(<b>快Na⁺内流</b>)→1期(短暂K⁺外流)→2期(<b>平台期</b>，Ca²⁺内流与K⁺外流平衡)→3期(K⁺外流)→4期(静息)。平台期是心肌区别于骨骼肌的关键。' },
+    { t: '④ 简答：<b>动脉血压</b>形成四要素', c: '<b>心输出量</b>、外周阻力、大动脉弹性(缓冲)、循环血量，四者共同决定血压高低。' },
+    { t: '⑤ 名词解释：<b>通气/血流比值</b>', c: '肺泡通气量与肺血流之比，约<b>0.84</b>时换气效率最高；增大提示"死腔样通气"，减小提示"分流"。' } ],
+    wrong: ['把"平台期"误认为复极化；混淆<b>收缩压/舒张压</b>定义；误以为心率越快心输出量越多(过快反而下降)'],
+    hard: ['各期离子流机制、<b>异长/等长自身调节</b>的区分与应用'],
+    mnemonic: ['"0钠1钾2钙平，3钾4静记分明"(动作电位分期)'] },
+  { subject: '生物化学与分子生物学', high: [
+    { t: '① 名词解释：<b>三羧酸循环</b>', c: '在线粒体基质中<b>乙酰CoA</b>彻底氧化的共同通路，产生NADH/FADH₂，是糖脂蛋白代谢枢纽。' },
+    { t: '② 简答：<b>糖酵解</b>三个关键酶', c: '<b>己糖激酶</b>、磷酸果糖激酶-1、<b>丙酮酸激酶</b>；其中PFK-1是最主要限速酶。' },
+    { t: '③ 名词解释：<b>氧化磷酸化</b>', c: '呼吸链电子传递释放能量<b>偶联ATP合成</b>；P/O比值反映每对电子产ATP效率。' },
+    { t: '④ 名词解释：<b>酮体</b>', c: '肝细胞生成、<b>肝外组织</b>利用的<b>乙酰乙酸/β-羟丁酸/丙酮</b>，长期饥饿时的重要脑能源。' },
+    { t: '⑤ 简答：<b>DNA复制</b>特点', c: '<b>半保留</b>、半不连续(<b>冈崎片段</b>)、需RNA引物、双向进行。' } ],
+    wrong: ['糖酵解场所误记线粒体(实为<b>胞质</b>)；酮体"肝内生成、肝外利用"常被颠倒；TCA误记在胞质'],
+    hard: ['代谢途径交叉调控、呼吸链复合体顺序与抑制剂位点'],
+    mnemonic: ['"三羧酸在基质，糖酵胞质三酶卡；酮体肝生肝外用，复制半保留双向"'] },
+  { subject: '病理学', high: [
+    { t: '① 名词解释：<b>萎缩/化生/增生</b>', c: '萎缩=体积缩小；<b>化生</b>=一种分化上皮被另一种取代(如鳞化)；增生=细胞数量增多。' },
+    { t: '② 名词解释：<b>梗死</b>', c: '血管阻塞致局部组织<b>缺血性坏死</b>；分<b>贫血性</b>(心、脾、肾)与出血性(肺、肠)。' },
+    { t: '③ 简答：<b>肿瘤分化</b>与恶性度', c: '分化越低恶性度越高；<b>异型性</b>(细胞/组织结构异常)是良恶性诊断依据。' },
+    { t: '④ 名词解释：<b>肉芽组织</b>', c: '新生毛细血管+成纤维细胞+炎细胞，是<b>组织修复</b>的主力， eventual 演变为瘢痕。' },
+    { t: '⑤ 简答：<b>炎症</b>基本病理', c: '变质、渗出、增生三要素；<b>趋化</b>指白细胞沿化学梯度定向游走。' } ],
+    wrong: ['把"化生"当"增生"；坏死与<b>凋亡</b>混淆(凋亡无炎反应)；癌(上皮)与肉瘤(间叶)来源颠倒'],
+    hard: ['凋亡 vs 坏死的形态与机制、转移途径(淋巴/血行/种植)'],
+    mnemonic: ['"变质渗出增生，炎变三步真；癌从上皮来，肉瘤间叶生"'] },
+  { subject: '诊断学', high: [
+    { t: '① 名词解释：<b>移动性浊音</b>', c: '腹水>1000ml时浊音随体位改变，是提示<b>腹腔积液</b>的重要体征。' },
+    { t: '② 名词解释：<b>Murphy征</b>', c: '深压右肋缘下、令吸气时因痛终止吸气为阳性，提示<b>急性胆囊炎</b>。' },
+    { t: '③ 简答：<b>发热</b>分度', c: '低热37.3-38℃、中热38.1-39℃、高热39.1-41℃、超高热>41℃。' },
+    { t: '④ 名词解释：<b>弛张热</b>', c: '体温>39℃且24h波动>2℃但不回正常(见于<b>败血症</b>)，需与稽留热鉴别。' },
+    { t: '⑤ 简答：<b>水肿</b>常见病因', c: '心(右心衰)、肾(<b>肾病综合征</b>)、肝(低蛋白)、营养不良性。' } ],
+    wrong: ['混淆<b>弛张热</b>与稽留热；移动性浊音阈值(>1000ml)记错；墨菲征与麦氏点混淆'],
+    hard: ['各种热型鉴别、叩诊与听诊的定性定位'],
+    mnemonic: ['"稽留高稳一天平，弛张两天两度升；墨菲胆囊压，麦氏阑尾疼"'] },
+  { subject: '内科学', high: [
+    { t: '① 名词解释：<b>COPD</b>', c: '以持续<b>气流受限</b>为特征的慢性气道病，与吸烟/<b>慢性支气管炎</b>/肺气肿相关。' },
+    { t: '② 简答：<b>左心衰</b>临床表现', c: '<b>肺循环淤血</b>：呼吸困难(劳力性→夜间阵发性→端坐呼吸)、肺水肿、湿啰音。' },
+    { t: '③ 简答：<b>心绞痛</b>与心梗鉴别', c: '心梗胸痛更剧烈、>30min、<b>ST段抬高</b>、心肌酶(CK-MB/cTnI)升高。' },
+    { t: '④ 名词解释：<b>消化性溃疡</b>', c: '胃/十二指肠黏膜溃疡，<b>幽门螺杆菌</b>与NSAIDs为主要病因；十二指肠溃疡更常见。' },
+    { t: '⑤ 简答：<b>糖尿病</b>并发症', c: '急性(<b>酮症酸中毒</b>)；慢性微血管(视网膜/肾)、大血管(心/脑/下肢)。' } ],
+    wrong: ['左心衰(肺淤血)与右心衰(体循环淤血)表现颠倒；溃疡好发部位(十二指肠>胃)；心梗与心绞痛时间阈值(<30min)'],
+    hard: ['NYHA心功能分级、常见酸碱失衡(ABG)判读'],
+    mnemonic: ['"左衰肺淤血，右衰体循环；COPD气流限，戒烟是根本"'] },
+  { subject: '外科学', high: [
+    { t: '① 名词解释：<b>无菌术</b>', c: '杀灭/清除微生物、防止伤口感染的<b>原则与操作</b>(灭菌+消毒+无菌操作)。' },
+    { t: '② 名词解释：<b>休克</b>', c: '有效循环血量锐减致<b>组织灌注不足</b>；常见失血性、感染性(脓毒性)、心源性。' },
+    { t: '③ 简答：<b>破伤风</b>处理原则', c: '清创、早期足量<b>抗毒素(TAT)</b>、镇静解痉、防窒息；强调"预防>治疗"。' },
+    { t: '④ 简答：<b>急性阑尾炎</b>体征', c: '<b>麦氏点</b>(右髂前上棘与脐连线外1/3)压痛、反跳痛、肌紧张。' },
+    { t: '⑤ 名词解释：<b>颅内压增高</b>', c: '颅内容积代偿失代偿，三主征：<b>头痛/呕吐/视乳头水肿</b>。' } ],
+    wrong: ['麦氏点定位错误；破伤风"预防大于治疗"常被忽视；感染性休克补液原则(先晶后胶)混淆'],
+    hard: ['休克三期表现、肿瘤TNM分期含义'],
+    mnemonic: ['"麦氏右髂上，压痛反跳张；破伤风清创，TAT莫忘"'] },
+  { subject: '妇产科学', high: [
+    { t: '① 名词解释：<b>早孕反应</b>', c: '停经约6周起出现恶心/呕吐/厌油，多在<b>12周</b>前后缓解。' },
+    { t: '② 名词解释：<b>前置胎盘</b>', c: '胎盘附着于<b>宫颈内口</b>，典型表现为妊娠晚期<b>无痛性阴道流血</b>。' },
+    { t: '③ 简答：<b>妊娠期高血压</b>表现', c: '<b>高血压</b>+蛋白尿+水肿，重度可进展为<b>子痫</b>(抽搐)。' },
+    { t: '④ 名词解释：<b>产后出血</b>', c: '胎儿娩出后24h内出血量>500ml；四大因：宫缩乏力/产道损伤/胎盘因素/<b>凝血障碍</b>。' },
+    { t: '⑤ 简答：<b>卵巢囊肿蒂扭转</b>', c: '突发下腹剧痛伴恶心呕吐，是妇科常见急腹症，多需<b>急诊手术</b>。' } ],
+    wrong: ['前置胎盘"无痛性出血"常被遗漏；妊高症与子痫关系混淆；产后出血阈值(>500ml)记错'],
+    hard: ['分娩机制(衔接→下降→俯屈→内旋转)、妇科肿瘤FIGO分期'],
+    mnemonic: ['"前置无痛流血，妊高抽子痫；产后五百血，四因记心间"'] },
+  { subject: '儿科学', high: [
+    { t: '① 名词解释：<b>生长发育</b>', c: '连续而有阶段、各系统不平衡，有两个高峰：<b>婴儿期</b>与<b>青春期</b>。' },
+    { t: '② 简答：<b>体重</b>估算公式', c: '<1岁=出生(3kg)+月龄×0.7；2岁=年龄×2+8(kg)；体格评价常用指标。' },
+    { t: '③ 名词解释：<b>新生儿黄疸</b>', c: '胆红素代谢未成熟致皮肤黄染；分<b>生理性</b>(生后2-3天、轻、自退)与病理性。' },
+    { t: '④ 简答：<b>佝偻病</b>', c: '<b>维生素D</b>缺乏致钙磷代谢异常、骨骼改变(方颅/鸡胸/O形腿)。' },
+    { t: '⑤ 名词解释：<b>小儿腹泻</b>', c: '多病原致大便次数/性状改变，核心是<b>防治脱水</b>与电解质紊乱。' } ],
+    wrong: ['体重公式(1岁/2岁)记错；生理性与病理性黄疸界限(出现时间/峰值)混淆；脱水程度(轻中重)判读错误'],
+    hard: ['计划免疫程序(疫苗时间表)、液体疗法(累积损失量计算)'],
+    mnemonic: ['"两岁乘二加八，一岁公斤加七；维D缺佝偻病，黄疸分生理病"'] }
+];
 const medicalVideos = makeSearchItems([
   { icon: '🦴', title: '系统解剖学（霍琨手绘版）', desc: '医学本科必修，运动/内脏/神经解剖系统讲解', tags: ['解剖','基础'] },
   { icon: '🧪', title: '生物化学与分子生物学', desc: '糖脂代谢/酶/核酸/基因表达', tags: ['生化','基础'] },
@@ -650,6 +725,22 @@ const medicalVideos = makeSearchItems([
 ], v => v.title);
 function renderMedical() {
   document.getElementById('medicalVideoList').innerHTML = videoList('medical', medicalVideos);
+  const box = document.getElementById('medReview');
+  if (box) box.innerHTML = `
+    <div class="font-bold mb-2">📚 医学专业课复习资料（按科目）</div>
+    ${medicalData.map((s, si) => `
+      <div class="card mt-2">
+        <div class="font-bold mb-2">🩺 ${esc(s.subject)}</div>
+        <div class="text-sm font-bold text-blue mb-1">· 常考高频考点（含简单解答）</div>
+        ${s.high.map(h => `<div class="text-sm mb-2"><b>${h.t}</b><br><span class="text-muted">${h.c}</span></div>`).join('')}
+        <div class="text-sm font-bold text-orange mb-1">· 易错考点</div>
+        ${s.wrong.map(w => `<div class="text-sm mb-1">⚠️ ${esc(w)}</div>`).join('')}
+        <div class="text-sm font-bold text-green mb-1">· 学习难点</div>
+        ${s.hard.map(hd => `<div class="text-sm mb-1">🔧 ${esc(hd)}</div>`).join('')}
+        <div class="text-sm font-bold" style="color:#8e44ad">· 记忆口诀</div>
+        ${s.mnemonic.map(m => `<div class="text-sm mb-1">🔑 ${esc(m)}</div>`).join('')}
+      </div>`).join('')}
+  `;
   document.getElementById('medNote').value = store.get('luo_med_note', '');
 }
 function saveMedicalNote() { store.set('luo_med_note', document.getElementById('medNote').value); toast('笔记已保存'); }
@@ -866,7 +957,19 @@ const novelSplits = [
   { title: '《盗墓笔记》悬念钩子拆解', tag: '悬疑/冒险', points: '未知空间+线索递进+人物羁绊', apply: '每章留一个“接下来会发生什么”的钩子' },
   { title: '《庆余年》穿越爽文节奏', tag: '穿越/权谋', points: '现代思维降维+身份反差+金句', apply: '用主角“知道答案”的信息差制造爽点' },
   { title: '言情甜文“推拉”写法', tag: '甜宠/言情', points: '靠近-疏远-误会-和好情绪曲线', apply: '用暧昧拉扯代替直接表白更上头' },
-  { title: '爽文“打脸”结构模板', tag: '男频/爽文', points: '被轻视-展现实力-众人震惊三幕', apply: '把反派写得越狂，打脸越爽' }
+  { title: '爽文“打脸”结构模板', tag: '男频/爽文', points: '被轻视-展现实力-众人震惊三幕', apply: '把反派写得越狂，打脸越爽' },
+  { title: '《琅琊榜》权谋复仇线拆解', tag: '古装/权谋', points: '十二年隐忍布局+赤焰冤案+以弱博强', apply: '用“主角手中只有真相与人心”制造智斗爽感' },
+  { title: '《陈情令》CP感营造', tag: '耽改/双男主', points: '共患难羁绊+眼神戏+“姑苏蓝氏”规则反差', apply: '双男主用“一个守规一个破规”制造天然张力' },
+  { title: '《都挺好》家庭群像', tag: '现实/家庭', points: '原生家庭矛盾+苏明玉独立线+不强行和解', apply: '写家庭文别急着和解，把代际创伤写实更戳人' },
+  { title: '《隐秘的角落》细思极恐', tag: '悬疑/人性', points: '“一起爬山吗”童谣隐喻+成年人失控', apply: '用天真视角反衬黑暗，反差越甜越瘆人' },
+  { title: '《小敏家》中年爱情', tag: '现实/温情', points: '离异重组+代际摩擦+成年人克制浪漫', apply: '中年言情靠“互相托底”而非甜宠，更耐看' },
+  { title: '番茄小说黄金三章', tag: '男频/新媒体', points: '第一章立人设金手指、第二章小高潮、第三章入团', apply: '前 3000 字必须让读者“上瘾”，否则就流失' },
+  { title: '晋江“先婚后爱”套路', tag: '言情/婚后', points: '契约婚姻+同居日常+假戏真做', apply: '用“合法同居”把推拉合理化，甜度自然不齁' },
+  { title: '无限流“副本”设计', tag: '男频/系统', points: '规则怪谈+关卡递进+队友羁绊', apply: '每个副本只加一条新规则，读者边猜边怕' },
+  { title: '《山海情》群像叙事', tag: '主旋律/群像', points: '脱贫主线+多个立体配角+方言真实感', apply: '群像文给每个配角一个“自私又可爱”的动机' },
+  { title: '校园文“破镜重圆”', tag: '言情/校园', points: '年少错过+成年重逢+未消的心结', apply: '用“那年的误会一直没解开”做重逢钩子' },
+  { title: '悬疑“叙述性诡计”', tag: '推理/本格', points: '叙述视角误导+最后一页反转', apply: '让读者“知道全部细节却看错”，反转才炸' },
+  { title: '竖屏短剧“爽点密集”', tag: '短剧/竖屏', points: '每 10 秒一个冲突、每集一个反转', apply: '把长篇小说压缩成“每屏一个钩子”的节奏' }
 ];
 const novelTeaches = makeSearchItems([
   { icon: '✍️', title: '小说开头怎么写才吸引人', desc: '黄金三章与开头冲突设计', tags: ['写作技巧'] },
@@ -876,7 +979,10 @@ const novelTeaches = makeSearchItems([
 ], v => v.title);
 let scripts = store.get('luo_scripts', []);
 function renderNovel() {
-  document.getElementById('novelSplitList').innerHTML = novelSplits.map(n => `
+  const nsList = seededShuffle(novelSplits, todayKey()).slice(0, 8);
+  document.getElementById('novelSplitList').innerHTML =
+    `<div class="text-sm mb-2" style="color:#1565c0;font-weight:700">📅 每日更新 · ${todayKey()}（今日展示 8 / 共 ${novelSplits.length} 篇爆款，每天轮换不同书目）</div>` +
+    nsList.map(n => `
     <div class="card">
       <div class="font-bold mb-2">${n.title}</div>
       <div class="resource-tags"><span class="resource-tag">${n.tag}</span></div>
@@ -1302,10 +1408,25 @@ const aiPrompts = [
   { title: '旅行规划：生成行程清单', prompt: '我计划去[目的地]玩[天数]天，预算[金额]，喜欢美食和拍照。请帮我规划每日行程、交通、住宿建议和必带清单。' },
   { title: '绘画灵感：给 QQ 人设计动作', prompt: '请给我 5 个适合 QQ 人（头身比1:1）的可爱动作构思，包含表情、肢体和道具，适合做 CP 产粮插画。' },
   { title: '英语陪练：情景对话练习', prompt: '请扮演英语母语者，和我用简单英语聊「my daily routine」，每次只说一两句，等我回复后再继续，遇到错误温柔纠正。' },
-  { title: '读书拆解：把书变成思维导图', prompt: '请把《[书名]》拆解为思维导图大纲：核心观点、章节逻辑、金句、可迁移到自媒体的选题点。' }
+  { title: '读书拆解：把书变成思维导图', prompt: '请把《[书名]》拆解为思维导图大纲：核心观点、章节逻辑、金句、可迁移到自媒体的选题点。' },
+  { title: '论文降重：改写学术段落', prompt: '请帮我把下面这段论文改写，保留原意但换种表达降低重复率，保持学术语气：' },
+  { title: '英文邮件：礼貌催进度', prompt: '请帮我写一封英文邮件，礼貌地跟进[对方]关于[事项]的进度，既不过于急切也不失专业，给出主题行和正文。' },
+  { title: '情绪急救：把焦虑写下来', prompt: '我最近很焦虑，请先陪我聊聊，再帮我把焦虑的事项列成清单，并按“可控/不可控”分类，给出今晚能做的一件小事。' },
+  { title: '爆款标题：生成 10 个选题', prompt: '请为一篇关于「[主题]」的小红书/公众号文章生成 10 个有点击欲的标题，分别标注使用的钩子类型（数字/反差/悬念/共鸣）。' },
+  { title: '自媒体大纲：列公众号框架', prompt: '请帮我把「[选题]」拆成一篇 1500 字公众号文章框架：标题、3 个分论点、每个分论点的案例与金句、结尾引导。' },
+  { title: '人际分析：拆解一段对话潜台词', prompt: '请帮我分析下面这段对话里对方的潜台词和情绪，并给我一个得体的回复建议：' },
+  { title: '穿搭建议：按身材给方案', prompt: '我是[身高/体重/身材特点]的学生，想要少年感中性风，请给出 3 套一周穿搭公式和避雷单品。' },
+  { title: '备考口诀：把知识点编成顺口溜', prompt: '请把下面这些[科目]知识点编成好记的口诀或谐音梗，方便考前快速回忆：' },
+  { title: '会议纪要：整理成行动清单', prompt: '请把下面这段会议记录整理成：① 决议事项 ② 待办（负责人+截止日）③ 遗留问题，用清单呈现。' },
+  { title: '真诚表白：写一段心里话', prompt: '请帮我写一段给[对象]的真诚表白，不油腻、不套路，带点具体回忆，留出让我填名字和细节的空白。' },
+  { title: '购物决策：对比两款产品', prompt: '我纠结[产品A]和[产品B]，请从价格、核心参数、适用场景、优缺点对比，最后给明确选购建议。' },
+  { title: '代码求助：解释这段报错', prompt: '我运行代码报了下面这个错，请用人话解释原因、定位可能出错的行，并给出修复方案：' }
 ];
 function renderAi() {
-  document.getElementById('aiPromptList').innerHTML = aiPrompts.map((p, i) => `
+  const list = seededShuffle(aiPrompts, todayKey());
+  document.getElementById('aiPromptList').innerHTML =
+    `<div class="text-sm mb-2" style="color:#1565c0;font-weight:700">📅 每日更新 · ${todayKey()}（共 ${aiPrompts.length} 条口令，每天轮换顺序，覆盖学习/创作/生活）</div>` +
+    list.map((p, i) => `
     <div class="prompt-card">
       <div class="prompt-title">${p.title}</div>
       <div class="prompt-box">
@@ -1316,7 +1437,8 @@ function renderAi() {
   `).join('');
 }
 function copyPrompt(i) {
-  navigator.clipboard?.writeText(aiPrompts[i].prompt).then(() => toast('已复制提示词')).catch(() => toast('复制失败，请手动复制'));
+  const list = seededShuffle(aiPrompts, todayKey());
+  navigator.clipboard?.writeText(list[i].prompt).then(() => toast('已复制提示词')).catch(() => toast('复制失败，请手动复制'));
 }
 
 /* ================= 晋江写作素材库 / 梗库 / 避雷 / 灵感 / 全网素材 ================= */
@@ -1376,21 +1498,89 @@ const jjwxcWorks = [
     merits: ['第一人称代入', '心理细腻', '视角独特'],
     controversy: ['第一人称限制信息'],
     analysis: { plot: '暗恋长跑', character: '内向观察者', bg: '校园', copy: '内心独白式文案', outline: '注目→陪伴→告白', chapter: '情绪流', prose: '细腻', conflict: '不敢说出口', pace: '舒缓', blank: '未说之爱', psychology: '大量独白', action: '偷看动作', hookScene: '教室角落', dialogue: '少而精', expression: '欲说还休', env: '校园日常', mainPlot: '暗恋', subPlot: '成长' },
-    char: { bg: '普通', base: '敏感内向', motive: '默默喜欢', child: '安静童年' } }
+    char: { bg: '普通', base: '敏感内向', motive: '默默喜欢', child: '安静童年' } },
+  { title: '她的山她的海', author: '扶华', genre: '百合·校园', tags: ['细腻','治愈','双女主'], status: '完结', words: 300000, points: '高分',
+    hook: '两个女孩在山海之间的相互照亮，温柔而坚定。',
+    why: '扶华经典百合校园，以细腻笔触写少女情谊与自我成长，后劲极大。',
+    tropes: ['双向暗恋','双女主','校园','治愈'],
+    merits: ['文笔细腻','情感真实','人物立体'],
+    controversy: ['节奏偏慢','篇幅较长'],
+    analysis: { plot:'相识—靠近—彼此成全', character:'一个明媚一个沉静', bg:'海岛小城校园', copy:'“你是我的山，也是我的海”', outline:'相遇→靠近→各自成长', chapter:'情绪流推进', prose:'诗化克制', conflict:'自我与怯懦', pace:'舒缓', blank:'未言之爱留白', psychology:'大量独白', action:'细微动作', hookScene:'海边相遇', dialogue:'欲言又止', expression:'眼神戏', env:'山海气候', mainPlot:'情谊成长', subPlot:'学业友情' },
+    char: { bg:'普通家庭', base:'外冷内热', motive:'渴望被懂', child:'孤独童年' } },
+  { title: '某某', author: '木苏里', genre: '纯爱·校园', tags: ['双强','校园标杆','意难平'], status: '完结', words: 280000, points: '超高积分',
+    hook: '盛望与江添，两个天才少年在附中的光芒与遗憾。',
+    why: '校园纯爱标杆，把“最好的人留不住”写得高级又余味，名场面频出。',
+    tropes: ['双向暗恋','白月光','破镜','校园'],
+    merits: ['文笔高级','氛围感强','台词绝'],
+    controversy: ['结局意难平','部分读者求 HE'],
+    analysis: { plot:'相遇—羁绊—分离—回望', character:'桀骜×清冷双强', bg:'重点中学', copy:'“我的骨骼说，我还是爱你”', outline:'同窗→靠近→错过', chapter:'情绪递进', prose:'诗意留白', conflict:'现实与心动', pace:'轻缓蓄势', blank:'未说出口', psychology:'少年心事', action:'日常互动', hookScene:'教室/天台', dialogue:'少年感台词', expression:'微表情', env:'校园四季', mainPlot:'情感', subPlot:'学业' },
+    char: { bg:'优渥家庭', base:'外傲内软', motive:'想被需要', child:'被寄予厚望' } },
+  { title: '撒野', author: '巫哲', genre: '纯爱·校园', tags: ['救赎','现实向','双男主'], status: '完结', words: 320000, points: '超高积分',
+    hook: '蒋丞被丢到小城钢厂，遇见了他想一起“撒野”的人。',
+    why: '现实向校园救赎文，写原生家庭、高考与彼此拉扯，又痛又暖。',
+    tropes: ['救赎','双向奔赴','校园','成长'],
+    merits: ['真实接地气','人物弧光强','台词鲜活'],
+    controversy: ['前期压抑','方言阅读门槛'],
+    analysis: { plot:'落魄—相遇—互相托举', character:'刺头×温柔强者', bg:'北方小城钢厂', copy:'“怕什么，我陪你”', outline:'困境→靠近→高考', chapter:'现实流', prose:'口语化有力', conflict:'原生家庭', pace:'沉稳', blank:'脆弱瞬间', psychology:'防御与渴望', action:'护短动作', hookScene:'钢厂/天台', dialogue:'狠话藏软', expression:'倔强', env:'灰调小城', mainPlot:'救赎', subPlot:'学业' },
+    char: { bg:'被遗弃经历', base:'外壳尖锐', motive:'想要归属', child:'颠沛童年' } },
+  { title: '伪装学渣', author: '木瓜黄', genre: '纯爱·校园', tags: ['双强','反差','甜'], status: '完结', words: 260000, points: '高分',
+    hook: '两个“学渣”互相伪装，实则都在藏起光。',
+    why: '校园双强反差甜文，学霸装学渣的名场面欢乐又上头。',
+    tropes: ['双向暗恋','装学渣','双强','校园'],
+    merits: ['反差萌','节奏轻快','甜而不腻'],
+    controversy: ['甜度偏高'],
+    analysis: { plot:'伪装—识破—双向确认', character:'傲娇×慵懒双强', bg:'重点高中', copy:'“其实我全会”', outline:'误会→拆穿→在一起', chapter:'日常+小高潮', prose:'轻快', conflict:'自尊与心意', pace:'明快', blank:'心动留白', psychology:'少年心事', action:'课堂互动', hookScene:'考场/走廊', dialogue:'互怼甜', expression:'耳红', env:'校园', mainPlot:'恋爱', subPlot:'学业逆袭' },
+    char: { bg:'普通', base:'外松内紧', motive:'怕被看轻', child:'被低估' } },
+  { title: '默读', author: 'priest', genre: '纯爱·悬疑', tags: ['刑侦','智力对决','双男主'], status: '完结', words: 400000, points: '超高积分',
+    hook: '刑侦队长与犯罪专家，在案件与过往里彼此解码。',
+    why: '悬疑+纯爱双线高能，每案映射社会议题，格局大。',
+    tropes: ['强强','悬疑','救赎','破镜'],
+    merits: ['结构精巧','立意深刻','文笔老辣'],
+    controversy: ['暗线沉重','篇幅长'],
+    analysis: { plot:'案件—追凶—解密身世', character:'硬汉×优雅智性', bg:'现代都市刑侦', copy:'“我可以教你，但你要听”', outline:'单元案→主线收束', chapter:'悬疑递进', prose:'冷峻利落', conflict:'法理与人情', pace:'紧凑', blank:'真相延迟', psychology:'创伤解码', action:'审讯对峙', hookScene:'案发现场', dialogue:'机锋暗藏', expression:'克制', env:'雨夜都市', mainPlot:'探案', subPlot:'情感' },
+    char: { bg:'复杂过往', base:'外冷内执', motive:'寻求公正', child:'创伤经历' } },
+  { title: '偷偷藏不住', author: '竹已', genre: '言情·校园', tags: ['暗恋','甜文','年下'], status: '完结', words: 350000, points: '超高积分',
+    hook: '桑稚暗恋哥哥的朋友段嘉许，一路追到他身边。',
+    why: '校园暗恋甜文天花板，暗恋心理写得真实又撩，全民上头。',
+    tropes: ['暗恋','年下','甜宠','校园'],
+    merits: ['暗恋代入强','甜度精准','人设讨喜'],
+    controversy: ['甜度偏高怕腻者慎'],
+    analysis: { plot:'暗恋—追随—双向确认', character:'软萌妹×温柔哥', bg:'高中到大学', copy:'“段哥哥”', outline:'暗恋→靠近→在一起', chapter:'甜日常', prose:'鲜活', conflict:'年龄差心理', pace:'轻甜', blank:'心动留白', psychology:'少女暗恋', action:'小动作', hookScene:'书桌/聚会', dialogue:'甜撩', expression:'脸红', env:'校园生活', mainPlot:'恋爱', subPlot:'成长' },
+    char: { bg:'和睦家庭', base:'天真执着', motive:'想靠近他', child:'被宠爱' } }
 ];
 
 /* ---- 题材库（等级 S/A/B） ---- */
 const jjwxcGenres = [
-  { name: '暗恋', tier: 'S', desc: '第一人称/女主视角代入极强，长盛不衰', coreTropes: ['双向暗恋', '暗恋成真', '竹马暗恋', '暗恋对象不知情', '默默守护'], praise: ['代入感强', '情绪真实', '后劲大'], mines: ['单箭头拖太长', '告白草率'], advice: ['用细节堆心动，少直白抒情', '设置“差点被发现”的紧张感'] },
-  { name: '校园', tier: 'S', desc: '青春氛围+甜度，短视频化友好', coreTropes: ['双向暗恋', '青梅竹马', '校霸×学霸', '破镜重圆(大学)', '运动会/课堂'], praise: ['青春感', '甜而不腻'], mines: ['悬浮人设', '狗血冲突'], advice: ['用真实校园细节建立真实感', 'CP反差要鲜明'] },
-  { name: '百合GL', tier: 'S', desc: '2026 积分榜头部，强强/破镜最稳', coreTropes: ['强取豪夺', '破镜重圆', '双向暗恋', '室友/死对头', 'ABO/Omega'], praise: ['强情绪', '高粘性', '读者大方'], mines: ['强行不对等', '烂尾'], advice: ['双强人设更受欢迎', '台风/重逢等强意象开篇'] },
-  { name: '言情(现言)', tier: 'S', desc: '主流大盘，甜宠/追妻/破镜', coreTropes: ['破镜重圆', '追妻火葬场', '先婚后爱', '青梅竹马', '职场恋爱'], praise: ['受众广', '易影视化'], mines: ['工业糖精', '男主油腻'], advice: ['冲突要源于性格而非巧合', '女主需有自我'] },
-  { name: '第一人称', tier: 'A', desc: '代入感拉满，适合暗恋/悬疑', coreTropes: ['女主视角暗恋', '第一人称悬疑', '内心独白', '限知视角', '不可靠叙述'], praise: ['沉浸', '心理真实'], mines: ['信息受限致剧情慢'], advice: ['用内心戏补信息', '关键处切视角'] },
-  { name: '破镜重圆', tier: 'A', desc: '情绪回响强，重逢即钩子', coreTropes: ['重逢', '误会解开', '带球/失忆(慎用)', '岁月沉淀', '和解'], praise: ['后劲大', '成熟感'], mines: ['强行分手', '虐而失真'], advice: ['分手需合理且双方有成长', '重逢后慢热升温'] },
-  { name: '穿书/快穿', tier: 'A', desc: '无限流友好，单元剧结构', coreTropes: ['炮灰逆袭', '反派女配', '系统任务', '攻略', '世界线'], praise: ['结构清晰', '节奏快'], mines: ['系统机械', '世界逻辑崩'], advice: ['每个世界有独立主题', '系统服务剧情非挂件'] },
-  { name: '悬疑', tier: 'A', desc: '强情节，适配第一人称限知', coreTropes: ['不可靠叙述', '反转', '密室/案子', '暗线', '真相延迟'], praise: ['留存高', '讨论度高'], mines: ['逻辑硬伤', '反转为反转'], advice: ['伏笔前置', '用限知视角藏信息'] },
-  { name: '玄幻', tier: 'B', desc: '世界观为重，起号门槛高', coreTropes: ['重生', '废柴逆袭', '宗门', '秘境', '契灵'], praise: ['长线', '男频女频通吃'], mines: ['设定堆砌', '升级流水'], advice: ['用人物动机带世界观', '前期紧凑'] },
-  { name: '无限流', tier: 'B', desc: '副本制，单元+主线', coreTropes: ['副本', '玩家', '规则怪谈', '通关', '主神'], praise: ['强情节', '易出圈'], mines: ['副本同质', '规则混乱'], advice: ['每个副本一种恐惧/主题', '主角成长线贯穿'] }
+  { name: '暗恋', tier: 'S', desc: '第一人称/女主视角代入极强，长盛不衰', coreTropes: ['双向暗恋', '暗恋成真', '竹马暗恋', '暗恋对象不知情', '默默守护'], praise: ['代入感强', '情绪真实', '后劲大'], mines: ['单箭头拖太长', '告白草率'], advice: ['用细节堆心动，少直白抒情', '设置“差点被发现”的紧张感'],
+    detail: '暗恋的爽点在于“我知道你不知道”的信息差与小心翼翼。核心是**把单箭头写出重量**：不是“我喜欢他”，而是“他转笔时我数到第三下才敢抬头”。分两种写法——① 甜向：双向暗恋，双方都在藏，揭穿时double甜；② 虐向：单箭头+遗憾，靠“他结婚了我还记得他爱喝的口味”收刀。',
+    example: '举例：女主视角写“每周三他打球，我就把水放在第三排”，三年没说出口；结尾他拿出同款水：“我也放了三年。”——信息差回收，双向暗恋拆穿，读者暴哭。' },
+  { name: '校园', tier: 'S', desc: '青春氛围+甜度，短视频化友好', coreTropes: ['双向暗恋', '青梅竹马', '校霸×学霸', '破镜重圆(大学)', '运动会/课堂'], praise: ['青春感', '甜而不腻'], mines: ['悬浮人设', '狗血冲突'], advice: ['用真实校园细节建立真实感', 'CP反差要鲜明'],
+    detail: '校园文的真实感来自**具体场景**：早读、晚自习、小卖部、运动会、高考倒计时。人设反差公式=桀骜×软萌 / 学神×学渣 / 校霸×书呆。甜要“有事发生”，不是硬撒糖，而是“他把自己的外套披你身上还嫌弃你矮”。',
+    example: '举例：《某某》盛望×江添=桀骜学霸×清冷学霸，用“附中天才”的共同身份制造默契；《伪装学渣》两个学霸互装学渣，反差萌来自“其实我全会”的反复拆穿。' },
+  { name: '百合GL', tier: 'S', desc: '2026 积分榜头部，强强/破镜最稳', coreTropes: ['强取豪夺', '破镜重圆', '双向暗恋', '室友/死对头', 'ABO/Omega'], praise: ['强情绪', '高粘性', '读者大方'], mines: ['强行不对等', '烂尾'], advice: ['双强人设更受欢迎', '台风/重逢等强意象开篇'],
+    detail: '百合读者更吃**双强/势均力敌**与细腻心理。开篇用强意象（台风、海、雪）制造封闭空间与情绪高压。破镜重圆在百合里特别稳，因为“失去过又找回”的情绪回响强。避免一方彻底弱势的强行不对等。',
+    example: '举例：《她的山她的海》用“山/海”互喻写两个女孩互相成全；《今夜刮起台风》用台风夜封闭空间把外部风暴与内心风暴同构，开篇即钩子。' },
+  { name: '言情(现言)', tier: 'S', desc: '主流大盘，甜宠/追妻/破镜', coreTropes: ['破镜重圆', '追妻火葬场', '先婚后爱', '青梅竹马', '职场恋爱'], praise: ['受众广', '易影视化'], mines: ['工业糖精', '男主油腻'], advice: ['冲突要源于性格而非巧合', '女主需有自我'],
+    detail: '现言要**女主有事业线与判断力**，男主不是“赏赐式宠爱”而是平等对手。追妻火葬场的前提是男主先有“失去”，读者才解气。破镜重圆的分手理由必须成立（价值观冲突＞误会）。',
+    example: '举例：女主是律师，男主是甲方，法庭上针锋相对→私下拉扯，比“霸总宠妻”更有张力；分手因男主隐瞒关键决策，重逢时他已学会尊重，而非跪求。' },
+  { name: '第一人称', tier: 'A', desc: '代入感拉满，适合暗恋/悬疑', coreTropes: ['女主视角暗恋', '第一人称悬疑', '内心独白', '限知视角', '不可靠叙述'], praise: ['沉浸', '心理真实'], mines: ['信息受限致剧情慢'], advice: ['用内心戏补信息', '关键处切视角'],
+    detail: '第一人称的**限知视角**是双刃剑：沉浸感强，但主角不知情时读者也被蒙在鼓里。技巧：用“我以为是A，其实是B”的错位制造张力；悬疑里让“我”成为不可靠叙述者，结尾反转时才成立。',
+    example: '举例：暗恋文用“我暗恋的人是凶手”的限知独白，读者跟着主角怀疑，最后反转“凶手是替他顶罪的人”——信息差全靠第一人称藏。' },
+  { name: '破镜重圆', tier: 'A', desc: '情绪回响强，重逢即钩子', coreTropes: ['重逢', '误会解开', '带球/失忆(慎用)', '岁月沉淀', '和解'], praise: ['后劲大', '成熟感'], mines: ['强行分手', '虐而失真'], advice: ['分手需合理且双方有成长', '重逢后慢热升温'],
+    detail: '破镜的核心是**“分开的日子里两人都变了”**。读者要看到分离期的成长，否则重逢只是原地踏步。重逢后给“慢热升温”，别立刻复合，让“熟悉又陌生”的拉扯持续。',
+    example: '举例：《某某》盛望江添分离多年各自成为更好的人，重逢时一个已是医生一个仍是刺头，身份反转让旧情有了新张力；而非简单“我错了求复合”。' },
+  { name: '穿书/快穿', tier: 'A', desc: '无限流友好，单元剧结构', coreTropes: ['炮灰逆袭', '反派女配', '系统任务', '攻略', '世界线'], praise: ['结构清晰', '节奏快'], mines: ['系统机械', '世界逻辑崩'], advice: ['每个世界有独立主题', '系统服务剧情非挂件'],
+    detail: '穿书/快穿靠**单元剧**控节奏：每个世界一个主题（搞事业/救某人/揭阴谋），主线用“系统任务”串联。系统是工具不是外挂，否则爽感廉价。炮灰逆袭要“靠脑子翻盘”。',
+    example: '举例：《穿成炮灰后我靠摆摊爆红》每个世界用不同生意破局，主线是“系统让我当炮灰，我偏活成主角”，事业线抵消恋爱悬浮。' },
+  { name: '悬疑', tier: 'A', desc: '强情节，适配第一人称限知', coreTropes: ['不可靠叙述', '反转', '密室/案子', '暗线', '真相延迟'], praise: ['留存高', '讨论度高'], mines: ['逻辑硬伤', '反转为反转'], advice: ['伏笔前置', '用限知视角藏信息'],
+    detail: '悬疑的命门是**伏笔前置+真相延迟**。第3章埋的线索，第30章才回收，读者二刷才懂。避免“为反转而反转”的神展开，反转必须早有暗示。限知视角天然适合藏关键信息。',
+    example: '举例：开篇写“我喜欢的人出现在案发现场监控里”，读者随主角怀疑他是凶手；结尾反转“他是去救受害者”，伏笔早在第二章他买止血绷带时埋下。' },
+  { name: '玄幻', tier: 'B', desc: '世界观为重，起号门槛高', coreTropes: ['重生', '废柴逆袭', '宗门', '秘境', '契灵'], praise: ['长线', '男频女频通吃'], mines: ['设定堆砌', '升级流水'], advice: ['用人物动机带世界观', '前期紧凑'],
+    detail: '玄幻容易**设定堆砌+升级流水**。破解法：让世界观通过主角的“想要什么”自然展开，而非大段说明。前期紧凑，金手指要有代价或限制。',
+    example: '举例：主角重生不是为爽，而是为救某人——动机驱动下，功法/宗门设定随复仇线逐层揭开，比“开局满级”更抓人。' },
+  { name: '无限流', tier: 'B', desc: '副本制，单元+主线', coreTropes: ['副本', '玩家', '规则怪谈', '通关', '主神'], praise: ['强情节', '易出圈'], mines: ['副本同质', '规则混乱'], advice: ['每个副本一种恐惧/主题', '主角成长线贯穿'],
+    detail: '无限流靠**副本差异化**维持新鲜感：每个副本对应一种恐惧（密闭/信任/时间）或主题（人性实验）。主神/系统线要收束到主角成长，否则副本沦为过关游戏。',
+    example: '举例：一个副本是“不能说谎的村庄”，逼出角色秘密；下一个是“七日循环”，训练决策——副本服务于主角性格蜕变，而非随机闯关。' }
 ];
 
 /* ---- 平台规则（真实 2025-2026） ---- */
@@ -1488,7 +1678,8 @@ function renderJJWXC() {
 }
 function renderJJWXCRank() {
   const el = document.getElementById('jjwxcRankList'); if (!el) return;
-  el.innerHTML = jjwxcWorks.map((w, i) => {
+  const list = seededShuffle(jjwxcWorks, todayKey()).slice(0, 6);
+  el.innerHTML = '<div class="text-sm text-muted mb-2">📅 每日更新 · ' + todayKey() + '（今日展示 6 / 共 ' + jjwxcWorks.length + ' 本，每天轮换不同书目）</div>' + list.map((w, i) => {
     const id = 'work-' + i;
     const a = w.analysis, c = w.char;
     return `<div class="card">
@@ -1532,6 +1723,8 @@ function renderJJWXCGenre() {
       <div class="flex-between mb-1"><span class="font-bold">${esc(g.name)}</span><span class="tier-${g.tier}">${g.tier} 级</span></div>
       <div class="text-sm text-muted mb-2">${esc(g.desc)}</div>
       <div class="mb-2"><span class="text-orange">高分核心梗 TOP5：</span>${g.coreTropes.map(t => `<span class="resource-tag">${esc(t)}</span>`).join('')}</div>
+      <div class="mb-2 text-sm"><span class="text-blue">🔍 细节分析：</span><span class="text-muted">${esc(g.detail)}</span></div>
+      <div class="mb-2 text-sm" style="background:var(--orange-light);padding:8px;border-radius:8px"><span class="font-bold">📌 举例分析：</span>${esc(g.example)}</div>
       <div class="mb-1 text-sm"><span class="text-green">读者好评点：</span>${g.praise.map(esc).join('、')}</div>
       <div class="mb-1 text-sm"><span class="mine-zone">雷点：</span>${g.mines.map(esc).join('、')}</div>
       <div class="mb-1 text-sm"><span class="hl-rule">创作建议：</span>${g.advice.map(esc).join('；')}</div>

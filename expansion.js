@@ -612,7 +612,87 @@ const cetWords = [
   { w: 'witness', ph: '/ˈwɪtnəs/', pos: 'v./n.', cn: '目睹；证人', freq: '中', ex: 'Witness a change.' },
   { w: 'worship', ph: '/ˈwɜːʃɪp/', pos: 'v./n.', cn: '崇拜', freq: '低', ex: 'Worship heroes.' },
   { w: 'yield', ph: '/jiːld/', pos: 'v./n.', cn: '产出；屈服', freq: '中', ex: 'Yield results.' },
-  { w: 'youth', ph: '/juːθ/', pos: 'n.', cn: '青春；青年', freq: '中', ex: 'In my youth.' }
+  { w: 'youth', ph: '/juːθ/', pos: 'n.', cn: '青春；青年', freq: '中', ex: 'In my youth.' },
+  { w: 'yield', ph: '/jiːld/', pos: 'v.', cn: '产生；屈服；让步', freq: '中', ex: 'The investment yields good profit.' },
+  { w: 'zone', ph: '/zəʊn/', pos: 'n.', cn: '地区；区域', freq: '高', ex: 'This is a no-parking zone.' },
+  { w: 'zoom', ph: '/zuːm/', pos: 'v.', cn: '快速移动；变焦', freq: '中', ex: 'The car zoomed past.' },
+  { w: 'welfare', ph: '/ˈwelfeə/', pos: 'n.', cn: '福利；幸福', freq: '中', ex: 'Social welfare helps the poor.' },
+  { w: 'wander', ph: '/ˈwɒndə/', pos: 'v.', cn: '漫步；走神', freq: '中', ex: 'She wandered in the park.' },
+  { w: 'vessel', ph: '/ˈvesl/', pos: 'n.', cn: '血管；船只；容器', freq: '中', ex: 'A blood vessel carries blood.' },
+  { w: 'venture', ph: '/ˈventʃə/', pos: 'n.', cn: '冒险（事业）', freq: '中', ex: 'A new business venture is risky.' },
+  { w: 'vain', ph: '/veɪn/', pos: 'a.', cn: '徒劳的；虚荣的', freq: '中', ex: 'They tried in vain to save him.' },
+  { w: 'urgent', ph: '/ˈɜːdʒənt/', pos: 'a.', cn: '紧急的', freq: '高', ex: 'This is an urgent call.' },
+  { w: 'utility', ph: '/juːˈtɪləti/', pos: 'n.', cn: '实用；公用事业', freq: '中', ex: 'The utility of this tool is clear.' },
+  { w: 'undergo', ph: '/ˌʌndəˈɡəʊ/', pos: 'v.', cn: '经历；承受', freq: '高', ex: 'He underwent surgery.' },
+  { w: 'underlie', ph: '/ˌʌndəˈlaɪ/', pos: 'v.', cn: '构成…的基础', freq: '中', ex: 'Trust underlies friendship.' },
+  { w: 'uniform', ph: '/ˈjuːnɪfɔːm/', pos: 'n./a.', cn: '制服；一致的', freq: '中', ex: 'Students wear a uniform.' },
+  { w: 'union', ph: '/ˈjuːnjən/', pos: 'n.', cn: '联盟；工会', freq: '中', ex: 'The workers formed a union.' },
+  { w: 'unity', ph: '/ˈjuːnəti/', pos: 'n.', cn: '团结；统一', freq: '中', ex: 'Unity brings strength.' },
+  { w: 'upset', ph: '/ʌpˈset/', pos: 'v./a.', cn: '使心烦；打乱', freq: '高', ex: 'The news upset her.' },
+  { w: 'utilize', ph: '/ˈjuːtəlaɪz/', pos: 'v.', cn: '利用', freq: '中', ex: 'We should utilize solar energy.' },
+  { w: 'utmost', ph: '/ˈʌtməʊst/', pos: 'a.', cn: '极度的；最大限度的', freq: '中', ex: 'We tried our utmost.' },
+  { w: 'vacant', ph: '/ˈveɪkənt/', pos: 'a.', cn: '空缺的；空的', freq: '中', ex: 'The seat was vacant.' },
+  { w: 'vague', ph: '/veɪɡ/', pos: 'a.', cn: '模糊的；含糊的', freq: '中', ex: 'He gave a vague answer.' },
+  { w: 'valid', ph: '/ˈvælɪd/', pos: 'a.', cn: '有效的；合理的', freq: '高', ex: 'Your ticket is still valid.' },
+  { w: 'valley', ph: '/ˈvæli/', pos: 'n.', cn: '山谷', freq: '中', ex: 'The river runs through the valley.' },
+  { w: 'variable', ph: '/ˈveəriəbl/', pos: 'a./n.', cn: '可变的；变量', freq: '中', ex: 'Temperature is a variable.' },
+  { w: 'vary', ph: '/ˈveəri/', pos: 'v.', cn: '变化；不同', freq: '高', ex: 'Prices vary by season.' },
+  { w: 'vast', ph: '/vɑːst/', pos: 'a.', cn: '广阔的；巨大的', freq: '高', ex: 'A vast ocean lay ahead.' },
+  { w: 'vehicle', ph: '/ˈviːəkl/', pos: 'n.', cn: '车辆；媒介', freq: '高', ex: 'The vehicle broke down.' },
+  { w: 'velocity', ph: '/vəˈlɒsəti/', pos: 'n.', cn: '速度；速率', freq: '低', ex: 'The velocity of light is fixed.' },
+  { w: 'vertical', ph: '/ˈvɜːtɪkl/', pos: 'a.', cn: '垂直的', freq: '中', ex: 'Draw a vertical line.' },
+  { w: 'via', ph: '/ˈvaɪə/', pos: 'prep.', cn: '经由；通过', freq: '高', ex: 'I sent it via email.' },
+  { w: 'vice', ph: '/vaɪs/', pos: 'n.', cn: '恶习；缺点', freq: '中', ex: 'Greed is a vice.' },
+  { w: 'victim', ph: '/ˈvɪktɪm/', pos: 'n.', cn: '受害者', freq: '高', ex: 'He was a victim of fraud.' },
+  { w: 'violate', ph: '/ˈvaɪəleɪt/', pos: 'v.', cn: '违反；侵犯', freq: '中', ex: 'Do not violate the rules.' },
+  { w: 'virtual', ph: '/ˈvɜːtʃuəl/', pos: 'a.', cn: '虚拟的；实质上的', freq: '高', ex: 'We met in a virtual room.' },
+  { w: 'virtue', ph: '/ˈvɜːtʃuː/', pos: 'n.', cn: '美德；优点', freq: '中', ex: 'Honesty is a virtue.' },
+  { w: 'visible', ph: '/ˈvɪzəbl/', pos: 'a.', cn: '可见的', freq: '中', ex: 'The star is visible at night.' },
+  { w: 'vision', ph: '/ˈvɪʒn/', pos: 'n.', cn: '视力；远见', freq: '高', ex: 'She has a clear vision.' },
+  { w: 'vital', ph: '/ˈvaɪtl/', pos: 'a.', cn: '至关重要的；生命的', freq: '高', ex: 'Sleep is vital to health.' },
+  { w: 'volume', ph: '/ˈvɒljuːm/', pos: 'n.', cn: '体积；音量；卷', freq: '中', ex: 'Turn up the volume.' },
+  { w: 'voluntary', ph: '/ˈvɒləntri/', pos: 'a.', cn: '自愿的；志愿的', freq: '中', ex: 'He is a voluntary worker.' },
+  { w: 'vote', ph: '/vəʊt/', pos: 'v./n.', cn: '投票；选举', freq: '高', ex: 'They vote for the leader.' },
+  { w: 'voyage', ph: '/ˈvɔɪɪdʒ/', pos: 'n.', cn: '航行；航程', freq: '低', ex: 'The voyage took months.' },
+  { w: 'wage', ph: '/weɪdʒ/', pos: 'n.', cn: '工资（常用复数）', freq: '高', ex: 'His wages rose this year.' },
+  { w: 'warn', ph: '/wɔːn/', pos: 'v.', cn: '警告；提醒', freq: '高', ex: 'She warned me of the risk.' },
+  { w: 'weary', ph: '/ˈwɪəri/', pos: 'a.', cn: '疲倦的；厌倦的', freq: '低', ex: 'He felt weary after work.' },
+  { w: 'weave', ph: '/wiːv/', pos: 'v.', cn: '编织', freq: '中', ex: 'She weaves a basket.' },
+  { w: 'weed', ph: '/wiːd/', pos: 'n./v.', cn: '杂草；除草', freq: '低', ex: 'Pull the weeds in the garden.' },
+  { w: 'widen', ph: '/ˈwaɪdn/', pos: 'v.', cn: '加宽；扩大', freq: '中', ex: 'They widened the road.' },
+  { w: 'willing', ph: '/ˈwɪlɪŋ/', pos: 'a.', cn: '愿意的', freq: '高', ex: 'He is willing to help.' },
+  { w: 'withdraw', ph: '/wɪðˈdrɔː/', pos: 'v.', cn: '撤回；取款', freq: '中', ex: 'He withdrew money from the bank.' },
+  { w: 'witness', ph: '/ˈwɪtnəs/', pos: 'n./v.', cn: '目击者；见证', freq: '高', ex: 'She witnessed the accident.' },
+  { w: 'worship', ph: '/ˈwɜːʃɪp/', pos: 'v./n.', cn: '崇拜；敬奉', freq: '中', ex: 'They worship the sun.' },
+  { w: 'worthy', ph: '/ˈwɜːði/', pos: 'a.', cn: '值得的', freq: '中', ex: 'The cause is worthy of support.' },
+  { w: 'yawn', ph: '/jɔːn/', pos: 'v.', cn: '打哈欠', freq: '低', ex: 'He yawned in class.' },
+  { w: 'youngster', ph: '/ˈjʌŋstə/', pos: 'n.', cn: '年轻人；少年', freq: '中', ex: 'The youngsters played outside.' },
+  { w: 'quarrel', ph: '/ˈkwɒrəl/', pos: 'v./n.', cn: '争吵', freq: '中', ex: 'They quarreled over money.' },
+  { w: 'quiver', ph: '/ˈkwɪvə/', pos: 'v.', cn: '颤抖；抖动', freq: '低', ex: 'Her voice quivered.' },
+  { w: 'quotation', ph: '/kwəʊˈteɪʃn/', pos: 'n.', cn: '引文；报价', freq: '中', ex: 'He used a quotation from Tagore.' },
+  { w: 'radical', ph: '/ˈrædɪkl/', pos: 'a.', cn: '根本的；激进的', freq: '中', ex: 'A radical change is needed.' },
+  { w: 'rail', ph: '/reɪl/', pos: 'n.', cn: '栏杆；铁轨', freq: '中', ex: 'The train left the rails.' },
+  { w: 'rational', ph: '/ˈræʃnəl/', pos: 'a.', cn: '理性的；合理的', freq: '中', ex: 'Make a rational choice.' },
+  { w: 'realm', ph: '/relm/', pos: 'n.', cn: '领域；王国', freq: '中', ex: 'In the realm of art, rules differ.' },
+  { w: 'rebel', ph: '/ˈrebl/', pos: 'n./v.', cn: '反叛者；反抗', freq: '中', ex: 'The rebels fought the king.' },
+  { w: 'recall', ph: '/rɪˈkɔːl/', pos: 'v.', cn: '回忆；召回', freq: '高', ex: 'I recall his face.' },
+  { w: 'recession', ph: '/rɪˈseʃn/', pos: 'n.', cn: '经济衰退', freq: '中', ex: 'The recession hurt jobs.' },
+  { w: 'reckless', ph: '/ˈrekləs/', pos: 'a.', cn: '鲁莽的', freq: '低', ex: 'Reckless driving is dangerous.' },
+  { w: 'reckon', ph: '/ˈrekən/', pos: 'v.', cn: '认为；估计', freq: '中', ex: 'I reckon he is right.' },
+  { w: 'recruit', ph: '/rɪˈkruːt/', pos: 'v./n.', cn: '招募；新成员', freq: '高', ex: 'The army recruits soldiers.' },
+  { w: 'refine', ph: '/rɪˈfaɪn/', pos: 'v.', cn: '精炼；改进', freq: '中', ex: 'They refine crude oil.' },
+  { w: 'reinforce', ph: '/ˌriːɪnˈfɔːs/', pos: 'v.', cn: '加强；加固', freq: '高', ex: 'This proves reinforces my view.' },
+  { w: 'rejoice', ph: '/rɪˈdʒɔɪs/', pos: 'v.', cn: '欣喜；高兴', freq: '低', ex: 'They rejoiced at the news.' },
+  { w: 'relay', ph: '/ˈriːleɪ/', pos: 'v./n.', cn: '转播；接力', freq: '低', ex: 'The match was relayed live.' },
+  { w: 'relevant', ph: '/ˈreləvənt/', pos: 'a.', cn: '相关的', freq: '高', ex: 'Give a relevant example.' },
+  { w: 'reliable', ph: '/rɪˈlaɪəbl/', pos: 'a.', cn: '可靠的', freq: '高', ex: 'He is a reliable friend.' },
+  { w: 'relief', ph: '/rɪˈliːf/', pos: 'n.', cn: '缓解；宽慰', freq: '高', ex: 'The medicine brought relief.' },
+  { w: 'religious', ph: '/rɪˈlɪdʒəs/', pos: 'a.', cn: '宗教的', freq: '中', ex: 'She is religious.' },
+  { w: 'reluctant', ph: '/rɪˈlʌktənt/', pos: 'a.', cn: '不情愿的', freq: '中', ex: 'He was reluctant to go.' },
+  { w: 'remarkable', ph: '/rɪˈmɑːkəbl/', pos: 'a.', cn: '显著的；非凡的', freq: '高', ex: 'She made remarkable progress.' },
+  { w: 'remedy', ph: '/ˈremədi/', pos: 'n./v.', cn: '补救；治疗', freq: '中', ex: 'There is no easy remedy.' },
+  { w: 'render', ph: '/ˈrendə/', pos: 'v.', cn: '致使；提供', freq: '高', ex: 'The shock rendered him silent.' },
+  { w: 'rent', ph: '/rent/', pos: 'n./v.', cn: '租金；出租', freq: '高', ex: 'He pays rent monthly.' }
 ];
 const VOCAB_BATCH = 10;
 let vocabState = store.get('luo_vocab_state', { batch: 0, learned: [] });
@@ -634,6 +714,7 @@ function renderVocab() {
       <div class="stat-card"><div class="stat-num">${learned}</div><div class="stat-label">已背单词</div></div>
       <div class="stat-card"><div class="stat-num">${cetWords.length}</div><div class="stat-label">词库总量</div></div>
     </div>
+    <div class="text-sm mb-2" style="color:#1565c0;font-weight:700">📘 出题范围：<b>大学英语四级（CET-4）考纲词汇</b>（近 5 年真题高频，随堂测试均出自此词库）</div>
     <div class="flex-between mb-2">
       <span class="text-sm text-muted">🔤 本组单词（点击「背完换下一批」自动轮换）</span>
       <button class="btn btn-orange" style="padding:6px 10px;font-size:12px" onclick="completeVocabBatch()">背完换下一批 →</button>
@@ -865,14 +946,24 @@ const novelCraft = [
   { cat: '节奏', title: '爽点前置', body: '开篇 1-3 章内给出第一个小爽点/小糖点，留住读者再慢慢铺大线。', ex: '先让主角打脸一次小反派，再展开身世。' },
   { cat: '节奏', title: '情绪曲线', body: '一章之内也要有起承转合：平静→波动→小高潮→留钩子。避免平铺直叙。', ex: '日常→误会的苗头→爆发→误会加深的钩子。' },
   { cat: '共鸣', title: '共同记忆点', body: '高考、晚自习、宿舍、未发出的消息——越具体的共同经验越有代入感。', ex: '「那条打了又删的消息，最后变成了『在吗』。」' },
-  { cat: '共鸣', title: '遗憾与错过', body: '青春文最痛的是「差一点」：差一点说出口、差一点在一起。把「差一点」写到极致。', ex: '「如果那天我没假装无所谓，现在会不会不一样。」' }
+  { cat: '共鸣', title: '遗憾与错过', body: '青春文最痛的是「差一点」：差一点说出口、差一点在一起。把「差一点」写到极致。', ex: '「如果那天我没假装无所谓，现在会不会不一样。」' },
+  { cat: '逻辑', title: '配角也要有弧光', body: '配角不是工具人，给每个重要配角一个小目标，主线因此更厚。反派阵营里也要有“不得已”。', ex: '军师效忠反派，其实只为救被扣的妹妹——读者瞬间理解。' },
+  { cat: '逻辑', title: '世界观用细节喂', body: '别用大段设定交代，把规则藏进情节与对话。读者边读边拼，比说明书更有沉浸感。', ex: '用「月圆夜不许出门」代替解释整套魔法体系。' },
+  { cat: '钩子', title: '伪结局钩子', body: '看似解决、实则埋下更大危机，章末给“以为赢了”的错觉再反转。', ex: '「以为赢了，直到发现奖品是自己的记忆。」' },
+  { cat: '文案', title: '评论区即素材库', body: '看读者在哪些章催更、骂人设、求糖——那里就是爽点与痛点坐标。', ex: '读者齐喊“缺糖”，就在下一章加缓冲甜戏。' },
+  { cat: '节奏', title: '预告式章节标题', body: '标题先剧透冲突，逼读者点进来；配合章末钩子形成双重牵引。', ex: '「第13章 她亲手烧了那封信」。' },
+  { cat: '共鸣', title: '感官记忆点', body: '用气味、声音、温度锚定情绪，比形容词更戳。具体感官=具体回忆。', ex: '「雨后泥土味=每个暗恋开始的夏天」。' },
+  { cat: '共鸣', title: '成长不是突变', body: '主角改变要渐进，靠事件累积。一次打击只裂一道缝，三件事后才换一个人。', ex: '从「怕麻烦」到「主动扛事」，经历三件事的推挤。' },
+  { cat: '节奏', title: '情绪蓄水池', body: '长期伏笔到点释放，读者才爆哭。前面每埋一次，后面回报一次。', ex: '第3章埋的伤疤，第20章揭晓，弹幕全破防。' }
 ];
 function renderNovelCraft() {
   const el = document.getElementById('novelCraftBox'); if (!el) return;
   const cats = ['全部', '逻辑', '钩子', '文案', '节奏', '共鸣'];
   const cur = el.dataset.cat || '全部';
-  const list = cur === '全部' ? novelCraft : novelCraft.filter(c => c.cat === cur);
+  const pool = cur === '全部' ? novelCraft : novelCraft.filter(c => c.cat === cur);
+  const list = seededShuffle(pool, 'craft' + cur + todayKey());
   el.innerHTML = `
+    <div class="text-sm mb-2" style="color:#1565c0;font-weight:700">📅 每日更新 · ${todayKey()}（共 ${novelCraft.length} 条创作心法，每天轮换呈现顺序，覆盖逻辑/钩子/文案/节奏/共鸣）</div>
     <div class="tabs" id="ncTabs">
       ${cats.map(c => `<div class="tab ${c === cur ? 'active' : ''}" onclick="setNcCat('${c}')">${c}</div>`).join('')}
     </div>
@@ -881,7 +972,7 @@ function renderNovelCraft() {
         <div class="flex-between"><div class="font-bold">${esc(c.title)}</div><span class="tier-A">${c.cat}</span></div>
         <div class="mt-1">${esc(c.body)}</div>
         <div class="text-sm text-blue mt-1">📌 示例：${esc(c.ex)}</div>
-        ${gstar('craft-' + i, '创作', c.title, c.body)}
+        ${gstar('craft-' + cur + '-' + i, '创作', c.title, c.body)}
       </div>`).join('')}
     </div>`;
 }
@@ -911,14 +1002,23 @@ const videoScripts = [
   { cat: '追星', title: '爱豆语录混剪', scenario: '把采访金句串成「治愈向」', hook: '「这几句话，陪我熬过期末」', shots: ['黑底白字金句卡', '对应舞台/笑容', '粉丝视角', '结尾感谢'], voice: '文案：「谢谢你成为光」', bgm: '钢琴纯音', caption: '#语录 #治愈' },
   { cat: '旅游', title: '特种兵 24h 打卡', scenario: '极限时间多地刷景点', hook: '「24 小时，我刷了 8 个地标」', shots: ['凌晨车站', '景点快剪接龙', '美食塞满', '深夜回程'], voice: '口播：「腿已废，但值」', bgm: 'city pop 快节奏', caption: '#特种兵旅游 #打卡' },
   { cat: '旅游', title: '小众美食探店', scenario: '钻巷子找本地人小店', hook: '「游客找不到，本地人排队」', shots: ['巷口定位', '老板现做特写', '第一口反应', '人均价标注'], voice: '口播：「认准这家」', bgm: '轻快', caption: '#美食探店 #本地' },
-  { cat: '旅游', title: '一个人旅行 vlog', scenario: '独行也精彩的自我对话', hook: '「一个人，也能把日子过成诗」', shots: ['行李箱出发', '独自看海/城', '自拍杆延时', '夜记手账'], voice: '旁白：「独处是和自己约会」', bgm: '民谣', caption: '#一个人旅行 #独行' }
+  { cat: '旅游', title: '一个人旅行 vlog', scenario: '独行也精彩的自我对话', hook: '「一个人，也能把日子过成诗」', shots: ['行李箱出发', '独自看海/城', '自拍杆延时', '夜记手账'], voice: '旁白：「独处是和自己约会」', bgm: '民谣', caption: '#一个人旅行 #独行' },
+  { cat: 'Cos', title: '汉服日常反差 vlog', scenario: '把汉服穿进食堂/教室的破次元反差', hook: '「穿汉服去上早八，室友看傻了」', shots: ['出门穿汉服', '教室落座反差', '食堂端餐盘', '回寝换常服对比'], voice: '「传统也能很日常」', bgm: '国风电子', caption: '#汉服日常 #反差' },
+  { cat: 'Cos', title: '角色声线模仿', scenario: '配音向，还原本命经典台词', hook: '「闭眼一听，就是他本人」', shots: ['原片名场面', '自己对着镜子配', '音画对比', '花絮笑场'], voice: '原台词+即兴吐槽', bgm: '角色 BGM 纯音', caption: '#配音 #声控' },
+  { cat: '追星', title: '双担舞台对比', scenario: '把两个爱豆同曲目不同舞台剪在一起', hook: '「同一个动作，两种心动」', shots: ['A舞台高光', 'B舞台高光', '逐帧对比', '结尾二选一投票'], voice: '「你更pick谁」', bgm: '双舞台混音', caption: '#双担 #对比' },
+  { cat: '追星', title: '小卡开箱测评', scenario: '拆新出的周边盲盒/小卡', hook: '「这一盒到底值不值」', shots: ['未拆封展示', '逐张开箱', '自留/出闲鱼标注', '性价比结论'], voice: '真实测评不恰烂钱', bgm: '轻快', caption: '#周边开箱 #测评' },
+  { cat: '旅游', title: '夜市逛吃攻略', scenario: '本地夜市扫街，学生党友好', hook: '「50 块吃撑的夜市地图」', shots: ['入口全景', '每摊特写+价格', '必点清单', '避雷提示'], voice: '口播：「这家别错过」', bgm: '市井 lo-fi', caption: '#夜市 #美食' },
+  { cat: '旅游', title: '高铁周末游', scenario: '2 小时直达周边城市的一日往返', hook: '「不上班的周末，去隔壁省」', shots: ['高铁票特写', '出站打卡', 'citywalk快剪', '当晚返程'], voice: '「说走就走」', bgm: 'city pop', caption: '#高铁游 #周末' },
+  { cat: 'Cos', title: '病娇反派 cos', scenario: '用妆造和眼神拿捏反派疯感', hook: '「温柔笑着，却让人后背发凉」', shots: ['素颜对比', '上妆过程', '眼神特写练习', '定格wink'], voice: '「疯批也可以很美」', bgm: '暗黑电子', caption: '#病娇 #反派cos' }
 ];
 function renderVideoScr() {
   const el = document.getElementById('videoScrBox'); if (!el) return;
   const cats = ['全部', 'Cos', '追星', '旅游'];
   const cur = el.dataset.cat || '全部';
-  const list = cur === '全部' ? videoScripts : videoScripts.filter(v => v.cat === cur);
+  const pool = cur === '全部' ? videoScripts : videoScripts.filter(v => v.cat === cur);
+  const list = seededShuffle(pool, 'vscr' + cur + todayKey());
   el.innerHTML = `
+    <div class="text-sm mb-2" style="color:#1565c0;font-weight:700">📅 每日更新 · ${todayKey()}（共 ${videoScripts.length} 套脚本模板，每天轮换呈现顺序，覆盖 Cos / 追星 / 旅游）</div>
     <div class="tabs" id="vsTabs">
       ${cats.map(c => `<div class="tab ${c === cur ? 'active' : ''}" onclick="setVsCat('${c}')">${c === '全部' ? '全部' : (c === 'Cos' ? '👗 Cos' : c === '追星' ? '⭐ 追星' : '✈️ 旅游')}</div>`).join('')}
     </div>
@@ -932,7 +1032,7 @@ function renderVideoScr() {
         <div class="text-sm mt-1"><span class="text-blue">口播：</span>${esc(v.voice)}</div>
         <div class="text-sm mt-1"><span class="text-green">BGM：</span>${esc(v.bgm)}</div>
         <div class="text-sm mt-1"><span class="text-muted">文案：</span>${esc(v.caption)}</div>
-        ${gstar('vscr-' + i, '脚本', v.title, v.hook)}
+        ${gstar('vscr-' + cur + '-' + i, '脚本', v.title, v.hook)}
       </div>`).join('')}
     </div>`;
 }
