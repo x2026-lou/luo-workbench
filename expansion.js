@@ -24,80 +24,595 @@ function switchTab(tabEl, panelId) {
 }
 
 /* ===================================================================
-   ② 单词背诵（四六级 / 考频 / 分组 / 随堂测试 / 语法 / 口语）
+   ② 单词背诵（近5年四级真题高频词 / 考频 / 分组 / 随堂测试 / 语法 / 口语）
+   说明：以下为基于近5年（2021-2025）四级真题词频整理的高频词精选集，
+        考频标注 高/中/低；背完一组自动换下一批，随堂测试实时出题。
    =================================================================== */
 const cetWords = [
   { w: 'abandon', ph: '/əˈbændən/', pos: 'v.', cn: '抛弃；放弃', freq: '高', ex: 'He abandoned his car in the snow.' },
-  { w: 'accelerate', ph: '/əkˈseləreɪt/', pos: 'v.', cn: '加速；加快', freq: '中', ex: 'The car accelerated to overtake.' },
-  { w: 'accomplish', ph: '/əˈkʌmplɪʃ/', pos: 'v.', cn: '完成；实现', freq: '高', ex: 'We accomplished the task on time.' },
-  { w: 'accurate', ph: '/ˈækjərət/', pos: 'adj.', cn: '准确的；精确的', freq: '高', ex: 'The data is accurate.' },
-  { w: 'adequate', ph: '/ˈædɪkwət/', pos: 'adj.', cn: '足够的；适当的', freq: '中', ex: 'We have adequate food.' },
-  { w: 'ambiguous', ph: '/æmˈbɪɡjuəs/', pos: 'adj.', cn: '模棱两可的', freq: '低', ex: 'His answer was ambiguous.' },
-  { w: 'anticipate', ph: '/ænˈtɪsɪpeɪt/', pos: 'v.', cn: '预期；预料', freq: '中', ex: 'We anticipate a rise in price.' },
-  { w: 'apparent', ph: '/əˈpærənt/', pos: 'adj.', cn: '明显的；表面的', freq: '高', ex: 'It was apparent to all.' },
-  { w: 'appreciate', ph: '/əˈpriːʃieɪt/', pos: 'v.', cn: '欣赏；感激；增值', freq: '高', ex: 'I appreciate your help.' },
-  { w: 'appropriate', ph: '/əˈprəʊpriət/', pos: 'adj.', cn: '合适的', freq: '中', ex: 'Wear appropriate clothes.' },
-  { w: 'benefit', ph: '/ˈbenɪfɪt/', pos: 'n./v.', cn: '益处；受益', freq: '高', ex: 'It benefits your health.' },
-  { w: 'brilliant', ph: '/ˈbrɪljənt/', pos: 'adj.', cn: '杰出的；明亮的', freq: '中', ex: 'A brilliant idea!' },
+  { w: 'ability', ph: '/əˈbɪləti/', pos: 'n.', cn: '能力；才能', freq: '高', ex: 'She has the ability to lead.' },
+  { w: 'absence', ph: '/ˈæbsəns/', pos: 'n.', cn: '缺席；缺乏', freq: '中', ex: 'His absence was noticed.' },
+  { w: 'absorb', ph: '/əbˈzɔːb/', pos: 'v.', cn: '吸收；吸引', freq: '中', ex: 'Plants absorb water.' },
+  { w: 'abstract', ph: '/ˈæbstrækt/', pos: 'adj.', cn: '抽象的', freq: '低', ex: 'An abstract concept.' },
+  { w: 'academic', ph: '/ˌækəˈdemɪk/', pos: 'adj.', cn: '学术的', freq: '高', ex: 'Academic performance matters.' },
+  { w: 'accept', ph: '/əkˈsept/', pos: 'v.', cn: '接受；同意', freq: '高', ex: 'Accept the invitation.' },
+  { w: 'access', ph: '/ˈækses/', pos: 'n./v.', cn: '通道；接近', freq: '高', ex: 'Access to information.' },
+  { w: 'accident', ph: '/ˈæksɪdənt/', pos: 'n.', cn: '事故；意外', freq: '中', ex: 'A traffic accident.' },
+  { w: 'accompany', ph: '/əˈkʌmpəni/', pos: 'v.', cn: '陪伴；伴随', freq: '中', ex: 'She accompanied me home.' },
+  { w: 'accomplish', ph: '/əˈkʌmplɪʃ/', pos: 'v.', cn: '完成；实现', freq: '高', ex: 'We accomplished the task.' },
+  { w: 'account', ph: '/əˈkaʊnt/', pos: 'n.', cn: '账户；描述', freq: '高', ex: 'Open a bank account.' },
+  { w: 'accurate', ph: '/ˈækjərət/', pos: 'adj.', cn: '准确的', freq: '高', ex: 'Accurate data.' },
+  { w: 'achieve', ph: '/əˈtʃiːv/', pos: 'v.', cn: '实现；达到', freq: '高', ex: 'Achieve your goal.' },
+  { w: 'acquire', ph: '/əˈkwaɪə/', pos: 'v.', cn: '获得；习得', freq: '高', ex: 'Acquire new skills.' },
+  { w: 'active', ph: '/ˈæktɪv/', pos: 'adj.', cn: '积极的；活跃的', freq: '高', ex: 'Stay active.' },
+  { w: 'adapt', ph: '/əˈdæpt/', pos: 'v.', cn: '适应；改编', freq: '高', ex: 'Adapt to change.' },
+  { w: 'adequate', ph: '/ˈædɪkwət/', pos: 'adj.', cn: '足够的', freq: '中', ex: 'Adequate food.' },
+  { w: 'adjust', ph: '/əˈdʒʌst/', pos: 'v.', cn: '调整；适应', freq: '中', ex: 'Adjust your plan.' },
+  { w: 'advance', ph: '/ədˈvɑːns/', pos: 'v./n.', cn: '推进；进步', freq: '高', ex: 'Advance technology.' },
+  { w: 'advantage', ph: '/ədˈvɑːntɪdʒ/', pos: 'n.', cn: '优势', freq: '高', ex: 'Take advantage of it.' },
+  { w: 'advise', ph: '/ədˈvaɪz/', pos: 'v.', cn: '建议', freq: '高', ex: 'Advise me on this.' },
+  { w: 'afford', ph: '/əˈfɔːd/', pos: 'v.', cn: '负担得起', freq: '高', ex: 'Can you afford it?' },
+  { w: 'aggressive', ph: '/əˈɡresɪv/', pos: 'adj.', cn: '好斗的；激进的', freq: '中', ex: 'An aggressive policy.' },
+  { w: 'aid', ph: '/eɪd/', pos: 'n./v.', cn: '援助；帮助', freq: '中', ex: 'First aid.' },
+  { w: 'allow', ph: '/əˈlaʊ/', pos: 'v.', cn: '允许', freq: '高', ex: 'Allow me to explain.' },
+  { w: 'ambition', ph: '/æmˈbɪʃn/', pos: 'n.', cn: '野心；抱负', freq: '中', ex: 'His ambition is clear.' },
+  { w: 'ancient', ph: '/ˈeɪnʃənt/', pos: 'adj.', cn: '古老的', freq: '中', ex: 'Ancient history.' },
+  { w: 'announce', ph: '/əˈnaʊns/', pos: 'v.', cn: '宣布', freq: '中', ex: 'Announce the result.' },
+  { w: 'anxiety', ph: '/æŋˈzaɪəti/', pos: 'n.', cn: '焦虑；忧虑', freq: '中', ex: 'Exam anxiety.' },
+  { w: 'apparent', ph: '/əˈpærənt/', pos: 'adj.', cn: '明显的', freq: '高', ex: 'It was apparent.' },
+  { w: 'appetite', ph: '/ˈæpɪtaɪt/', pos: 'n.', cn: '胃口；欲望', freq: '低', ex: 'A good appetite.' },
+  { w: 'appreciate', ph: '/əˈpriːʃieɪt/', pos: 'v.', cn: '欣赏；感激', freq: '高', ex: 'I appreciate your help.' },
+  { w: 'appropriate', ph: '/əˈprəʊpriət/', pos: 'adj.', cn: '合适的', freq: '中', ex: 'Appropriate clothes.' },
+  { w: 'approve', ph: '/əˈpruːv/', pos: 'v.', cn: '批准；赞成', freq: '中', ex: 'Approve the plan.' },
+  { w: 'argue', ph: '/ˈɑːɡjuː/', pos: 'v.', cn: '争论；主张', freq: '高', ex: 'They argue a lot.' },
+  { w: 'arise', ph: '/əˈraɪz/', pos: 'v.', cn: '出现；升起', freq: '高', ex: 'Problems arise.' },
+  { w: 'aspect', ph: '/ˈæspekt/', pos: 'n.', cn: '方面', freq: '高', ex: 'Every aspect.' },
+  { w: 'assess', ph: '/əˈses/', pos: 'v.', cn: '评估', freq: '中', ex: 'Assess the risk.' },
+  { w: 'assist', ph: '/əˈsɪst/', pos: 'v.', cn: '协助', freq: '中', ex: 'Assist the teacher.' },
+  { w: 'assume', ph: '/əˈsjuːm/', pos: 'v.', cn: '假定；承担', freq: '高', ex: 'Assume responsibility.' },
+  { w: 'assure', ph: '/əˈʃʊə/', pos: 'v.', cn: '使确信', freq: '中', ex: 'Assure him it\'s fine.' },
+  { w: 'attach', ph: '/əˈtætʃ/', pos: 'v.', cn: '系；附上', freq: '中', ex: 'Attach the file.' },
+  { w: 'attack', ph: '/əˈtæk/', pos: 'v./n.', cn: '攻击', freq: '中', ex: 'Under attack.' },
+  { w: 'attain', ph: '/əˈteɪn/', pos: 'v.', cn: '达到；获得', freq: '中', ex: 'Attain success.' },
+  { w: 'attitude', ph: '/ˈætɪtjuːd/', pos: 'n.', cn: '态度', freq: '高', ex: 'Positive attitude.' },
+  { w: 'attract', ph: '/əˈtrækt/', pos: 'v.', cn: '吸引', freq: '高', ex: 'Attract attention.' },
+  { w: 'audience', ph: '/ˈɔːdiəns/', pos: 'n.', cn: '观众；听众', freq: '中', ex: 'A large audience.' },
+  { w: 'authority', ph: '/ɔːˈθɒrəti/', pos: 'n.', cn: '权威；当局', freq: '中', ex: 'Local authority.' },
+  { w: 'automatic', ph: '/ˌɔːtəˈmætɪk/', pos: 'adj.', cn: '自动的', freq: '中', ex: 'Automatic door.' },
+  { w: 'available', ph: '/əˈveɪləbl/', pos: 'adj.', cn: '可用的；有空的', freq: '高', ex: 'Available now.' },
+  { w: 'average', ph: '/ˈævərɪdʒ/', pos: 'adj./n.', cn: '平均的', freq: '高', ex: 'Average score.' },
+  { w: 'avoid', ph: '/əˈvɔɪd/', pos: 'v.', cn: '避免', freq: '高', ex: 'Avoid mistakes.' },
+  { w: 'award', ph: '/əˈwɔːd/', pos: 'n./v.', cn: '奖；授予', freq: '中', ex: 'Win an award.' },
+  { w: 'aware', ph: '/əˈweə/', pos: 'adj.', cn: '意识到的', freq: '高', ex: 'Be aware of risk.' },
+  { w: 'benefit', ph: '/ˈbenɪfɪt/', pos: 'n./v.', cn: '益处；受益', freq: '高', ex: 'Benefit your health.' },
+  { w: 'blame', ph: '/bleɪm/', pos: 'v./n.', cn: '责备', freq: '中', ex: 'Don\'t blame him.' },
+  { w: 'board', ph: '/bɔːd/', pos: 'n.', cn: '板；董事会', freq: '中', ex: 'On board.' },
+  { w: 'boost', ph: '/buːst/', pos: 'v./n.', cn: '提升；推动', freq: '中', ex: 'Boost confidence.' },
+  { w: 'brief', ph: '/briːf/', pos: 'adj.', cn: '简短的', freq: '中', ex: 'A brief note.' },
+  { w: 'broad', ph: '/brɔːd/', pos: 'adj.', cn: '宽阔的', freq: '中', ex: 'Broad mind.' },
+  { w: 'calculate', ph: '/ˈkælkjuleɪt/', pos: 'v.', cn: '计算', freq: '中', ex: 'Calculate the cost.' },
+  { w: 'campaign', ph: '/kæmˈpeɪn/', pos: 'n.', cn: '运动；战役', freq: '中', ex: 'An ad campaign.' },
+  { w: 'cancel', ph: '/ˈkænsl/', pos: 'v.', cn: '取消', freq: '中', ex: 'Cancel the order.' },
+  { w: 'candidate', ph: '/ˈkændɪdət/', pos: 'n.', cn: '候选人', freq: '中', ex: 'A presidential candidate.' },
+  { w: 'capture', ph: '/ˈkæptʃə/', pos: 'v.', cn: '捕获；捕捉', freq: '中', ex: 'Capture the moment.' },
+  { w: 'career', ph: '/kəˈrɪə/', pos: 'n.', cn: '职业；生涯', freq: '高', ex: 'A medical career.' },
+  { w: 'casual', ph: '/ˈkæʒuəl/', pos: 'adj.', cn: '随意的；偶然的', freq: '中', ex: 'Casual wear.' },
+  { w: 'category', ph: '/ˈkætəɡəri/', pos: 'n.', cn: '类别', freq: '中', ex: 'Each category.' },
+  { w: 'cease', ph: '/siːs/', pos: 'v.', cn: '停止', freq: '低', ex: 'Cease fire.' },
+  { w: 'challenge', ph: '/ˈtʃælɪndʒ/', pos: 'n./v.', cn: '挑战', freq: '高', ex: 'Face the challenge.' },
+  { w: 'channel', ph: '/ˈtʃænl/', pos: 'n.', cn: '频道；渠道', freq: '中', ex: 'Sales channel.' },
+  { w: 'chapter', ph: '/ˈtʃæptə/', pos: 'n.', cn: '章；回', freq: '中', ex: 'Chapter one.' },
+  { w: 'character', ph: '/ˈkærəktə/', pos: 'n.', cn: '性格；角色', freq: '高', ex: 'A strong character.' },
+  { w: 'charge', ph: '/tʃɑːdʒ/', pos: 'n./v.', cn: '收费；负责', freq: '高', ex: 'In charge of.' },
   { w: 'circumstance', ph: '/ˈsɜːkəmstəns/', pos: 'n.', cn: '情况；环境', freq: '中', ex: 'Under no circumstance.' },
-  { w: 'comprehensive', ph: '/ˌkɒmprɪˈhensɪv/', pos: 'adj.', cn: '全面的；综合的', freq: '中', ex: 'A comprehensive plan.' },
-  { w: 'compromise', ph: '/ˈkɒmprəmaɪz/', pos: 'n./v.', cn: '妥协；折中', freq: '低', ex: 'Reach a compromise.' },
+  { w: 'cite', ph: '/saɪt/', pos: 'v.', cn: '引用', freq: '中', ex: 'Cite the source.' },
+  { w: 'civil', ph: '/ˈsɪvl/', pos: 'adj.', cn: '公民的；民用的', freq: '中', ex: 'Civil service.' },
+  { w: 'clarify', ph: '/ˈklærəfaɪ/', pos: 'v.', cn: '澄清', freq: '中', ex: 'Clarify the rule.' },
+  { w: 'classic', ph: '/ˈklæsɪk/', pos: 'adj./n.', cn: '经典的', freq: '中', ex: 'A classic novel.' },
+  { w: 'climate', ph: '/ˈklaɪmət/', pos: 'n.', cn: '气候', freq: '中', ex: 'Climate change.' },
+  { w: 'cognitive', ph: '/ˈkɒɡnətɪv/', pos: 'adj.', cn: '认知的', freq: '低', ex: 'Cognitive skill.' },
+  { w: 'collapse', ph: '/kəˈlæps/', pos: 'v./n.', cn: '倒塌；崩溃', freq: '低', ex: 'The bridge collapsed.' },
+  { w: 'colleague', ph: '/ˈkɒliːɡ/', pos: 'n.', cn: '同事', freq: '中', ex: 'My colleague.' },
+  { w: 'combat', ph: '/ˈkɒmbæt/', pos: 'v./n.', cn: '战斗； combating', freq: '中', ex: 'Combat pollution.' },
+  { w: 'comment', ph: '/ˈkɒment/', pos: 'n./v.', cn: '评论', freq: '高', ex: 'Leave a comment.' },
+  { w: 'commission', ph: '/kəˈmɪʃn/', pos: 'n.', cn: '委员会；佣金', freq: '低', ex: 'A commission report.' },
+  { w: 'commit', ph: '/kəˈmɪt/', pos: 'v.', cn: '犯；承诺', freq: '高', ex: 'Commit a crime.' },
+  { w: 'community', ph: '/kəˈmjuːnəti/', pos: 'n.', cn: '社区；群体', freq: '高', ex: 'Local community.' },
+  { w: 'compensate', ph: '/ˈkɒmpenseɪt/', pos: 'v.', cn: '补偿', freq: '低', ex: 'Compensate for loss.' },
+  { w: 'compete', ph: '/kəmˈpiːt/', pos: 'v.', cn: '竞争', freq: '高', ex: 'Compete for the job.' },
+  { w: 'complex', ph: '/ˈkɒmpleks/', pos: 'adj.', cn: '复杂的', freq: '高', ex: 'A complex issue.' },
+  { w: 'component', ph: '/kəmˈpəʊnənt/', pos: 'n.', cn: '成分；部件', freq: '中', ex: 'Key component.' },
+  { w: 'comprehensive', ph: '/ˌkɒmprɪˈhensɪv/', pos: 'adj.', cn: '全面的', freq: '中', ex: 'Comprehensive plan.' },
+  { w: 'comprise', ph: '/kəmˈpraɪz/', pos: 'v.', cn: '包含；组成', freq: '中', ex: 'The team comprises 10.' },
+  { w: 'concentrate', ph: '/ˈkɒnsntreɪt/', pos: 'v.', cn: '集中；专注', freq: '高', ex: 'Concentrate on study.' },
+  { w: 'concept', ph: '/ˈkɒnsept/', pos: 'n.', cn: '概念', freq: '高', ex: 'A new concept.' },
+  { w: 'concern', ph: '/kənˈsɜːn/', pos: 'v./n.', cn: '关心；担忧', freq: '高', ex: 'Concern for others.' },
+  { w: 'conclude', ph: '/kənˈkluːd/', pos: 'v.', cn: '总结；得出结论', freq: '高', ex: 'Conclude the speech.' },
+  { w: 'conduct', ph: '/kənˈdʌkt/', pos: 'v.', cn: '进行；行为', freq: '高', ex: 'Conduct research.' },
+  { w: 'confidence', ph: '/ˈkɒnfɪdəns/', pos: 'n.', cn: '信心', freq: '高', ex: 'Build confidence.' },
+  { w: 'confirm', ph: '/kənˈfɜːm/', pos: 'v.', cn: '确认', freq: '高', ex: 'Confirm the booking.' },
+  { w: 'conflict', ph: '/ˈkɒnflɪkt/', pos: 'n./v.', cn: '冲突', freq: '中', ex: 'A civil conflict.' },
+  { w: 'confront', ph: '/kənˈfrʌnt/', pos: 'v.', cn: '面对；对抗', freq: '低', ex: 'Confront the problem.' },
+  { w: 'conscious', ph: '/ˈkɒnʃəs/', pos: 'adj.', cn: '有意识的', freq: '中', ex: 'Conscious decision.' },
   { w: 'consequence', ph: '/ˈkɒnsɪkwəns/', pos: 'n.', cn: '结果；后果', freq: '高', ex: 'Face the consequence.' },
+  { w: 'conserve', ph: '/kənˈsɜːv/', pos: 'v.', cn: '保护；节约', freq: '中', ex: 'Conserve energy.' },
   { w: 'considerable', ph: '/kənˈsɪdərəbl/', pos: 'adj.', cn: '相当大的', freq: '中', ex: 'Considerable progress.' },
-  { w: 'consistent', ph: '/kənˈsɪstənt/', pos: 'adj.', cn: '一致的；持续的', freq: '中', ex: 'Be consistent in study.' },
-  { w: 'contemporary', ph: '/kənˈtemprəri/', pos: 'adj.', cn: '当代的；同时代的', freq: '低', ex: 'Contemporary art.' },
+  { w: 'consist', ph: '/kənˈsɪst/', pos: 'v.', cn: '由…组成', freq: '高', ex: 'Consist of three parts.' },
+  { w: 'constant', ph: '/ˈkɒnstənt/', pos: 'adj.', cn: '持续的；恒定的', freq: '中', ex: 'Constant change.' },
+  { w: 'constitute', ph: '/ˈkɒnstɪtjuːt/', pos: 'v.', cn: '构成；组成', freq: '低', ex: 'Constitute a risk.' },
+  { w: 'consult', ph: '/kənˈsʌlt/', pos: 'v.', cn: '咨询；查阅', freq: '中', ex: 'Consult a doctor.' },
+  { w: 'consume', ph: '/kənˈsjuːm/', pos: 'v.', cn: '消耗；消费', freq: '中', ex: 'Consume less.' },
+  { w: 'contact', ph: '/ˈkɒntækt/', pos: 'n./v.', cn: '联系', freq: '高', ex: 'Keep in contact.' },
+  { w: 'contain', ph: '/kənˈteɪn/', pos: 'v.', cn: '包含；容纳', freq: '高', ex: 'The box contains books.' },
+  { w: 'contemporary', ph: '/kənˈtemprəri/', pos: 'adj.', cn: '当代的', freq: '低', ex: 'Contemporary art.' },
+  { w: 'content', ph: '/ˈkɒntent/', pos: 'n./adj.', cn: '内容；满足的', freq: '高', ex: 'Table of contents.' },
+  { w: 'contest', ph: '/ˈkɒntest/', pos: 'n.', cn: '竞赛', freq: '中', ex: 'A singing contest.' },
+  { w: 'context', ph: '/ˈkɒntekst/', pos: 'n.', cn: '语境；背景', freq: '中', ex: 'In context.' },
+  { w: 'contract', ph: '/ˈkɒntrækt/', pos: 'n.', cn: '合同', freq: '中', ex: 'Sign a contract.' },
+  { w: 'contradict', ph: '/ˌkɒntrəˈdɪkt/', pos: 'v.', cn: '反驳；矛盾', freq: '低', ex: 'Contradict yourself.' },
   { w: 'contribute', ph: '/kənˈtrɪbjuːt/', pos: 'v.', cn: '贡献；促成', freq: '高', ex: 'Contribute to society.' },
   { w: 'controversial', ph: '/ˌkɒntrəˈvɜːʃl/', pos: 'adj.', cn: '有争议的', freq: '中', ex: 'A controversial topic.' },
-  { w: 'crucial', ph: '/ˈkruːʃl/', pos: 'adj.', cn: '关键的；至关重要的', freq: '高', ex: 'A crucial moment.' },
-  { w: 'deliberate', ph: '/dɪˈlɪbərət/', pos: 'adj.', cn: '故意的；深思熟虑的', freq: '低', ex: 'A deliberate mistake.' },
+  { w: 'convey', ph: '/kənˈveɪ/', pos: 'v.', cn: '传达；输送', freq: '中', ex: 'Convey a message.' },
+  { w: 'convince', ph: '/kənˈvɪns/', pos: 'v.', cn: '使信服', freq: '中', ex: 'Convince the judge.' },
+  { w: 'corporate', ph: '/ˈkɔːpərət/', pos: 'adj.', cn: '公司的', freq: '中', ex: 'Corporate culture.' },
+  { w: 'correspond', ph: '/ˌkɒrəˈspɒnd/', pos: 'v.', cn: '对应；通信', freq: '低', ex: 'Correspond to need.' },
+  { w: 'costly', ph: '/ˈkɒstli/', pos: 'adj.', cn: '昂贵的', freq: '中', ex: 'Costly mistake.' },
+  { w: 'create', ph: '/kriˈeɪt/', pos: 'v.', cn: '创造', freq: '高', ex: 'Create value.' },
+  { w: 'credit', ph: '/ˈkredɪt/', pos: 'n.', cn: '信用；学分', freq: '中', ex: 'Course credit.' },
+  { w: 'crisis', ph: '/ˈkraɪsɪs/', pos: 'n.', cn: '危机', freq: '中', ex: 'Economic crisis.' },
+  { w: 'critic', ph: '/ˈkrɪtɪk/', pos: 'n.', cn: '评论家；批评者', freq: '中', ex: 'A literary critic.' },
+  { w: 'crucial', ph: '/ˈkruːʃl/', pos: 'adj.', cn: '关键的', freq: '高', ex: 'A crucial moment.' },
+  { w: 'culture', ph: '/ˈkʌltʃə/', pos: 'n.', cn: '文化', freq: '高', ex: 'Campus culture.' },
+  { w: 'curiosity', ph: '/ˌkjʊəriˈɒsəti/', pos: 'n.', cn: '好奇心', freq: '中', ex: 'Out of curiosity.' },
+  { w: 'current', ph: '/ˈkʌrənt/', pos: 'adj.', cn: '当前的', freq: '高', ex: 'Current issue.' },
+  { w: 'debate', ph: '/dɪˈbeɪt/', pos: 'n./v.', cn: '辩论', freq: '中', ex: 'A heated debate.' },
+  { w: 'decade', ph: '/ˈdekeɪd/', pos: 'n.', cn: '十年', freq: '中', ex: 'Over a decade.' },
+  { w: 'decline', ph: '/dɪˈklaɪn/', pos: 'v./n.', cn: '下降；拒绝', freq: '中', ex: 'Decline the offer.' },
+  { w: 'dedicate', ph: '/ˈdedɪkeɪt/', pos: 'v.', cn: '致力于', freq: '低', ex: 'Dedicate to work.' },
+  { w: 'define', ph: '/dɪˈfaɪn/', pos: 'v.', cn: '定义', freq: '高', ex: 'Define the term.' },
+  { w: 'deliberate', ph: '/dɪˈlɪbərət/', pos: 'adj.', cn: '故意的；深思的', freq: '低', ex: 'A deliberate act.' },
   { w: 'demonstrate', ph: '/ˈdemənstreɪt/', pos: 'v.', cn: '证明；演示', freq: '高', ex: 'Demonstrate the method.' },
-  { w: 'distinguish', ph: '/dɪˈstɪŋɡwɪʃ/', pos: 'v.', cn: '区分；辨别', freq: '中', ex: 'Distinguish right from wrong.' },
-  { w: 'dominant', ph: '/ˈdɒmɪnənt/', pos: 'adj.', cn: '占主导的；统治的', freq: '中', ex: 'The dominant culture.' },
+  { w: 'deny', ph: '/dɪˈnaɪ/', pos: 'v.', cn: '否认；拒绝', freq: '中', ex: 'Deny the charge.' },
+  { w: 'depend', ph: '/dɪˈpend/', pos: 'v.', cn: '依赖', freq: '高', ex: 'Depend on you.' },
+  { w: 'depress', ph: '/dɪˈpres/', pos: 'v.', cn: '使沮丧；压低', freq: '中', ex: 'Depress the price.' },
+  { w: 'derive', ph: '/dɪˈraɪv/', pos: 'v.', cn: '源于；得出', freq: '中', ex: 'Derive from Latin.' },
+  { w: 'deserve', ph: '/dɪˈzɜːv/', pos: 'v.', cn: '应得', freq: '中', ex: 'Deserve praise.' },
+  { w: 'design', ph: '/dɪˈzaɪn/', pos: 'v./n.', cn: '设计', freq: '高', ex: 'Design a plan.' },
+  { w: 'desire', ph: '/dɪˈzaɪə/', pos: 'n./v.', cn: '渴望', freq: '中', ex: 'A strong desire.' },
+  { w: 'detail', ph: '/ˈdiːteɪl/', pos: 'n.', cn: '细节', freq: '高', ex: 'Pay attention to detail.' },
+  { w: 'detect', ph: '/dɪˈtekt/', pos: 'v.', cn: '察觉；探测', freq: '中', ex: 'Detect a signal.' },
+  { w: 'device', ph: '/dɪˈvaɪs/', pos: 'n.', cn: '设备；装置', freq: '中', ex: 'A mobile device.' },
+  { w: 'diminish', ph: '/dɪˈmɪnɪʃ/', pos: 'v.', cn: '减少；削弱', freq: '低', ex: 'Diminish risk.' },
+  { w: 'disappoint', ph: '/ˌdɪsəˈpɔɪnt/', pos: 'v.', cn: '使失望', freq: '中', ex: 'Don\'t disappoint me.' },
+  { w: 'discipline', ph: '/ˈdɪsəplɪn/', pos: 'n.', cn: '纪律；学科', freq: '中', ex: 'Self-discipline.' },
+  { w: 'discount', ph: '/ˈdɪskaʊnt/', pos: 'n.', cn: '折扣', freq: '中', ex: 'A student discount.' },
+  { w: 'discriminate', ph: '/dɪˈskrɪmɪneɪt/', pos: 'v.', cn: '歧视；区分', freq: '低', ex: 'Discriminate against.' },
+  { w: 'dismiss', ph: '/dɪsˈmɪs/', pos: 'v.', cn: '解散；驳回', freq: '中', ex: 'Dismiss the idea.' },
+  { w: 'display', ph: '/dɪˈspleɪ/', pos: 'v./n.', cn: '展示', freq: '中', ex: 'Display confidence.' },
+  { w: 'dispose', ph: '/dɪˈspəʊz/', pos: 'v.', cn: '处理；处置', freq: '低', ex: 'Dispose of waste.' },
+  { w: 'dispute', ph: '/dɪˈspjuːt/', pos: 'n./v.', cn: '争端；争论', freq: '低', ex: 'A border dispute.' },
+  { w: 'distinct', ph: '/dɪˈstɪŋkt/', pos: 'adj.', cn: '明显的；不同的', freq: '中', ex: 'Distinct features.' },
+  { w: 'distribute', ph: '/dɪˈstrɪbjuːt/', pos: 'v.', cn: '分配；分发', freq: '中', ex: 'Distribute leaflets.' },
+  { w: 'diverse', ph: '/daɪˈvɜːs/', pos: 'adj.', cn: '多样的', freq: '中', ex: 'Diverse cultures.' },
+  { w: 'document', ph: '/ˈdɒkjument/', pos: 'n.', cn: '文件；文档', freq: '中', ex: 'A legal document.' },
+  { w: 'dominate', ph: '/ˈdɒmɪneɪt/', pos: 'v.', cn: '支配；主导', freq: '中', ex: 'Dominate the market.' },
+  { w: 'doubt', ph: '/daʊt/', pos: 'n./v.', cn: '怀疑', freq: '高', ex: 'No doubt.' },
+  { w: 'draft', ph: '/drɑːft/', pos: 'n./v.', cn: '草稿；起草', freq: '中', ex: 'A draft plan.' },
+  { w: 'dramatic', ph: '/drəˈmætɪk/', pos: 'adj.', cn: '戏剧性的；显著的', freq: '中', ex: 'A dramatic change.' },
+  { w: 'dynamic', ph: '/daɪˈnæmɪk/', pos: 'adj.', cn: '动态的；有活力的', freq: '低', ex: 'A dynamic team.' },
+  { w: 'eager', ph: '/ˈiːɡə/', pos: 'adj.', cn: '渴望的', freq: '中', ex: 'Eager to learn.' },
+  { w: 'economic', ph: '/ˌiːkəˈnɒmɪk/', pos: 'adj.', cn: '经济的', freq: '高', ex: 'Economic growth.' },
+  { w: 'efficient', ph: '/ɪˈfɪʃnt/', pos: 'adj.', cn: '高效的', freq: '中', ex: 'An efficient worker.' },
   { w: 'elaborate', ph: '/ɪˈlæbərət/', pos: 'adj./v.', cn: '精心制作的；详述', freq: '低', ex: 'An elaborate plan.' },
+  { w: 'element', ph: '/ˈelɪmənt/', pos: 'n.', cn: '元素；要素', freq: '中', ex: 'Key element.' },
+  { w: 'eliminate', ph: '/ɪˈlɪmɪneɪt/', pos: 'v.', cn: '消除；淘汰', freq: '中', ex: 'Eliminate poverty.' },
   { w: 'embarrass', ph: '/ɪmˈbærəs/', pos: 'v.', cn: '使尴尬', freq: '中', ex: 'Don\'t embarrass him.' },
-  { w: 'emphasis', ph: '/ˈemfəsɪs/', pos: 'n.', cn: '强调；重点', freq: '高', ex: 'Put emphasis on reading.' },
-  { w: 'enhance', ph: '/ɪnˈhɑːns/', pos: 'v.', cn: '提高；增强', freq: '高', ex: 'Enhance your skills.' },
+  { w: 'emerge', ph: '/ɪˈmɜːdʒ/', pos: 'v.', cn: '出现；浮现', freq: '高', ex: 'A new trend emerges.' },
+  { w: 'emotion', ph: '/ɪˈməʊʃn/', pos: 'n.', cn: '情绪；情感', freq: '中', ex: 'Show emotion.' },
+  { w: 'emphasize', ph: '/ˈemfəsaɪz/', pos: 'v.', cn: '强调', freq: '高', ex: 'Emphasize the point.' },
+  { w: 'enable', ph: '/ɪˈneɪbl/', pos: 'v.', cn: '使能够', freq: '高', ex: 'Enable us to win.' },
+  { w: 'encounter', ph: '/ɪnˈkaʊntə/', pos: 'v./n.', cn: '遭遇；遇到', freq: '中', ex: 'Encounter a problem.' },
+  { w: 'enhance', ph: '/ɪnˈhɑːns/', pos: 'v.', cn: '提高；增强', freq: '高', ex: 'Enhance skills.' },
   { w: 'enormous', ph: '/ɪˈnɔːməs/', pos: 'adj.', cn: '巨大的', freq: '高', ex: 'An enormous building.' },
-  { w: 'essential', ph: '/ɪˈsenʃl/', pos: 'adj.', cn: '必要的；本质的', freq: '高', ex: 'Water is essential.' },
+  { w: 'ensure', ph: '/ɪnˈʃʊə/', pos: 'v.', cn: '确保', freq: '高', ex: 'Ensure safety.' },
+  { w: 'entire', ph: '/ɪnˈtaɪə/', pos: 'adj.', cn: '全部的', freq: '高', ex: 'The entire day.' },
+  { w: 'environment', ph: '/ɪnˈvaɪrənmənt/', pos: 'n.', cn: '环境', freq: '高', ex: 'Protect the environment.' },
+  { w: 'essential', ph: '/ɪˈsenʃl/', pos: 'adj.', cn: '必要的', freq: '高', ex: 'Water is essential.' },
+  { w: 'establish', ph: '/ɪˈstæblɪʃ/', pos: 'v.', cn: '建立；确立', freq: '高', ex: 'Establish a company.' },
+  { w: 'estimate', ph: '/ˈestɪmeɪt/', pos: 'v./n.', cn: '估计', freq: '中', ex: 'Estimate the cost.' },
+  { w: 'ethic', ph: '/ˈeθɪk/', pos: 'n.', cn: '伦理；道德', freq: '低', ex: 'Work ethic.' },
   { w: 'evaluate', ph: '/ɪˈvæljueɪt/', pos: 'v.', cn: '评价；评估', freq: '高', ex: 'Evaluate the result.' },
-  { w: 'evident', ph: '/ˈevɪdənt/', pos: 'adj.', cn: '明显的', freq: '中', ex: 'It is evident that...' },
+  { w: 'evidence', ph: '/ˈevɪdəns/', pos: 'n.', cn: '证据', freq: '高', ex: 'Strong evidence.' },
+  { w: 'evident', ph: '/ˈevɪdənt/', pos: 'adj.', cn: '明显的', freq: '中', ex: 'It is evident.' },
   { w: 'exaggerate', ph: '/ɪɡˈzædʒəreɪt/', pos: 'v.', cn: '夸大', freq: '低', ex: 'Don\'t exaggerate.' },
-  { w: 'fascinate', ph: '/ˈfæsɪneɪt/', pos: 'v.', cn: '使着迷', freq: '中', ex: 'The story fascinates me.' },
-  { w: 'feasible', ph: '/ˈfiːzəbl/', pos: 'adj.', cn: '可行的', freq: '中', ex: 'A feasible plan.' },
-  { w: 'fluctuate', ph: '/ˈflʌktʃueɪt/', pos: 'v.', cn: '波动', freq: '低', ex: 'Prices fluctuate.' },
+  { w: 'exceed', ph: '/ɪkˈsiːd/', pos: 'v.', cn: '超过', freq: '中', ex: 'Exceed the limit.' },
+  { w: 'exclude', ph: '/ɪkˈskluːd/', pos: 'v.', cn: '排除；不包括', freq: '中', ex: 'Exclude the disabled.' },
+  { w: 'exhibit', ph: '/ɪɡˈzɪbɪt/', pos: 'v./n.', cn: '展览；展示', freq: '中', ex: 'Exhibit talent.' },
+  { w: 'expand', ph: '/ɪkˈspænd/', pos: 'v.', cn: '扩张；扩大', freq: '中', ex: 'Expand the business.' },
+  { w: 'expect', ph: '/ɪkˈspekt/', pos: 'v.', cn: '期望；预料', freq: '高', ex: 'Expect the worst.' },
+  { w: 'expense', ph: '/ɪkˈspens/', pos: 'n.', cn: '花费；开支', freq: '中', ex: 'At the expense of.' },
+  { w: 'expertise', ph: '/ˌekspɜːˈtiːz/', pos: 'n.', cn: '专长', freq: '低', ex: 'Technical expertise.' },
+  { w: 'explicit', ph: '/ɪkˈsplɪsɪt/', pos: 'adj.', cn: '明确的', freq: '低', ex: 'Explicit instruction.' },
+  { w: 'exploit', ph: '/ɪkˈsplɔɪt/', pos: 'v.', cn: '开发；利用', freq: '低', ex: 'Exploit resources.' },
+  { w: 'explore', ph: '/ɪkˈsplɔː/', pos: 'v.', cn: '探索', freq: '高', ex: 'Explore the city.' },
+  { w: 'export', ph: '/ɪkˈspɔːt/', pos: 'v./n.', cn: '出口', freq: '中', ex: 'Export goods.' },
+  { w: 'expose', ph: '/ɪkˈspəʊz/', pos: 'v.', cn: '暴露；揭露', freq: '中', ex: 'Expose the truth.' },
+  { w: 'extend', ph: '/ɪkˈstend/', pos: 'v.', cn: '延伸；延长', freq: '高', ex: 'Extend the deadline.' },
+  { w: 'external', ph: '/ɪkˈstɜːnl/', pos: 'adj.', cn: '外部的', freq: '中', ex: 'External pressure.' },
+  { w: 'facilitate', ph: '/fəˈsɪlɪteɪt/', pos: 'v.', cn: '促进；使便利', freq: '低', ex: 'Facilitate learning.' },
+  { w: 'factor', ph: '/ˈfæktə/', pos: 'n.', cn: '因素', freq: '高', ex: 'Key factor.' },
+  { w: 'faint', ph: '/feɪnt/', pos: 'adj.', cn: '微弱的；模糊的', freq: '低', ex: 'A faint light.' },
+  { w: 'familiar', ph: '/fəˈmɪliə/', pos: 'adj.', cn: '熟悉的', freq: '中', ex: 'Familiar with it.' },
+  { w: 'feature', ph: '/ˈfiːtʃə/', pos: 'n./v.', cn: '特征；以…为特色', freq: '高', ex: 'A key feature.' },
+  { w: 'federal', ph: '/ˈfedərəl/', pos: 'adj.', cn: '联邦的', freq: '中', ex: 'Federal government.' },
+  { w: 'fee', ph: '/fiː/', pos: 'n.', cn: '费用', freq: '中', ex: 'Tuition fee.' },
+  { w: 'financial', ph: '/faɪˈnænʃl/', pos: 'adj.', cn: '金融的；财政的', freq: '高', ex: 'Financial aid.' },
+  { w: 'flexible', ph: '/ˈfleksəbl/', pos: 'adj.', cn: '灵活的', freq: '中', ex: 'A flexible schedule.' },
+  { w: 'focus', ph: '/ˈfəʊkəs/', pos: 'v./n.', cn: '聚焦；集中', freq: '高', ex: 'Focus on goals.' },
+  { w: 'foundation', ph: '/faʊnˈdeɪʃn/', pos: 'n.', cn: '基础；基金会', freq: '中', ex: 'Lay a foundation.' },
+  { w: 'frame', ph: '/freɪm/', pos: 'n./v.', cn: '框架；制定', freq: '中', ex: 'A logical frame.' },
+  { w: 'fulfill', ph: '/fʊlˈfɪl/', pos: 'v.', cn: '履行；实现', freq: '高', ex: 'Fulfill a promise.' },
+  { w: 'function', ph: '/ˈfʌŋkʃn/', pos: 'n./v.', cn: '功能；运转', freq: '高', ex: 'Basic function.' },
   { w: 'fundamental', ph: '/ˌfʌndəˈmentl/', pos: 'adj.', cn: '基本的；根本的', freq: '高', ex: 'Fundamental rights.' },
   { w: 'generate', ph: '/ˈdʒenəreɪt/', pos: 'v.', cn: '产生；生成', freq: '高', ex: 'Generate ideas.' },
-  { w: 'guarantee', ph: '/ˌɡærənˈtiː/', pos: 'v./n.', cn: '保证；担保', freq: '高', ex: 'We guarantee quality.' },
-  { w: 'humble', ph: '/ˈhʌmbl/', pos: 'adj.', cn: '谦逊的；卑微的', freq: '中', ex: 'A humble person.' },
-  { w: 'illusion', ph: '/ɪˈluːʒn/', pos: 'n.', cn: '幻觉；错觉', freq: '低', ex: 'An optical illusion.' },
+  { w: 'generous', ph: '/ˈdʒenərəs/', pos: 'adj.', cn: '慷慨的', freq: '中', ex: 'A generous gift.' },
+  { w: 'genuine', ph: '/ˈdʒenjʊɪn/', pos: 'adj.', cn: '真正的', freq: '中', ex: 'Genuine smile.' },
+  { w: 'global', ph: '/ˈɡləʊbl/', pos: 'adj.', cn: '全球的', freq: '高', ex: 'Global warming.' },
+  { w: 'goal', ph: '/ɡəʊl/', pos: 'n.', cn: '目标', freq: '高', ex: 'Set a goal.' },
+  { w: 'graduate', ph: '/ˈɡrædʒueɪt/', pos: 'v./n.', cn: '毕业；毕业生', freq: '高', ex: 'Graduate from college.' },
+  { w: 'grant', ph: '/ɡrɑːnt/', pos: 'v./n.', cn: '授予；拨款', freq: '中', ex: 'Grant a wish.' },
+  { w: 'guarantee', ph: '/ˌɡærənˈtiː/', pos: 'v./n.', cn: '保证', freq: '高', ex: 'Guarantee quality.' },
+  { w: 'guilty', ph: '/ˈɡɪlti/', pos: 'adj.', cn: '有罪的；内疚的', freq: '中', ex: 'Feel guilty.' },
+  { w: 'handle', ph: '/ˈhændl/', pos: 'v.', cn: '处理；应对', freq: '高', ex: 'Handle pressure.' },
+  { w: 'hierarchy', ph: '/ˈhaɪərɑːki/', pos: 'n.', cn: '等级；层级', freq: '低', ex: 'A clear hierarchy.' },
+  { w: 'highlight', ph: '/ˈhaɪlaɪt/', pos: 'v./n.', cn: '强调；亮点', freq: '中', ex: 'Highlight the risk.' },
+  { w: 'hint', ph: '/hɪnt/', pos: 'n./v.', cn: '暗示；提示', freq: '低', ex: 'A helpful hint.' },
+  { w: 'household', ph: '/ˈhaʊshəʊld/', pos: 'n./adj.', cn: '家庭；家用的', freq: '中', ex: 'Household name.' },
+  { w: 'humble', ph: '/ˈhʌmbl/', pos: 'adj.', cn: '谦逊的', freq: '中', ex: 'A humble person.' },
+  { w: 'identify', ph: '/aɪˈdentɪfaɪ/', pos: 'v.', cn: '识别；确认', freq: '高', ex: 'Identify the problem.' },
+  { w: 'identity', ph: '/aɪˈdentəti/', pos: 'n.', cn: '身份；特性', freq: '中', ex: 'Cultural identity.' },
+  { w: 'ignore', ph: '/ɪɡˈnɔː/', pos: 'v.', cn: '忽视', freq: '高', ex: 'Ignore the noise.' },
+  { w: 'illustrate', ph: '/ˈɪləstreɪt/', pos: 'v.', cn: '说明；图解', freq: '中', ex: 'Illustrate the point.' },
+  { w: 'image', ph: '/ˈɪmɪdʒ/', pos: 'n.', cn: '形象；图像', freq: '高', ex: 'Public image.' },
+  { w: 'immigrant', ph: '/ˈɪmɪɡrənt/', pos: 'n.', cn: '移民', freq: '低', ex: 'An immigrant worker.' },
+  { w: 'impact', ph: '/ˈɪmpækt/', pos: 'n./v.', cn: '影响；冲击', freq: '高', ex: 'Have an impact.' },
+  { w: 'imply', ph: '/ɪmˈplaɪ/', pos: 'v.', cn: '暗示', freq: '中', ex: 'What does it imply?' },
+  { w: 'impose', ph: '/ɪmˈpəʊz/', pos: 'v.', cn: '强加；征收', freq: '中', ex: 'Impose a tax.' },
+  { w: 'incentive', ph: '/ɪnˈsentɪv/', pos: 'n.', cn: '激励；刺激', freq: '低', ex: 'A financial incentive.' },
+  { w: 'incident', ph: '/ˈɪnsɪdənt/', pos: 'n.', cn: '事件', freq: '中', ex: 'A minor incident.' },
+  { w: 'incline', ph: '/ɪnˈklaɪn/', pos: 'v.', cn: '倾向于', freq: '低', ex: 'Incline to agree.' },
+  { w: 'income', ph: '/ˈɪnkʌm/', pos: 'n.', cn: '收入', freq: '高', ex: 'Monthly income.' },
+  { w: 'increase', ph: '/ɪnˈkriːs/', pos: 'v./n.', cn: '增加', freq: '高', ex: 'Increase sales.' },
+  { w: 'index', ph: '/ˈɪndeks/', pos: 'n.', cn: '指数；索引', freq: '低', ex: 'Price index.' },
+  { w: 'indicate', ph: '/ˈɪndɪkeɪt/', pos: 'v.', cn: '表明；指示', freq: '高', ex: 'Studies indicate.' },
+  { w: 'individual', ph: '/ˌɪndɪˈvɪdʒuəl/', pos: 'n./adj.', cn: '个人；个体的', freq: '高', ex: 'Individual needs.' },
+  { w: 'industry', ph: '/ˈɪndəstri/', pos: 'n.', cn: '工业；行业', freq: '高', ex: 'Service industry.' },
   { w: 'inevitable', ph: '/ɪnˈevɪtəbl/', pos: 'adj.', cn: '不可避免的', freq: '中', ex: 'An inevitable result.' },
-  { w: 'influence', ph: '/ˈɪnfluəns/', pos: 'n./v.', cn: '影响', freq: '高', ex: 'Have an influence on.' },
-  { w: 'inevitable', ph: '/ɪnˈevɪtəbl/', pos: 'adj.', cn: '不可避免的', freq: '中', ex: 'Change is inevitable.' },
-  { w: 'justify', ph: '/ˈdʒʌstɪfaɪ/', pos: 'v.', cn: '证明…正当', freq: '中', ex: 'How to justify it?' },
+  { w: 'influence', ph: '/ˈɪnfluəns/', pos: 'n./v.', cn: '影响', freq: '高', ex: 'Have an influence.' },
+  { w: 'inform', ph: '/ɪnˈfɔːm/', pos: 'v.', cn: '通知；告知', freq: '高', ex: 'Inform the public.' },
+  { w: 'infrastructure', ph: '/ˈɪnfrəstrʌktʃə/', pos: 'n.', cn: '基础设施', freq: '低', ex: 'Urban infrastructure.' },
+  { w: 'inherit', ph: '/ɪnˈherɪt/', pos: 'v.', cn: '继承', freq: '低', ex: 'Inherit a house.' },
+  { w: 'initial', ph: '/ɪˈnɪʃl/', pos: 'adj.', cn: '最初的', freq: '中', ex: 'Initial stage.' },
+  { w: 'inject', ph: '/ɪnˈdʒekt/', pos: 'v.', cn: '注射；注入', freq: '低', ex: 'Inject capital.' },
+  { w: 'injure', ph: '/ˈɪndʒə/', pos: 'v.', cn: '伤害', freq: '中', ex: 'Injure a leg.' },
+  { w: 'innocent', ph: '/ˈɪnəsnt/', pos: 'adj.', cn: '无辜的', freq: '中', ex: 'Innocent people.' },
+  { w: 'input', ph: '/ˈɪnpʊt/', pos: 'n.', cn: '输入；投入', freq: '中', ex: 'Your input matters.' },
+  { w: 'insert', ph: '/ɪnˈsɜːt/', pos: 'v.', cn: '插入', freq: '低', ex: 'Insert a coin.' },
+  { w: 'insight', ph: '/ˈɪnsaɪt/', pos: 'n.', cn: '洞见；领悟', freq: '中', ex: 'Gain insight.' },
+  { w: 'insist', ph: '/ɪnˈsɪst/', pos: 'v.', cn: '坚持', freq: '中', ex: 'Insist on it.' },
+  { w: 'inspect', ph: '/ɪnˈspekt/', pos: 'v.', cn: '检查；视察', freq: '低', ex: 'Inspect the goods.' },
+  { w: 'instant', ph: '/ˈɪnstənt/', pos: 'adj.', cn: '立即的', freq: '中', ex: 'Instant reply.' },
+  { w: 'instinct', ph: '/ˈɪnstɪŋkt/', pos: 'n.', cn: '本能', freq: '中', ex: 'By instinct.' },
+  { w: 'intend', ph: '/ɪnˈtend/', pos: 'v.', cn: '打算', freq: '高', ex: 'Intend to help.' },
+  { w: 'intense', ph: '/ɪnˈtens/', pos: 'adj.', cn: '强烈的；剧烈的', freq: '中', ex: 'Intense heat.' },
+  { w: 'interaction', ph: '/ˌɪntərˈækʃn/', pos: 'n.', cn: '互动', freq: '中', ex: 'Social interaction.' },
+  { w: 'internal', ph: '/ɪnˈtɜːnl/', pos: 'adj.', cn: '内部的', freq: '中', ex: 'Internal affairs.' },
+  { w: 'interpret', ph: '/ɪnˈtɜːprɪt/', pos: 'v.', cn: '解释；口译', freq: '中', ex: 'Interpret the law.' },
+  { w: 'interval', ph: '/ˈɪntəvl/', pos: 'n.', cn: '间隔', freq: '低', ex: 'At intervals.' },
+  { w: 'intervention', ph: '/ˌɪntəˈvenʃn/', pos: 'n.', cn: '干预', freq: '低', ex: 'Government intervention.' },
+  { w: 'involve', ph: '/ɪnˈvɒlv/', pos: 'v.', cn: '涉及；使参与', freq: '高', ex: 'Involve students.' },
+  { w: 'isolate', ph: '/ˈaɪsəleɪt/', pos: 'v.', cn: '隔离；孤立', freq: '低', ex: 'Isolate the patient.' },
+  { w: 'issue', ph: '/ˈɪʃuː/', pos: 'n./v.', cn: '问题；发布', freq: '高', ex: 'A key issue.' },
+  { w: 'justify', ph: '/ˈdʒʌstɪfaɪ/', pos: 'v.', cn: '证明…正当', freq: '中', ex: 'Justify the cost.' },
+  { w: 'label', ph: '/ˈleɪbl/', pos: 'n./v.', cn: '标签；标注', freq: '中', ex: 'A price label.' },
+  { w: 'labor', ph: '/ˈleɪbə/', pos: 'n.', cn: '劳动；劳动力', freq: '中', ex: 'Manual labor.' },
+  { w: 'lack', ph: '/læk/', pos: 'n./v.', cn: '缺乏', freq: '高', ex: 'Lack of sleep.' },
+  { w: 'landscape', ph: '/ˈlændskeɪp/', pos: 'n.', cn: '风景；景观', freq: '低', ex: 'Rural landscape.' },
+  { w: 'layer', ph: '/ˈleɪə/', pos: 'n.', cn: '层', freq: '低', ex: 'A layer of snow.' },
+  { w: 'legal', ph: '/ˈliːɡl/', pos: 'adj.', cn: '法律的；合法的', freq: '高', ex: 'Legal aid.' },
   { w: 'legitimate', ph: '/lɪˈdʒɪtɪmət/', pos: 'adj.', cn: '合法的；合理的', freq: '低', ex: 'A legitimate reason.' },
-  { w: 'magnificent', ph: '/mæɡˈnɪfɪsnt/', pos: 'adj.', cn: '壮丽的', freq: '低', ex: 'A magnificent view.' },
+  { w: 'leisure', ph: '/ˈleʒə/', pos: 'n.', cn: '闲暇', freq: '中', ex: 'Leisure time.' },
+  { w: 'level', ph: '/ˈlevl/', pos: 'n./adj.', cn: '水平；平的', freq: '高', ex: 'A high level.' },
+  { w: 'liberal', ph: '/ˈlɪbərəl/', pos: 'adj.', cn: '自由的；开明的', freq: '低', ex: 'A liberal arts college.' },
+  { w: 'license', ph: '/ˈlaɪsns/', pos: 'n.', cn: '执照；许可', freq: '中', ex: 'A driver\'s license.' },
+  { w: 'link', ph: '/lɪŋk/', pos: 'n./v.', cn: '联系；连接', freq: '高', ex: 'Link theory to practice.' },
+  { w: 'locate', ph: '/ləʊˈkeɪt/', pos: 'v.', cn: '位于；找出', freq: '中', ex: 'Locate the file.' },
+  { w: 'logic', ph: '/ˈlɒdʒɪk/', pos: 'n.', cn: '逻辑', freq: '中', ex: 'Sound logic.' },
+  { w: 'loyal', ph: '/ˈlɔɪəl/', pos: 'adj.', cn: '忠诚的', freq: '中', ex: 'A loyal friend.' },
   { w: 'maintain', ph: '/meɪnˈteɪn/', pos: 'v.', cn: '维持；保养', freq: '高', ex: 'Maintain a habit.' },
-  { w: 'negligible', ph: '/ˈneɡlɪdʒəbl/', pos: 'adj.', cn: '可忽略的', freq: '低', ex: 'A negligible error.' },
+  { w: 'major', ph: '/ˈmeɪdʒə/', pos: 'adj./n.', cn: '主要的；专业', freq: '高', ex: 'A major issue.' },
+  { w: 'manifest', ph: '/ˈmænɪfest/', pos: 'v./adj.', cn: '显示；明显的', freq: '低', ex: 'Manifest in behavior.' },
+  { w: 'manipulate', ph: '/məˈnɪpjuleɪt/', pos: 'v.', cn: '操纵；操作', freq: '低', ex: 'Manipulate data.' },
+  { w: 'margin', ph: '/ˈmɑːdʒɪn/', pos: 'n.', cn: '边缘；利润', freq: '低', ex: 'Profit margin.' },
+  { w: 'massive', ph: '/ˈmæsɪv/', pos: 'adj.', cn: '巨大的', freq: '中', ex: 'Massive support.' },
+  { w: 'mature', ph: '/məˈtʃʊə/', pos: 'adj.', cn: '成熟的', freq: '中', ex: 'A mature attitude.' },
+  { w: 'mechanism', ph: '/ˈmekənɪzəm/', pos: 'n.', cn: '机制；机理', freq: '中', ex: 'A defense mechanism.' },
+  { w: 'mental', ph: '/ˈmentl/', pos: 'adj.', cn: '心理的；精神的', freq: '高', ex: 'Mental health.' },
+  { w: 'method', ph: '/ˈmeθəd/', pos: 'n.', cn: '方法', freq: '高', ex: 'A scientific method.' },
+  { w: 'migrant', ph: '/ˈmaɪɡrənt/', pos: 'n.', cn: '移民；候鸟', freq: '低', ex: 'Migrant workers.' },
+  { w: 'military', ph: '/ˈmɪlətri/', pos: 'adj.', cn: '军事的', freq: '中', ex: 'Military service.' },
+  { w: 'minimal', ph: '/ˈmɪnɪml/', pos: 'adj.', cn: '最小的', freq: '低', ex: 'Minimal risk.' },
+  { w: 'modify', ph: '/ˈmɒdɪfaɪ/', pos: 'v.', cn: '修改；调整', freq: '中', ex: 'Modify the plan.' },
+  { w: 'monitor', ph: '/ˈmɒnɪtə/', pos: 'v./n.', cn: '监控；显示器', freq: '中', ex: 'Monitor progress.' },
+  { w: 'motive', ph: '/ˈməʊtɪv/', pos: 'n.', cn: '动机', freq: '中', ex: 'A hidden motive.' },
+  { w: 'mutual', ph: '/ˈmjuːtʃuəl/', pos: 'adj.', cn: '相互的', freq: '中', ex: 'Mutual respect.' },
+  { w: 'narrow', ph: '/ˈnærəʊ/', pos: 'adj.', cn: '狭窄的', freq: '低', ex: 'A narrow road.' },
+  { w: 'native', ph: '/ˈneɪtɪv/', pos: 'adj./n.', cn: '本地的；母语的', freq: '中', ex: 'Native speaker.' },
+  { w: 'natural', ph: '/ˈnætʃrəl/', pos: 'adj.', cn: '自然的', freq: '高', ex: 'Natural talent.' },
+  { w: 'negative', ph: '/ˈneɡətɪv/', pos: 'adj.', cn: '消极的；负的', freq: '高', ex: 'Negative attitude.' },
+  { w: 'neglect', ph: '/nɪˈɡlekt/', pos: 'v./n.', cn: '忽视；疏忽', freq: '中', ex: 'Neglect your health.' },
+  { w: 'network', ph: '/ˈnetwɜːk/', pos: 'n.', cn: '网络', freq: '高', ex: 'Social network.' },
+  { w: 'neutral', ph: '/ˈnjuːtrəl/', pos: 'adj.', cn: '中立的', freq: '低', ex: 'Stay neutral.' },
+  { w: 'nevertheless', ph: '/ˌnevəðəˈles/', pos: 'adv.', cn: '然而；不过', freq: '低', ex: 'Nevertheless, we try.' },
+  { w: 'notion', ph: '/ˈnəʊʃn/', pos: 'n.', cn: '概念；想法', freq: '中', ex: 'A vague notion.' },
+  { w: 'novel', ph: '/ˈnɒvl/', pos: 'n./adj.', cn: '小说；新颖的', freq: '中', ex: 'A novel idea.' },
+  { w: 'nuclear', ph: '/ˈnjuːkliə/', pos: 'adj.', cn: '核的', freq: '中', ex: 'Nuclear energy.' },
+  { w: 'objective', ph: '/əbˈdʒektɪv/', pos: 'n./adj.', cn: '目标；客观的', freq: '高', ex: 'An objective view.' },
+  { w: 'obtain', ph: '/əbˈteɪn/', pos: 'v.', cn: '获得', freq: '高', ex: 'Obtain a degree.' },
   { w: 'obvious', ph: '/ˈɒbviəs/', pos: 'adj.', cn: '明显的', freq: '高', ex: 'An obvious mistake.' },
   { w: 'occupy', ph: '/ˈɒkjupaɪ/', pos: 'v.', cn: '占据；占领', freq: '中', ex: 'Occupy your mind.' },
-  { w: 'overwhelming', ph: '/ˌəʊvəˈwelmɪŋ/', pos: 'adj.', cn: '压倒性的', freq: '中', ex: 'Overwhelming support.' },
+  { w: 'occur', ph: '/əˈkɜː/', pos: 'v.', cn: '发生；出现', freq: '高', ex: 'Accidents occur.' },
+  { w: 'offend', ph: '/əˈfend/', pos: 'v.', cn: '冒犯', freq: '中', ex: 'Offend someone.' },
+  { w: 'offset', ph: '/ˈɒfset/', pos: 'v.', cn: '抵消', freq: '低', ex: 'Offset the cost.' },
+  { w: 'ongoing', ph: '/ˈɒnɡəʊɪŋ/', pos: 'adj.', cn: '进行中的', freq: '中', ex: 'An ongoing project.' },
+  { w: 'opponent', ph: '/əˈpəʊnənt/', pos: 'n.', cn: '对手', freq: '中', ex: 'A worthy opponent.' },
+  { w: 'optimistic', ph: '/ˌɒptɪˈmɪstɪk/', pos: 'adj.', cn: '乐观的', freq: '中', ex: 'An optimistic view.' },
+  { w: 'option', ph: '/ˈɒpʃn/', pos: 'n.', cn: '选择；选项', freq: '高', ex: 'Keep your options open.' },
+  { w: 'origin', ph: '/ˈɒrɪdʒɪn/', pos: 'n.', cn: '起源；出身', freq: '中', ex: 'Country of origin.' },
+  { w: 'output', ph: '/ˈaʊtpʊt/', pos: 'n.', cn: '产量；输出', freq: '中', ex: 'Daily output.' },
+  { w: 'overcome', ph: '/ˌəʊvəˈkʌm/', pos: 'v.', cn: '克服', freq: '高', ex: 'Overcome fear.' },
+  { w: 'overlap', ph: '/ˌəʊvəˈlæp/', pos: 'v./n.', cn: '重叠', freq: '低', ex: 'Overlap in time.' },
+  { w: 'overseas', ph: '/ˌəʊvəˈsiːz/', pos: 'adv./adj.', cn: '海外', freq: '中', ex: 'Overseas study.' },
+  { w: 'panel', ph: '/ˈpænl/', pos: 'n.', cn: '专家组；面板', freq: '低', ex: 'A discussion panel.' },
+  { w: 'participant', ph: '/pɑːˈtɪsɪpənt/', pos: 'n.', cn: '参与者', freq: '中', ex: 'Active participant.' },
+  { w: 'particular', ph: '/pəˈtɪkjələ/', pos: 'adj.', cn: '特别的；特定的', freq: '高', ex: 'In particular.' },
+  { w: 'partner', ph: '/ˈpɑːtnə/', pos: 'n.', cn: '伙伴；搭档', freq: '高', ex: 'Business partner.' },
+  { w: 'passive', ph: '/ˈpæsɪv/', pos: 'adj.', cn: '被动的', freq: '中', ex: 'Passive voice.' },
+  { w: 'peak', ph: '/piːk/', pos: 'n./adj.', cn: '高峰', freq: '中', ex: 'Peak season.' },
+  { w: 'perceive', ph: '/pəˈsiːv/', pos: 'v.', cn: '感知；察觉', freq: '中', ex: 'Perceive a change.' },
+  { w: 'perform', ph: '/pəˈfɔːm/', pos: 'v.', cn: '执行；表演', freq: '高', ex: 'Perform a task.' },
+  { w: 'period', ph: '/ˈpɪəriəd/', pos: 'n.', cn: '时期；周期', freq: '高', ex: 'A short period.' },
+  { w: 'persist', ph: '/pəˈsɪst/', pos: 'v.', cn: '坚持；持续', freq: '中', ex: 'Persist in study.' },
+  { w: 'perspective', ph: '/pəˈspektɪv/', pos: 'n.', cn: '视角；观点', freq: '高', ex: 'From my perspective.' },
   { w: 'phenomenon', ph: '/fəˈnɒmɪnən/', pos: 'n.', cn: '现象', freq: '高', ex: 'A natural phenomenon.' },
+  { w: 'physical', ph: '/ˈfɪzɪkl/', pos: 'adj.', cn: '身体的；物理的', freq: '高', ex: 'Physical health.' },
+  { w: 'plus', ph: '/plʌs/', pos: 'prep./conj.', cn: '加；而且', freq: '高', ex: 'Plus, it\'s free.' },
+  { w: 'policy', ph: '/ˈpɒləsi/', pos: 'n.', cn: '政策', freq: '高', ex: 'Public policy.' },
+  { w: 'portion', ph: '/ˈpɔːʃn/', pos: 'n.', cn: '部分；一份', freq: '中', ex: 'A portion of food.' },
+  { w: 'pose', ph: '/pəʊz/', pos: 'v.', cn: '造成；摆姿势', freq: '中', ex: 'Pose a threat.' },
+  { w: 'positive', ph: '/ˈpɒzətɪv/', pos: 'adj.', cn: '积极的；正的', freq: '高', ex: 'Positive attitude.' },
+  { w: 'possess', ph: '/pəˈzes/', pos: 'v.', cn: '拥有', freq: '中', ex: 'Possess talent.' },
+  { w: 'posture', ph: '/ˈpɒstʃə/', pos: 'n.', cn: '姿势；姿态', freq: '低', ex: 'Good posture.' },
+  { w: 'poverty', ph: '/ˈpɒvəti/', pos: 'n.', cn: '贫困', freq: '中', ex: 'Live in poverty.' },
+  { w: 'precise', ph: '/prɪˈsaɪs/', pos: 'adj.', cn: '精确的', freq: '中', ex: 'Precise data.' },
+  { w: 'predict', ph: '/prɪˈdɪkt/', pos: 'v.', cn: '预测', freq: '中', ex: 'Predict the result.' },
+  { w: 'prefer', ph: '/prɪˈfɜː/', pos: 'v.', cn: '更喜欢', freq: '高', ex: 'Prefer tea to coffee.' },
+  { w: 'preliminary', ph: '/prɪˈlɪmɪnəri/', pos: 'adj.', cn: '初步的', freq: '低', ex: 'A preliminary study.' },
   { w: 'preserve', ph: '/prɪˈzɜːv/', pos: 'v.', cn: '保护；保存', freq: '中', ex: 'Preserve the environment.' },
   { w: 'prevail', ph: '/prɪˈveɪl/', pos: 'v.', cn: '盛行；获胜', freq: '低', ex: 'Justice will prevail.' },
+  { w: 'previous', ph: '/ˈpriːviəs/', pos: 'adj.', cn: '先前的', freq: '高', ex: 'Previous experience.' },
+  { w: 'primary', ph: '/ˈpraɪməri/', pos: 'adj.', cn: '主要的；初级的', freq: '高', ex: 'Primary goal.' },
+  { w: 'priority', ph: '/praɪˈɒrəti/', pos: 'n.', cn: '优先；优先级', freq: '高', ex: 'Top priority.' },
+  { w: 'privacy', ph: '/ˈprɪvəsi/', pos: 'n.', cn: '隐私', freq: '中', ex: 'Right to privacy.' },
+  { w: 'proceed', ph: '/prəˈsiːd/', pos: 'v.', cn: '继续进行', freq: '中', ex: 'Proceed with care.' },
+  { w: 'process', ph: '/ˈprəʊses/', pos: 'n./v.', cn: '过程；处理', freq: '高', ex: 'A long process.' },
+  { w: 'proclaim', ph: '/prəˈkleɪm/', pos: 'v.', cn: '宣布', freq: '低', ex: 'Proclaim a victory.' },
+  { w: 'produce', ph: '/prəˈdjuːs/', pos: 'v.', cn: '生产；产生', freq: '高', ex: 'Produce results.' },
+  { w: 'profile', ph: '/ˈprəʊfaɪl/', pos: 'n.', cn: '简介；轮廓', freq: '中', ex: 'User profile.' },
+  { w: 'profit', ph: '/ˈprɒfɪt/', pos: 'n./v.', cn: '利润；获利', freq: '中', ex: 'Make a profit.' },
+  { w: 'profound', ph: '/prəˈfaʊnd/', pos: 'adj.', cn: '深刻的', freq: '低', ex: 'A profound impact.' },
+  { w: 'prohibit', ph: '/prəˈhɪbɪt/', pos: 'v.', cn: '禁止', freq: '中', ex: 'Prohibit smoking.' },
+  { w: 'project', ph: '/ˈprɒdʒekt/', pos: 'n.', cn: '项目；工程', freq: '高', ex: 'A research project.' },
+  { w: 'promote', ph: '/prəˈməʊt/', pos: 'v.', cn: '促进；提升', freq: '高', ex: 'Promote health.' },
+  { w: 'propose', ph: '/prəˈpəʊz/', pos: 'v.', cn: '提议；求婚', freq: '中', ex: 'Propose a plan.' },
+  { w: 'prospect', ph: '/ˈprɒspekt/', pos: 'n.', cn: '前景；期望', freq: '中', ex: 'Job prospects.' },
+  { w: 'prosperity', ph: '/prɒˈsperəti/', pos: 'n.', cn: '繁荣', freq: '低', ex: 'Economic prosperity.' },
+  { w: 'protect', ph: '/prəˈtekt/', pos: 'v.', cn: '保护', freq: '高', ex: 'Protect the environment.' },
+  { w: 'protest', ph: '/ˈprəʊtest/', pos: 'n./v.', cn: '抗议', freq: '中', ex: 'A peaceful protest.' },
+  { w: 'provide', ph: '/prəˈvaɪd/', pos: 'v.', cn: '提供', freq: '高', ex: 'Provide support.' },
+  { w: 'publish', ph: '/ˈpʌblɪʃ/', pos: 'v.', cn: '出版；发布', freq: '中', ex: 'Publish a paper.' },
   { w: 'pursue', ph: '/pəˈsjuː/', pos: 'v.', cn: '追求；从事', freq: '高', ex: 'Pursue your dream.' },
+  { w: 'qualify', ph: '/ˈkwɒlɪfaɪ/', pos: 'v.', cn: '使合格； qualifying', freq: '中', ex: 'Qualify for the job.' },
+  { w: 'quality', ph: '/ˈkwɒləti/', pos: 'n.', cn: '质量；品质', freq: '高', ex: 'High quality.' },
+  { w: 'quote', ph: '/kwəʊt/', pos: 'v./n.', cn: '引用；报价', freq: '中', ex: 'Quote a line.' },
   { w: 'radical', ph: '/ˈrædɪkl/', pos: 'adj.', cn: '激进的；根本的', freq: '低', ex: 'A radical change.' },
-  { w: 'reluctant', ph: '/rɪˈlʌktənt/', pos: 'adj.', cn: '不情愿的', freq: '中', ex: 'He was reluctant to go.' },
+  { w: 'random', ph: '/ˈrændəm/', pos: 'adj.', cn: '随机的', freq: '中', ex: 'Random sample.' },
+  { w: 'range', ph: '/reɪndʒ/', pos: 'n./v.', cn: '范围；ranging', freq: '高', ex: 'A wide range.' },
+  { w: 'rank', ph: '/ræŋk/', pos: 'n./v.', cn: '等级；排名', freq: '中', ex: 'Rank first.' },
+  { w: 'rate', ph: '/reɪt/', pos: 'n./v.', cn: '比率；评价', freq: '高', ex: 'Birth rate.' },
+  { w: 'rational', ph: '/ˈræʃnəl/', pos: 'adj.', cn: '理性的', freq: '低', ex: 'A rational choice.' },
+  { w: 'react', ph: '/riˈækt/', pos: 'v.', cn: '反应', freq: '高', ex: 'React to news.' },
+  { w: 'reality', ph: '/riˈæləti/', pos: 'n.', cn: '现实', freq: '高', ex: 'Face reality.' },
+  { w: 'realize', ph: '/ˈrɪəlaɪz/', pos: 'v.', cn: '意识到；实现', freq: '高', ex: 'Realize a dream.' },
+  { w: 'receive', ph: '/rɪˈsiːv/', pos: 'v.', cn: '收到', freq: '高', ex: 'Receive a gift.' },
+  { w: 'recover', ph: '/rɪˈkʌvə/', pos: 'v.', cn: '恢复；挽回', freq: '中', ex: 'Recover from illness.' },
+  { w: 'reflect', ph: '/rɪˈflekt/', pos: 'v.', cn: '反映；反思', freq: '高', ex: 'Reflect on life.' },
+  { w: 'reform', ph: '/rɪˈfɔːm/', pos: 'v./n.', cn: '改革', freq: '中', ex: 'Education reform.' },
+  { w: 'refuge', ph: '/ˈrefjuːdʒ/', pos: 'n.', cn: '避难所', freq: '低', ex: 'A safe refuge.' },
+  { w: 'regime', ph: '/reɪˈʒiːm/', pos: 'n.', cn: '政权；制度', freq: '低', ex: 'A political regime.' },
+  { w: 'region', ph: '/ˈriːdʒən/', pos: 'n.', cn: '地区', freq: '中', ex: 'In the region.' },
+  { w: 'register', ph: '/ˈredʒɪstə/', pos: 'v.', cn: '登记；注册', freq: '中', ex: 'Register for class.' },
+  { w: 'regulate', ph: '/ˈreɡjuleɪt/', pos: 'v.', cn: '管理；调节', freq: '中', ex: 'Regulate the market.' },
+  { w: 'reinforce', ph: '/ˌriːɪnˈfɔːs/', pos: 'v.', cn: '加强；加固', freq: '低', ex: 'Reinforce learning.' },
+  { w: 'reject', ph: '/rɪˈdʒekt/', pos: 'v.', cn: '拒绝；驳回', freq: '中', ex: 'Reject the offer.' },
+  { w: 'relate', ph: '/rɪˈleɪt/', pos: 'v.', cn: '关联；叙述', freq: '高', ex: 'Relate to others.' },
+  { w: 'release', ph: '/rɪˈliːs/', pos: 'v./n.', cn: '释放；发布', freq: '中', ex: 'Release a film.' },
+  { w: 'relevant', ph: '/ˈreləvənt/', pos: 'adj.', cn: '相关的', freq: '高', ex: 'Relevant experience.' },
+  { w: 'relief', ph: '/rɪˈliːf/', pos: 'n.', cn: '缓解；宽慰', freq: '中', ex: 'A sense of relief.' },
+  { w: 'rely', ph: '/rɪˈlaɪ/', pos: 'v.', cn: '依赖', freq: '高', ex: 'Rely on yourself.' },
+  { w: 'remain', ph: '/rɪˈmeɪn/', pos: 'v.', cn: '保持；剩余', freq: '高', ex: 'Remain calm.' },
+  { w: 'remote', ph: '/rɪˈməʊt/', pos: 'adj.', cn: '遥远的', freq: '中', ex: 'Remote area.' },
+  { w: 'remove', ph: '/rɪˈmuːv/', pos: 'v.', cn: '移除', freq: '高', ex: 'Remove obstacles.' },
+  { w: 'replace', ph: '/rɪˈpleɪs/', pos: 'v.', cn: '取代；更换', freq: '高', ex: 'Replace the old.' },
+  { w: 'request', ph: '/rɪˈkwest/', pos: 'n./v.', cn: '请求', freq: '高', ex: 'At your request.' },
+  { w: 'require', ph: '/rɪˈkwaɪə/', pos: 'v.', cn: '需要；要求', freq: '高', ex: 'Require effort.' },
+  { w: 'research', ph: '/rɪˈsɜːtʃ/', pos: 'n./v.', cn: '研究', freq: '高', ex: 'Do research.' },
+  { w: 'reserve', ph: '/rɪˈzɜːv/', pos: 'v./n.', cn: '保留；预订', freq: '中', ex: 'Reserve a seat.' },
+  { w: 'resolve', ph: '/rɪˈzɒlv/', pos: 'v.', cn: '解决；决心', freq: '中', ex: 'Resolve conflict.' },
+  { w: 'resort', ph: '/rɪˈzɔːt/', pos: 'n./v.', cn: '度假胜地；求助', freq: '低', ex: 'Resort to force.' },
+  { w: 'resource', ph: '/rɪˈsɔːs/', pos: 'n.', cn: '资源', freq: '高', ex: 'Natural resources.' },
+  { w: 'respond', ph: '/rɪˈspɒnd/', pos: 'v.', cn: '回应', freq: '高', ex: 'Respond quickly.' },
+  { w: 'restore', ph: '/rɪˈstɔː/', pos: 'v.', cn: '恢复；修复', freq: '低', ex: 'Restore confidence.' },
+  { w: 'restrict', ph: '/rɪˈstrɪkt/', pos: 'v.', cn: '限制', freq: '中', ex: 'Restrict access.' },
+  { w: 'retain', ph: '/rɪˈteɪn/', pos: 'v.', cn: '保留；保持', freq: '低', ex: 'Retain talent.' },
+  { w: 'reveal', ph: '/rɪˈviːl/', pos: 'v.', cn: '揭示；显露', freq: '中', ex: 'Reveal the truth.' },
+  { w: 'revenue', ph: '/ˈrevənjuː/', pos: 'n.', cn: '收入；税收', freq: '低', ex: 'Tax revenue.' },
+  { w: 'reverse', ph: '/rɪˈvɜːs/', pos: 'v./adj.', cn: '反转；相反的', freq: '中', ex: 'Reverse the trend.' },
+  { w: 'reward', ph: '/rɪˈwɔːd/', pos: 'n./v.', cn: '奖励', freq: '高', ex: 'A worthy reward.' },
+  { w: 'rigid', ph: '/ˈrɪdʒɪd/', pos: 'adj.', cn: '僵硬的；严格的', freq: '低', ex: 'Rigid rules.' },
+  { w: 'robust', ph: '/rəʊˈbʌst/', pos: 'adj.', cn: '强健的；稳健的', freq: '低', ex: 'A robust system.' },
+  { w: 'route', ph: '/ruːt/', pos: 'n.', cn: '路线', freq: '中', ex: 'A safe route.' },
+  { w: 'safeguard', ph: '/ˈseɪfɡɑːd/', pos: 'v./n.', cn: '保护；保障', freq: '低', ex: 'Safeguard rights.' },
+  { w: 'salary', ph: '/ˈsæləri/', pos: 'n.', cn: '薪水', freq: '中', ex: 'Monthly salary.' },
+  { w: 'scale', ph: '/skeɪl/', pos: 'n./v.', cn: '规模；比例', freq: '中', ex: 'On a large scale.' },
+  { w: 'scenario', ph: '/səˈnɑːriəʊ/', pos: 'n.', cn: '情景；剧本', freq: '低', ex: 'A worst-case scenario.' },
+  { w: 'scatter', ph: '/ˈskætə/', pos: 'v.', cn: '散开；散布', freq: '低', ex: 'Scatter seeds.' },
+  { w: 'scheme', ph: '/skiːm/', pos: 'n.', cn: '计划；方案', freq: '低', ex: 'A training scheme.' },
+  { w: 'scope', ph: '/skəʊp/', pos: 'n.', cn: '范围', freq: '中', ex: 'Beyond the scope.' },
+  { w: 'secure', ph: '/sɪˈkjʊə/', pos: 'adj./v.', cn: '安全的；获得', freq: '高', ex: 'Secure a job.' },
+  { w: 'seek', ph: '/siːk/', pos: 'v.', cn: '寻求', freq: '高', ex: 'Seek help.' },
+  { w: 'segment', ph: '/ˈseɡmənt/', pos: 'n.', cn: '部分；片段', freq: '低', ex: 'A market segment.' },
+  { w: 'select', ph: '/sɪˈlekt/', pos: 'v.', cn: '选择', freq: '高', ex: 'Select a topic.' },
+  { w: 'sensible', ph: '/ˈsensəbl/', pos: 'adj.', cn: '明智的', freq: '中', ex: 'A sensible choice.' },
+  { w: 'sequence', ph: '/ˈsiːkwəns/', pos: 'n.', cn: '顺序；序列', freq: '低', ex: 'In sequence.' },
+  { w: 'series', ph: '/ˈsɪəriːz/', pos: 'n.', cn: '系列', freq: '中', ex: 'A series of events.' },
+  { w: 'settle', ph: '/ˈsetl/', pos: 'v.', cn: '解决；定居', freq: '中', ex: 'Settle a dispute.' },
+  { w: 'severe', ph: '/sɪˈvɪə/', pos: 'adj.', cn: '严重的；严厉的', freq: '中', ex: 'Severe weather.' },
+  { w: 'shift', ph: '/ʃɪft/', pos: 'v./n.', cn: '转移；轮班', freq: '中', ex: 'Shift focus.' },
   { w: 'significant', ph: '/sɪɡˈnɪfɪkənt/', pos: 'adj.', cn: '重大的；显著的', freq: '高', ex: 'A significant difference.' },
+  { w: 'similar', ph: '/ˈsɪmələ/', pos: 'adj.', cn: '相似的', freq: '高', ex: 'Similar ideas.' },
+  { w: 'simulate', ph: '/ˈsɪmjuleɪt/', pos: 'v.', cn: '模拟', freq: '低', ex: 'Simulate an exam.' },
+  { w: 'site', ph: '/saɪt/', pos: 'n.', cn: '地点；网站', freq: '中', ex: 'A construction site.' },
+  { w: 'situation', ph: '/ˌsɪtʃuˈeɪʃn/', pos: 'n.', cn: '情况；形势', freq: '高', ex: 'A difficult situation.' },
+  { w: 'skill', ph: '/skɪl/', pos: 'n.', cn: '技能', freq: '高', ex: 'Practical skills.' },
+  { w: 'social', ph: '/ˈsəʊʃl/', pos: 'adj.', cn: '社会的；社交的', freq: '高', ex: 'Social media.' },
+  { w: 'society', ph: '/səˈsaɪəti/', pos: 'n.', cn: '社会；协会', freq: '高', ex: 'A civilized society.' },
+  { w: 'solar', ph: '/ˈsəʊlə/', pos: 'adj.', cn: '太阳的', freq: '低', ex: 'Solar energy.' },
+  { w: 'source', ph: '/sɔːs/', pos: 'n.', cn: '来源', freq: '高', ex: 'Reliable source.' },
+  { w: 'specific', ph: '/spəˈsɪfɪk/', pos: 'adj.', cn: '具体的；特定的', freq: '高', ex: 'Specific examples.' },
+  { w: 'specify', ph: '/ˈspesɪfaɪ/', pos: 'v.', cn: '明确说明', freq: '中', ex: 'Specify the time.' },
+  { w: 'spectrum', ph: '/ˈspektrəm/', pos: 'n.', cn: '光谱；范围', freq: '低', ex: 'A wide spectrum.' },
+  { w: 'spend', ph: '/spend/', pos: 'v.', cn: '花费；度过', freq: '高', ex: 'Spend time.' },
+  { w: 'spirit', ph: '/ˈspɪrɪt/', pos: 'n.', cn: '精神；灵魂', freq: '中', ex: 'Team spirit.' },
+  { w: 'split', ph: '/splɪt/', pos: 'v.', cn: '分裂；分开', freq: '低', ex: 'Split the task.' },
+  { w: 'sponsor', ph: '/ˈspɒnsə/', pos: 'n./v.', cn: '赞助者；赞助', freq: '低', ex: 'Event sponsor.' },
+  { w: 'stable', ph: '/ˈsteɪbl/', pos: 'adj.', cn: '稳定的', freq: '中', ex: 'A stable job.' },
+  { w: 'statistic', ph: '/stəˈtɪstɪk/', pos: 'n.', cn: '统计；数据', freq: '中', ex: 'Latest statistics.' },
+  { w: 'status', ph: '/ˈsteɪtəs/', pos: 'n.', cn: '地位；状态', freq: '高', ex: 'Social status.' },
+  { w: 'strain', ph: '/streɪn/', pos: 'n./v.', cn: '张力；拉紧', freq: '低', ex: 'Under strain.' },
+  { w: 'strategy', ph: '/ˈstrætədʒi/', pos: 'n.', cn: '策略', freq: '高', ex: 'A clear strategy.' },
+  { w: 'stress', ph: '/stres/', pos: 'n./v.', cn: '压力；强调', freq: '高', ex: 'Under stress.' },
+  { w: 'strict', ph: '/strɪkt/', pos: 'adj.', cn: '严格的', freq: '中', ex: 'Strict rules.' },
+  { w: 'structure', ph: '/ˈstrʌktʃə/', pos: 'n./v.', cn: '结构；构建', freq: '高', ex: 'Clear structure.' },
+  { w: 'struggle', ph: '/ˈstrʌɡl/', pos: 'v./n.', cn: '挣扎；奋斗', freq: '中', ex: 'Struggle for life.' },
+  { w: 'submit', ph: '/səbˈmɪt/', pos: 'v.', cn: '提交；屈服', freq: '中', ex: 'Submit a paper.' },
+  { w: 'subsequent', ph: '/ˈsʌbsɪkwənt/', pos: 'adj.', cn: '随后的', freq: '低', ex: 'Subsequent events.' },
+  { w: 'subsidy', ph: '/ˈsʌbsədi/', pos: 'n.', cn: '补贴', freq: '低', ex: 'Government subsidy.' },
+  { w: 'substance', ph: '/ˈsʌbstəns/', pos: 'n.', cn: '物质；实质', freq: '低', ex: 'A harmful substance.' },
+  { w: 'subtle', ph: '/ˈsʌtl/', pos: 'adj.', cn: '微妙的', freq: '低', ex: 'A subtle difference.' },
+  { w: 'succeed', ph: '/səkˈsiːd/', pos: 'v.', cn: '成功', freq: '高', ex: 'Succeed in exams.' },
   { w: 'sufficient', ph: '/səˈfɪʃnt/', pos: 'adj.', cn: '足够的', freq: '中', ex: 'Sufficient evidence.' },
-  { w: 'superficial', ph: '/ˌsuːpəˈfɪʃl/', pos: 'adj.', cn: '表面的；肤浅的', freq: '低', ex: 'A superficial analysis.' },
-  { w: 'thorough', ph: '/ˈθʌrə/', pos: 'adj.', cn: '彻底的', freq: '中', ex: 'A thorough check.' },
-  { w: 'tremendous', ph: '/trəˈmendəs/', pos: 'adj.', cn: '巨大的；极好的', freq: '中', ex: 'A tremendous effort.' },
-  { w: 'ultimate', ph: '/ˈʌltɪmət/', pos: 'adj.', cn: '最终的；根本的', freq: '高', ex: 'The ultimate goal.' },
+  { w: 'suggest', ph: '/səˈdʒest/', pos: 'v.', cn: '建议；暗示', freq: '高', ex: 'Suggest a plan.' },
+  { w: 'summary', ph: '/ˈsʌməri/', pos: 'n.', cn: '摘要', freq: '中', ex: 'In summary.' },
+  { w: 'supplement', ph: '/ˈsʌplɪmənt/', pos: 'n./v.', cn: '补充', freq: '低', ex: 'A dietary supplement.' },
+  { w: 'supply', ph: '/səˈplaɪ/', pos: 'v./n.', cn: '供应', freq: '中', ex: 'Supply and demand.' },
+  { w: 'suppose', ph: '/səˈpəʊz/', pos: 'v.', cn: '假设；认为', freq: '高', ex: 'Suppose it rains.' },
+  { w: 'surge', ph: '/sɜːdʒ/', pos: 'n./v.', cn: '激增', freq: '低', ex: 'A surge in price.' },
+  { w: 'survey', ph: '/ˈsɜːveɪ/', pos: 'n./v.', cn: '调查', freq: '中', ex: 'A customer survey.' },
+  { w: 'survive', ph: '/səˈvaɪv/', pos: 'v.', cn: '幸存；存活', freq: '高', ex: 'Survive the crisis.' },
+  { w: 'sustain', ph: '/səˈsteɪn/', pos: 'v.', cn: '维持；支撑', freq: '中', ex: 'Sustain growth.' },
+  { w: 'swallow', ph: '/ˈswɒləʊ/', pos: 'v.', cn: '吞下', freq: '低', ex: 'Swallow pride.' },
+  { w: 'switch', ph: '/swɪtʃ/', pos: 'v./n.', cn: '转换；开关', freq: '中', ex: 'Switch jobs.' },
+  { w: 'symbol', ph: '/ˈsɪmbl/', pos: 'n.', cn: '象征；符号', freq: '中', ex: 'A symbol of peace.' },
+  { w: 'sympathy', ph: '/ˈsɪmpəθi/', pos: 'n.', cn: '同情；共鸣', freq: '低', ex: 'Express sympathy.' },
+  { w: 'tackle', ph: '/ˈtækl/', pos: 'v.', cn: '处理； tackling', freq: '中', ex: 'Tackle the issue.' },
+  { w: 'target', ph: '/ˈtɑːɡɪt/', pos: 'n./v.', cn: '目标；瞄准', freq: '高', ex: 'Hit the target.' },
+  { w: 'task', ph: '/tɑːsk/', pos: 'n.', cn: '任务', freq: '高', ex: 'Daily tasks.' },
+  { w: 'technical', ph: '/ˈteknɪkl/', pos: 'adj.', cn: '技术的', freq: '中', ex: 'Technical skills.' },
+  { w: 'technique', ph: '/tekˈniːk/', pos: 'n.', cn: '技巧；技术', freq: '中', ex: 'A new technique.' },
+  { w: 'technology', ph: '/tekˈnɒlədʒi/', pos: 'n.', cn: '科技', freq: '高', ex: 'Modern technology.' },
+  { w: 'temporary', ph: '/ˈtemprəri/', pos: 'adj.', cn: '临时的', freq: '中', ex: 'A temporary job.' },
+  { w: 'tend', ph: '/tend/', pos: 'v.', cn: '倾向于', freq: '高', ex: 'Tend to agree.' },
+  { w: 'term', ph: '/tɜːm/', pos: 'n.', cn: '学期；术语', freq: '高', ex: 'In the long term.' },
+  { w: 'territory', ph: '/ˈterətri/', pos: 'n.', cn: '领土；领域', freq: '低', ex: 'Foreign territory.' },
+  { w: 'threat', ph: '/θret/', pos: 'n.', cn: '威胁', freq: '中', ex: 'A real threat.' },
+  { w: 'thus', ph: '/ðʌs/', pos: 'adv.', cn: '因此', freq: '高', ex: 'Thus we win.' },
+  { w: 'tie', ph: '/taɪ/', pos: 'v./n.', cn: '系；联系', freq: '中', ex: 'Tie the knot.' },
+  { w: 'timeline', ph: '/ˈtaɪmlaɪn/', pos: 'n.', cn: '时间线', freq: '低', ex: 'A project timeline.' },
+  { w: 'tiny', ph: '/ˈtaɪni/', pos: 'adj.', cn: '微小的', freq: '低', ex: 'A tiny room.' },
+  { w: 'tissue', ph: '/ˈtɪʃuː/', pos: 'n.', cn: '组织；纸巾', freq: '低', ex: 'Body tissue.' },
+  { w: 'tone', ph: '/təʊn/', pos: 'n.', cn: '语气；音调', freq: '中', ex: 'A polite tone.' },
+  { w: 'topic', ph: '/ˈtɒpɪk/', pos: 'n.', cn: '话题', freq: '高', ex: 'Hot topic.' },
+  { w: 'trace', ph: '/treɪs/', pos: 'v./n.', cn: '追踪；痕迹', freq: '中', ex: 'Trace the source.' },
+  { w: 'track', ph: '/træk/', pos: 'n./v.', cn: '轨道；追踪', freq: '高', ex: 'Keep track.' },
+  { w: 'trade', ph: '/treɪd/', pos: 'n./v.', cn: '贸易；交易', freq: '中', ex: 'International trade.' },
+  { w: 'tradition', ph: '/trəˈdɪʃn/', pos: 'n.', cn: '传统', freq: '中', ex: 'Cultural tradition.' },
+  { w: 'traffic', ph: '/ˈtræfɪk/', pos: 'n.', cn: '交通；流量', freq: '中', ex: 'Heavy traffic.' },
+  { w: 'trail', ph: '/treɪl/', pos: 'n.', cn: '小径；踪迹', freq: '低', ex: 'A mountain trail.' },
+  { w: 'train', ph: '/treɪn/', pos: 'v./n.', cn: '训练；火车', freq: '高', ex: 'Train hard.' },
+  { w: 'transfer', ph: '/trænsˈfɜː/', pos: 'v.', cn: '转移；调动', freq: '中', ex: 'Transfer money.' },
+  { w: 'transform', ph: '/trænsˈfɔːm/', pos: 'v.', cn: '改变；转化', freq: '高', ex: 'Transform life.' },
+  { w: 'transient', ph: '/ˈtrænziənt/', pos: 'adj.', cn: '短暂的', freq: '低', ex: 'Transient joy.' },
+  { w: 'transmit', ph: '/trænsˈmɪt/', pos: 'v.', cn: '传播；传送', freq: '中', ex: 'Transmit a signal.' },
+  { w: 'transparent', ph: '/trænsˈpærənt/', pos: 'adj.', cn: '透明的', freq: '低', ex: 'Transparent rules.' },
+  { w: 'transport', ph: '/trænsˈpɔːt/', pos: 'n./v.', cn: '运输', freq: '中', ex: 'Public transport.' },
+  { w: 'trap', ph: '/træp/', pos: 'n./v.', cn: '陷阱；困住', freq: '中', ex: 'Fall into a trap.' },
+  { w: 'treat', ph: '/triːt/', pos: 'v.', cn: '对待；治疗', freq: '高', ex: 'Treat fairly.' },
+  { w: 'trend', ph: '/trend/', pos: 'n.', cn: '趋势', freq: '高', ex: 'A growing trend.' },
+  { w: 'trial', ph: '/ˈtraɪəl/', pos: 'n.', cn: '审判；试验', freq: '中', ex: 'A clinical trial.' },
+  { w: 'trick', ph: '/trɪk/', pos: 'n./v.', cn: '诡计；戏弄', freq: '中', ex: 'A clever trick.' },
+  { w: 'trigger', ph: '/ˈtrɪɡə/', pos: 'v./n.', cn: '触发', freq: '低', ex: 'Trigger a reaction.' },
+  { w: 'tropical', ph: '/ˈtrɒpɪkl/', pos: 'adj.', cn: '热带的', freq: '低', ex: 'Tropical climate.' },
+  { w: 'tuition', ph: '/tjuˈɪʃn/', pos: 'n.', cn: '学费', freq: '中', ex: 'High tuition.' },
+  { w: 'twist', ph: '/twɪst/', pos: 'v./n.', cn: '扭转；转折', freq: '低', ex: 'A plot twist.' },
+  { w: 'ultimate', ph: '/ˈʌltɪmət/', pos: 'adj.', cn: '最终的', freq: '高', ex: 'The ultimate goal.' },
+  { w: 'undergo', ph: '/ˌʌndəˈɡəʊ/', pos: 'v.', cn: '经历；承受', freq: '低', ex: 'Undergo surgery.' },
+  { w: 'uniform', ph: '/ˈjuːnɪfɔːm/', pos: 'n./adj.', cn: '制服；一致的', freq: '中', ex: 'School uniform.' },
   { w: 'unique', ph: '/juˈniːk/', pos: 'adj.', cn: '独特的', freq: '高', ex: 'A unique style.' },
+  { w: 'universal', ph: '/ˌjuːnɪˈvɜːsl/', pos: 'adj.', cn: '普遍的', freq: '中', ex: 'Universal law.' },
+  { w: 'unlike', ph: '/ʌnˈlaɪk/', pos: 'prep.', cn: '不像', freq: '中', ex: 'Unlike last year.' },
+  { w: 'update', ph: '/ˌʌpˈdeɪt/', pos: 'v./n.', cn: '更新', freq: '高', ex: 'Update the app.' },
+  { w: 'utility', ph: '/juˈtɪləti/', pos: 'n.', cn: '效用；公用事业', freq: '低', ex: 'Public utility.' },
+  { w: 'utilize', ph: '/ˈjuːtəlaɪz/', pos: 'v.', cn: '利用', freq: '中', ex: 'Utilize resources.' },
   { w: 'vague', ph: '/veɪɡ/', pos: 'adj.', cn: '模糊的', freq: '中', ex: 'A vague answer.' },
-  { w: 'valid', ph: '/ˈvælɪd/', pos: 'adj.', cn: '有效的；合理的', freq: '高', ex: 'A valid passport.' },
+  { w: 'valid', ph: '/ˈvælɪd/', pos: 'adj.', cn: '有效的；合理的', freq: '高', ex: 'A valid reason.' },
   { w: 'vanish', ph: '/ˈvænɪʃ/', pos: 'v.', cn: '消失', freq: '低', ex: 'The fog vanished.' },
-  { w: 'vivid', ph: '/ˈvɪvɪd/', pos: 'adj.', cn: '生动的；鲜明的', freq: '中', ex: 'A vivid memory.' }
+  { w: 'variable', ph: '/ˈveəriəbl/', pos: 'n./adj.', cn: '变量；可变的', freq: '低', ex: 'A key variable.' },
+  { w: 'vary', ph: '/ˈveəri/', pos: 'v.', cn: '变化；不同', freq: '高', ex: 'Opinions vary.' },
+  { w: 'vast', ph: '/vɑːst/', pos: 'adj.', cn: '广阔的；巨大的', freq: '中', ex: 'A vast area.' },
+  { w: 'vehicle', ph: '/ˈviːəkl/', pos: 'n.', cn: '车辆；工具', freq: '中', ex: 'A new vehicle.' },
+  { w: 'venture', ph: '/ˈventʃə/', pos: 'n./v.', cn: '冒险；企业', freq: '低', ex: 'A new venture.' },
+  { w: 'version', ph: '/ˈvɜːʃn/', pos: 'n.', cn: '版本', freq: '中', ex: 'The latest version.' },
+  { w: 'victim', ph: '/ˈvɪktɪm/', pos: 'n.', cn: '受害者', freq: '中', ex: 'A flood victim.' },
+  { w: 'view', ph: '/vjuː/', pos: 'n./v.', cn: '观点；观看', freq: '高', ex: 'In my view.' },
+  { w: 'virtual', ph: '/ˈvɜːtʃuəl/', pos: 'adj.', cn: '虚拟的', freq: '中', ex: 'Virtual reality.' },
+  { w: 'visible', ph: '/ˈvɪzəbl/', pos: 'adj.', cn: '可见的', freq: '中', ex: 'Visible progress.' },
+  { w: 'vision', ph: '/ˈvɪʒn/', pos: 'n.', cn: '视力；愿景', freq: '中', ex: 'A clear vision.' },
+  { w: 'visual', ph: '/ˈvɪʒuəl/', pos: 'adj.', cn: '视觉的', freq: '中', ex: 'Visual aids.' },
+  { w: 'vital', ph: '/ˈvaɪtl/', pos: 'adj.', cn: '至关重要的', freq: '高', ex: 'Vital importance.' },
+  { w: 'volume', ph: '/ˈvɒljuːm/', pos: 'n.', cn: '量；体积', freq: '中', ex: 'Sales volume.' },
+  { w: 'voluntary', ph: '/ˈvɒləntri/', pos: 'adj.', cn: '志愿的；自愿的', freq: '低', ex: 'Voluntary work.' },
+  { w: 'vote', ph: '/vəʊt/', pos: 'v./n.', cn: '投票', freq: '中', ex: 'Vote for him.' },
+  { w: 'wage', ph: '/weɪdʒ/', pos: 'n.', cn: '工资', freq: '中', ex: 'Minimum wage.' },
+  { w: 'wander', ph: '/ˈwɒndə/', pos: 'v.', cn: '徘徊；漫步', freq: '低', ex: 'Wander in the park.' },
+  { w: 'wealth', ph: '/welθ/', pos: 'n.', cn: '财富', freq: '中', ex: 'Health is wealth.' },
+  { w: 'weapon', ph: '/ˈwepən/', pos: 'n.', cn: '武器', freq: '中', ex: 'A nuclear weapon.' },
+  { w: 'wisdom', ph: '/ˈwɪzdəm/', pos: 'n.', cn: '智慧', freq: '中', ex: 'Ancient wisdom.' },
+  { w: 'withdraw', ph: '/wɪðˈdrɔː/', pos: 'v.', cn: '撤回；取款', freq: '中', ex: 'Withdraw money.' },
+  { w: 'witness', ph: '/ˈwɪtnəs/', pos: 'v./n.', cn: '目睹；证人', freq: '中', ex: 'Witness a change.' },
+  { w: 'worship', ph: '/ˈwɜːʃɪp/', pos: 'v./n.', cn: '崇拜', freq: '低', ex: 'Worship heroes.' },
+  { w: 'yield', ph: '/jiːld/', pos: 'v./n.', cn: '产出；屈服', freq: '中', ex: 'Yield results.' },
+  { w: 'youth', ph: '/juːθ/', pos: 'n.', cn: '青春；青年', freq: '中', ex: 'In my youth.' }
 ];
 const VOCAB_BATCH = 10;
 let vocabState = store.get('luo_vocab_state', { batch: 0, learned: [] });
@@ -178,6 +693,7 @@ function toggleWordLearned(idx) {
   const i = vocabState.learned.indexOf(idx);
   if (i >= 0) vocabState.learned.splice(i, 1); else vocabState.learned.push(idx);
   store.set('luo_vocab_state', vocabState);
+  addPoints(i >= 0 ? -1 : 1, true);
   renderVocab();
 }
 function completeVocabBatch() {
@@ -188,7 +704,7 @@ function completeVocabBatch() {
     if (idx < cetWords.length && !vocabState.learned.includes(idx)) vocabState.learned.push(idx);
   }
   vocabState.batch = (vocabState.batch + 1) % batches.length;
-  totalPoints += 5; store.set('luo_total_points', totalPoints);
+  addPoints(5, true);
   store.set('luo_vocab_state', vocabState);
   toast('✅ 本组完成 +5 积分，已换下一批');
   renderVocab();
@@ -223,6 +739,7 @@ function answerQuiz(btn, qi, oi) {
   });
   const fb = document.getElementById('qfb-' + qi);
   fb.innerHTML = oi === ans ? '<span class="text-green">✓ 答对</span>' : '<span class="text-orange">✗ 正确答案已标绿</span>';
+  if (oi === ans) addPoints(1, false);
   const score = document.getElementById('quizScore');
   const total = document.querySelectorAll('.quiz-q').length;
   const right = document.querySelectorAll('.quiz-opt.correct').length;
@@ -242,7 +759,16 @@ const kaogongBank = [
   { type: '常识·时政', q: '2026 下半年公考通常包含几次主要机会？', opts: ['1 次', '3 次', '5 次', '越多越好无定数'], ans: 2, exp: '常见梳理：国考、省考联考、选调、事业单位、三支一扶等，下半年常被归纳约 5 次机会。' },
   { type: '行测·言语', q: '「这项政策＿＿了民生关切」应填？', opts: ['回应', '反映', '呼应', '均可'], ans: 3, exp: '「回应/反映/呼应」在此语境皆可，属近义辨析题。' },
   { type: '判断·类比', q: '医生：医院 ≈ ？', opts: ['教师：学校', '司机：马路', '作家：书店', '厨师：菜场'], ans: 0, exp: '职业与主要工作场所的对应关系。' },
-  { type: '常识·法律', q: '我国民法典规定普通诉讼时效一般为？', opts: ['1 年', '2 年', '3 年', '5 年'], ans: 2, exp: '《民法典》规定普通诉讼时效为 3 年。' }
+  { type: '常识·法律', q: '我国民法典规定普通诉讼时效一般为？', opts: ['1 年', '2 年', '3 年', '5 年'], ans: 2, exp: '《民法典》规定普通诉讼时效为 3 年。' },
+  { type: '行测·言语', q: '下列词语中，与「兼容并蓄」语义最接近的是？', opts: ['独树一帜', '博采众长', '一枝独秀', '孤芳自赏'], ans: 1, exp: '「兼容并蓄」指吸收不同内容，与「博采众长」近义。' },
+  { type: '行测·资料', q: '若 A 比上年增长 20%，B 比上年增长 20%，则 A、B 合计比上年约增长？', opts: ['20%', '40%', '约20%（权重未知）', '44%'], ans: 2, exp: '合计增长率取决于各自基期权重，不能简单相加。' },
+  { type: '申论', q: '公文写作中「请示」与「报告」的主要区别是？', opts: ['都用于汇报', '请示需批复、报告不必', '报告需批复', '无区别'], ans: 1, exp: '请示是「一文一事、需上级批复」，报告用于汇报不需批复。' },
+  { type: '常识·科技', q: '我国自主研发的卫星导航系统是？', opts: ['GPS', '北斗', '伽利略', '格洛纳斯'], ans: 1, exp: '北斗卫星导航系统（BDS）是我国自主建设的全球卫星导航系统。' },
+  { type: '行测·判断', q: '「所有猫都怕水，Tom 是猫，所以 Tom 怕水」属于？', opts: ['归纳推理', '演绎推理', '类比推理', '因果推理'], ans: 1, exp: '由一般到个别，是标准的三段论演绎推理。' },
+  { type: '常识·经济', q: 'CPI 指的是？', opts: ['居民消费价格指数', '工业生产指数', '国内生产总值', '失业率'], ans: 0, exp: 'CPI（居民消费价格指数）反映一篮子消费品价格变动。' },
+  { type: '申论', q: '写对策建议时，最应避免的是？', opts: ['具体可操作', '空话套话', '结合数据', '明确责任主体'], ans: 1, exp: '对策要具体可行，空话套话是申论大忌。' },
+  { type: '行测·数量', q: '某班 40 人，会英语 25 人、会日语 18 人，都会 8 人，都不会的几人？', opts: ['5', '8', '10', '15'], ans: 0, exp: '至少会一种=25+18-8=35，都不会=40-35=5。' },
+  { type: '常识·时政', q: '2026 国考新增的考查模块通常是？', opts: ['政治理论', '体育', '美术', '音乐'], ans: 0, exp: '近年国考行测强化政治理论模块考查。' }
 ];
 function renderExamWrap() {
   if (typeof renderExam === 'function') renderExam();
@@ -285,6 +811,7 @@ function answerExam(btn, qi, oi) {
   const fb = document.getElementById('efb-' + qi);
   const exp = kaogongBank.find(k => k.ans === ans && k.q === qEl.querySelector('.quiz-word').textContent.replace(/^\[.*?\]\s*/, ''));
   fb.innerHTML = (oi === ans ? '<span class="text-green">✓ 答对</span> ' : '<span class="text-orange">✗ 看解析</span> ') + '<span class="text-sm text-muted">' + (exp ? exp.exp : '') + '</span>';
+  if (oi === ans) addPoints(1, false);
 }
 
 /* ===================================================================
@@ -328,7 +855,17 @@ const novelCraft = [
   { cat: '共鸣', title: '真实情绪颗粒', body: '写「具体的委屈」而非「她很难过」。用动作/感官替代形容词：攥紧衣角、喉咙发紧。', ex: '暗恋共鸣点：偷偷存对方语音、假装偶遇。' },
   { cat: '共鸣', title: '代入感来自细节', body: '共情建立在共同经验：食堂、晚自习、未发出的消息。越具体越普适。', ex: '「那条打了又删的消息，最后变成了『在吗』。」' },
   { cat: '共鸣', title: '留白与心理活动', body: '不写尽、留呼吸。心理活动用「短句+破折号」模拟真实思维跳跃，胜过长篇独白。', ex: '「他来了。——又走了。——可我等了一晚上。」' },
-  { cat: '共鸣', title: '人物对话即性格', body: '让对话带「潜台词」：说一半、反着说、用口头禅。对话推动关系而非交代信息。', ex: '「谁等你了。」（其实从三点等到六点）' }
+  { cat: '共鸣', title: '人物对话即性格', body: '让对话带「潜台词」：说一半、反着说、用口头禅。对话推动关系而非交代信息。', ex: '「谁等你了。」（其实从三点等到六点）' },
+  { cat: '逻辑', title: '欲望驱动一切', body: '给主角一个「非得到不可」的欲望，再设阻碍。没有欲望就没有故事，没有阻碍就没有张力。', ex: '她想考上本校研究生，却卡在英语单科线。' },
+  { cat: '逻辑', title: '信息差制造悬念', body: '读者知道的比主角多（或反之），紧张感就来了。善用「上帝视角限知」。', ex: '读者早知道信是假的，主角还当真——揪心。' },
+  { cat: '钩子', title: '章节开头也重要', body: '不只是结尾，开头也要有钩子：冲突已发生、或抛出悬念，读者才愿意读下去。', ex: '「我暗恋的人，今天当着全班念了我们的聊天记录。」' },
+  { cat: '钩子', title: '金句前置', body: '把最戳人的一句话放在开篇或章末，利于截图传播与读者收藏。', ex: '「有些喜欢，是说不出口的、却比告白更重的东西。」' },
+  { cat: '文案', title: '反差人设一句话', body: '用「A 属性 × B 属性」制造张力，人设一眼立住。', ex: '「校霸却怕黑 / 学霸却社恐 / 浪子却专一」。' },
+  { cat: '文案', title: '文案三要素', body: '① 给身份代入 ② 给情绪价值 ③ 给点击理由。三者齐备转化最高。', ex: '「社恐女生的暗恋，每个女孩都懂。」' },
+  { cat: '节奏', title: '爽点前置', body: '开篇 1-3 章内给出第一个小爽点/小糖点，留住读者再慢慢铺大线。', ex: '先让主角打脸一次小反派，再展开身世。' },
+  { cat: '节奏', title: '情绪曲线', body: '一章之内也要有起承转合：平静→波动→小高潮→留钩子。避免平铺直叙。', ex: '日常→误会的苗头→爆发→误会加深的钩子。' },
+  { cat: '共鸣', title: '共同记忆点', body: '高考、晚自习、宿舍、未发出的消息——越具体的共同经验越有代入感。', ex: '「那条打了又删的消息，最后变成了『在吗』。」' },
+  { cat: '共鸣', title: '遗憾与错过', body: '青春文最痛的是「差一点」：差一点说出口、差一点在一起。把「差一点」写到极致。', ex: '「如果那天我没假装无所谓，现在会不会不一样。」' }
 ];
 function renderNovelCraft() {
   const el = document.getElementById('novelCraftBox'); if (!el) return;
@@ -365,7 +902,16 @@ const videoScripts = [
   { cat: '追星', title: '二创 Reaction', scenario: '边看舞台边真实反应', hook: '「第一次看这段，我哭了对不起」', shots: ['播放前期待脸', '高潮处真实反应特写', '暂停解析细节'], voice: '即兴吐槽+安利', bgm: '原舞台降噪保留', caption: '#reaction #二创' },
   { cat: '旅游', title: '周末citywalk 攻略', scenario: '半天逛吃路线，适合学生党', hook: '「100 块玩转__老城」', shots: ['地图路线动画', '小吃特写+价格', '出片机位示范', '避坑提示'], voice: '口播：「第一站别去网红店」', bgm: 'city pop', caption: '#citywalk #学生党旅游' },
   { cat: '旅游', title: '旅行 vlog 模板', scenario: '通用三段式，换城市即用', hook: '「__三日，存下这份」', shots: ['出发机场/车站', '每日高光快剪', '当地美食', '结尾感悟金句'], voice: '旁白：「旅行是把日常过成诗」', bgm: '轻音乐', caption: '#旅行vlog #攻略' },
-  { cat: '旅游', title: '小众机位打卡', scenario: '同一景点拍出大片', hook: '「本地人都不知道的机位」', shots: ['普通游客照对比', '低角度/逆光示范', '调色前后', '参数标注'], voice: '教程口播', bgm: '无词电子', caption: '#摄影技巧 #出片' }
+  { cat: '旅游', title: '小众机位打卡', scenario: '同一景点拍出大片', hook: '「本地人都不知道的机位」', shots: ['普通游客照对比', '低角度/逆光示范', '调色前后', '参数标注'], voice: '教程口播', bgm: '无词电子', caption: '#摄影技巧 #出片' },
+  { cat: 'Cos', title: 'Cos 反差萌', scenario: '素颜日常 vs 角色定妆的强烈对比', hook: '「同一个人？这反差也太绝了」', shots: ['开头素颜戴眼镜啃零食', '卡点换装一镜到底', '角色定格wink', '结尾比心'], voice: '「变身前：废柴；变身后：本命」', bgm: '角色 ED 变奏（变速原创）', caption: '#Cos反差 #变身' },
+  { cat: 'Cos', title: '低成本道具 DIY', scenario: '用快递盒/扭蛋/旧衣做角色武器', hook: '「0 成本还原这把武器」', shots: ['成品展示', '材料平铺', '裁剪粘合过程快剪', '上色细节'], voice: '教程口播：「关键在喷漆打底」', bgm: 'lo-fi 轻快', caption: '#道具教程 #手工' },
+  { cat: 'Cos', title: '双人联动 Cos', scenario: '和搭子拍 CP 向互动', hook: '「我们俩就是原作本作」', shots: ['同框入场', '互动名场面复刻', '对视笑场花絮', '定格合照'], voice: '即兴对话', bgm: '角色 BGM 纯音', caption: '#联动 #CP' },
+  { cat: '追星', title: '打投数据日常', scenario: '超话签到/投票/做数据的真实记录', hook: '「为爱发电的第 N 天，数据涨了」', shots: ['早间签到截图', '投票进度条', '做数据教程', '当日成果'], voice: '流水账：「今天也把榜守住」', bgm: '轻快', caption: '#打投 #做数据' },
+  { cat: '追星', title: '线下应援记录', scenario: '接机/灯牌/演唱会外场', hook: '「这一次，就站在你眼前」', shots: ['灯牌亮起特写', '人群reaction', '远远一眼live', '返程疲惫但满足'], voice: '旁白：「值得」', bgm: '本人 vocal', caption: '#线下应援 #演唱会' },
+  { cat: '追星', title: '爱豆语录混剪', scenario: '把采访金句串成「治愈向」', hook: '「这几句话，陪我熬过期末」', shots: ['黑底白字金句卡', '对应舞台/笑容', '粉丝视角', '结尾感谢'], voice: '文案：「谢谢你成为光」', bgm: '钢琴纯音', caption: '#语录 #治愈' },
+  { cat: '旅游', title: '特种兵 24h 打卡', scenario: '极限时间多地刷景点', hook: '「24 小时，我刷了 8 个地标」', shots: ['凌晨车站', '景点快剪接龙', '美食塞满', '深夜回程'], voice: '口播：「腿已废，但值」', bgm: 'city pop 快节奏', caption: '#特种兵旅游 #打卡' },
+  { cat: '旅游', title: '小众美食探店', scenario: '钻巷子找本地人小店', hook: '「游客找不到，本地人排队」', shots: ['巷口定位', '老板现做特写', '第一口反应', '人均价标注'], voice: '口播：「认准这家」', bgm: '轻快', caption: '#美食探店 #本地' },
+  { cat: '旅游', title: '一个人旅行 vlog', scenario: '独行也精彩的自我对话', hook: '「一个人，也能把日子过成诗」', shots: ['行李箱出发', '独自看海/城', '自拍杆延时', '夜记手账'], voice: '旁白：「独处是和自己约会」', bgm: '民谣', caption: '#一个人旅行 #独行' }
 ];
 function renderVideoScr() {
   const el = document.getElementById('videoScrBox'); if (!el) return;
@@ -406,7 +952,13 @@ const editTasks = [
   { id: 'et_text', name: '字幕/花字', cat: '包装', desc: '做一组动态花字标题', tip: '花字别挡人脸，出现/消失带小动效。' },
   { id: 'et_audio', name: '音频处理', cat: '声音', desc: '降噪+人声增强+背景乐音量平衡', tip: '人声 -6dB 左右，BGM -18dB 不抢戏。' },
   { id: 'et_frame', name: '构图练习', cat: '构图', desc: '用三分法/引导线重拍 3 张', tip: '手机开网格线，主体放交叉点。' },
-  { id: 'et_story', name: '叙事结构', cat: '结构', desc: '用「开头钩子+3个要点+金句结尾」剪 30 秒', tip: '先写脚本再剪，不沉迷素材。' }
+  { id: 'et_story', name: '叙事结构', cat: '结构', desc: '用「开头钩子+3个要点+金句结尾」剪 30 秒', tip: '先写脚本再剪，不沉迷素材。' },
+  { id: 'et_mask', name: '蒙版/抠图', cat: '特效', desc: '用蒙版把人物从背景分离做合成', tip: '用钢笔/色度建蒙版，边缘加 2px 羽化更自然。' },
+  { id: 'et_stab', name: '防抖/稳定', cat: '画面', desc: '用 Warp/陀螺仪稳定抖动画面', tip: '先裁剪 10% 余量再稳定，避免黑边。' },
+  { id: 'et_keyframe', name: '关键帧动画', cat: '动效', desc: '给文字/贴纸做位移缩放关键帧', tip: '缓入缓出比匀速更舒服。' },
+  { id: 'et_green', name: '绿幕合成', cat: '特效', desc: '实拍人物叠加虚拟背景', tip: '打光均匀、人物离幕 1m 以上，抠得更干净。' },
+  { id: 'et_jcut', name: 'J/L 切', cat: '转场', desc: '声音先入/画面后入的进阶转场', tip: 'L-cut：画面切了声音还在，叙事更顺。' },
+  { id: 'et_sub', name: '字幕/多语', cat: '包装', desc: '做可关闭的双语字幕条', tip: '字幕在安全区下 1/10，别压到关键画面。' }
 ];
 function renderEditCheck() {
   const el = document.getElementById('editCheckBox'); if (!el) return;
@@ -454,7 +1006,7 @@ function finishEditDay() {
   streak = (store.get('luo_edit_last', '') === yk) ? streak + 1 : 1;
   store.set('luo_edit_streak', streak);
   store.set('luo_edit_last', tk);
-  totalPoints += 10; store.set('luo_total_points', totalPoints);
+  addPoints(10, true);
   toast('🎬 剪辑打卡完成 +10 积分，连续 ' + streak + ' 天');
   renderEditCheck();
 }
@@ -478,7 +1030,18 @@ const goodKeywords = [
   { kw: '考研 咖啡 提神', cat: '饮品', note: '挂耳/冷萃' },
   { kw: '电脑 支架 升降', cat: '数码', note: '护颈' },
   { kw: '平价 卫衣 oversize', cat: '穿搭', note: '叠穿' },
-  { kw: '护腕 健身 举重', cat: '运动', note: '护具' }
+  { kw: '护腕 健身 举重', cat: '运动', note: '护具' },
+  { kw: '平价 蓝牙耳机 降噪', cat: '数码', note: '自习/通勤' },
+  { kw: '宿舍 床帘 遮光', cat: '宿舍', note: '隐私/助眠' },
+  { kw: '考研 番茄钟 计时器', cat: '学习', note: '专注' },
+  { kw: '桌面 收纳 洞洞板', cat: '宿舍', note: '走线/文具' },
+  { kw: '平价 香水 小样', cat: '美妆', note: '先试后买' },
+  { kw: '瑜伽垫 加厚 防滑', cat: '运动', note: '居家乡健' },
+  { kw: '学生 电脑包 防摔', cat: '数码', note: '上课通勤' },
+  { kw: '拍立得 相纸 平替', cat: '拍摄', note: '追星/手账' },
+  { kw: '平价 保温杯 大容量', cat: '生活', note: '上课/图书馆' },
+  { kw: '露营 折叠桌 便携', cat: '户外', note: '轻量化' },
+  { kw: '平价 机械键盘 客制化', cat: '数码', note: '手感/性价比' }
 ];
 function renderGoods() {
   const el = document.getElementById('goodsBox'); if (!el) return;
@@ -532,7 +1095,8 @@ function addGood() {
     note: (document.getElementById('gNote') || {}).value, date: fmtDate()
   });
   store.set('luo_goods', mine);
-  toast('已记录好物');
+  addPoints(2, true);
+  toast('已记录好物 +2');
   renderGoods();
 }
 function delGood(i) { const m = store.get('luo_goods', []); m.splice(i, 1); store.set('luo_goods', m); renderGoods(); }
@@ -545,6 +1109,7 @@ function countNotes() {
   const ids = ['daily', 'review', 'english', 'exam', 'medical', 'inspiration', 'viral', 'edit', 'recruit', 'fitness', 'finance', 'novel', 'image', 'books', 'drawing', 'guitar', 'kitchen', 'media', 'travel', 'office', 'eq', 'ai', 'jjwxc', 'meme', 'mine', 'genius', 'material', 'vocab', 'novelcraft', 'videoscr', 'editcheck', 'goods', 'rewards', 'accounting', 'film', 'dailyreview', 'seasonaldish', 'booklearn'];
   return ids.reduce((s, id) => s + getCount('luo_notes_' + id), 0);
 }
+const REALM_ICONS = ['🌱','🍃','🪨','💡','🌿','🔮','👶','🌌','🧠','🤝','🕳️','📜','⚡','⛰️','🌟','🛡️','☯️','♾️','👑'];
 function renderRewards() {
   const el = document.getElementById('rewardsBox'); if (!el) return;
   const pts = totalPoints;
@@ -553,21 +1118,34 @@ function renderRewards() {
   const vocabLearned = (store.get('luo_vocab_state', { learned: [] }).learned || []).length;
   const editStreak = store.get('luo_edit_streak', 0);
   const gold = getGolden().length;
+  const fly = flyDaysLeft();
+  // 19 重境界阶梯
+  const ladder = LEVELS.map((L, i) => {
+    const reached = pts >= L.need;
+    const isCur = (i + 1) === lv.lv;
+    return `<div class="realm-step ${reached ? 'reached' : ''} ${isCur ? 'cur' : ''}">
+      <div class="realm-dot">${reached ? REALM_ICONS[i] : (i + 1)}</div>
+      <div class="realm-name">${L.name}</div>
+      <div class="realm-sub">${L.sub}</div>
+      <div class="realm-need">${L.need} 分</div>
+    </div>`;
+  }).join('');
   const badges = [
-    { n: '🌱 启程', c: pts >= 80 }, { n: '🔥 连续7天', c: streak.count >= 7 },
+    { n: '🌱 凡境启程', c: pts >= 60 }, { n: '🔥 连续7天', c: streak.count >= 7 },
     { n: '📝 复盘达人', c: getCount('luo_dailyreview') >= 5 }, { n: '🧾 记账达人', c: getCount('luo_accounting') >= 10 },
     { n: '📑 书摘收藏', c: getCount('luo_booknotes') >= 5 }, { n: '🔤 单词进阶', c: vocabLearned >= 30 },
     { n: '✂️ 剪辑打卡', c: editStreak >= 5 }, { n: '⭐ 收藏家', c: gold >= 20 },
-    { n: '🎬 创作素材', c: gold >= 10 }
+    { n: '🎬 创作素材', c: gold >= 10 }, { n: '🏆 金丹突破', c: pts >= 650 },
+    { n: '🌟 大乘在望', c: pts >= 2900 }, { n: '👑 仙帝飞升', c: pts >= 8000 }
   ];
   const owned = badges.filter(b => b.c).length;
   const stats = [
-    ['积分', pts], ['等级', lv.title], ['连续完成任务', streak.count + ' 天'],
-    ['累计笔记', countNotes() + ' 条'], ['每日复盘', getCount('luo_dailyreview')],
-    ['书摘', getCount('luo_booknotes')], ['拉片', getCount('luo_films')],
-    ['电子菜谱', getCount('luo_recipes')], ['旅行攻略', getCount('luo_travel_guides')],
-    ['好物', getCount('luo_goods')], ['记账', getCount('luo_accounting') + ' 条'],
-    ['已背单词', vocabLearned], ['收藏', gold]
+    ['积分', pts], ['境界', 'Lv' + lv.lv + ' ' + lv.title], ['距飞升之期', fly + ' 天'],
+    ['连续完成任务', streak.count + ' 天'], ['累计笔记', countNotes() + ' 条'],
+    ['每日复盘', getCount('luo_dailyreview')], ['书摘', getCount('luo_booknotes')],
+    ['拉片', getCount('luo_films')], ['电子菜谱', getCount('luo_recipes')],
+    ['旅行攻略', getCount('luo_travel_guides')], ['好物', getCount('luo_goods')],
+    ['记账', getCount('luo_accounting') + ' 条'], ['已背单词', vocabLearned], ['收藏', gold]
   ];
   // 客观评价与建议（基于真实存储数据）
   const empty = [];
@@ -580,23 +1158,29 @@ function renderRewards() {
   if (editStreak < 5) empty.push('剪辑打卡');
   const mustDone = (typeof mustDos !== 'undefined') ? mustDos.every(m => m.done) : true;
   let evalText = '';
-  if (streak.count === 0 && pts < 80) evalText = '你还在起步阶段，建议先固定「每日必打卡」习惯，积满 80 分即可解锁第一个等级。';
+  if (streak.count === 0 && pts < 80) evalText = '你尚处凡境，建议先固定「每日必打卡」习惯，积满 60 分即可踏入炼气期。';
   else if (empty.length >= 4) evalText = '主线任务在推进，但记录型模块（' + empty.join('、') + '）还是空白。建议每天挑 1 个顺手记一条，积累长期复利。';
   else if (empty.length > 0) evalText = '整体不错！还有「' + empty.join('、') + '」可以开始经营，它们是复盘与创作素材的宝库。';
   else evalText = '全模块都在运转，执行力很强。建议每周做一次跨模块复盘，把书摘/拉片/笔记串成自己的方法论。';
   let suggest = '';
   if (!mustDone) suggest = '<br><b>💡 改善建议：</b>今日「每日必打卡」尚未全部完成，先补齐运动/英语/乐器等基础项，连续天数才会计入奖励。';
   else if (empty.length) suggest = '<br><b>💡 改善建议：</b>从空白模块里选一个最低门槛的开始（如记账每天 1 笔、复盘每天 3 行），比一次性全开更可持续。';
-  else suggest = '<br><b>🎁 奖励建议：</b>各模块均衡，可给自己设一个阶段奖励（如完成连续 7 天即兑换喜欢的小物）。';
+  else suggest = '<br><b>🎁 奖励建议：</b>各模块均衡，可给自己设一个阶段奖励（如突破金丹期即兑换喜欢的小物）。';
 
   el.innerHTML = `
     <div class="reward-hero">
-      <div class="reward-lv">Lv${lv.lv} · ${lv.title}</div>
+      <div class="reward-lv">Lv${lv.lv}/${lv.total} · ${lv.title}</div>
+      <div class="reward-sub">${lv.sub}${lv.next ? ' → 下一境界「' + lv.next + '」还需 ' + (lv.nextPts - pts) + ' 分' : ' · 已臻飞升之巅 👑'}</div>
+      <div class="realm-bar"><div class="realm-bar-fill" style="width:${lv.progress}%"></div></div>
       <div class="reward-pts">${pts} 积分</div>
-      <div class="reward-streak">🔥 连续完成任务 ${streak.count} 天</div>
+      <div class="reward-streak">🔥 连续 ${streak.count} 天 · ⏳ 距飞升之期 ${fly} 天</div>
     </div>
     <div class="card mt-3">
-      <div class="font-bold mb-2">🏅 徽章（${owned}/${badges.length}）</div>
+      <div class="font-bold mb-2">🪜 19 重境界（已至 ${lv.lv}/${lv.total}）</div>
+      <div class="realm-ladder">${ladder}</div>
+    </div>
+    <div class="card mt-3">
+      <div class="font-bold mb-2">🏅 成就徽章（${owned}/${badges.length}）</div>
       <div class="badge-grid">${badges.map(b => `<div class="badge ${b.c ? 'on' : ''}">${b.n}</div>`).join('')}</div>
     </div>
     <div class="card mt-3">
@@ -619,7 +1203,7 @@ function claimDailyReward() {
   streak.count = (streak.last === yk) ? streak.count + 1 : 1;
   streak.last = tk;
   store.set('luo_streak', streak);
-  totalPoints += 30; store.set('luo_total_points', totalPoints);
+  addPoints(30, true);
   toast('🎁 +30 积分，连续 ' + streak.count + ' 天');
   renderRewards();
 }
@@ -656,7 +1240,8 @@ function addDailyReview() {
     done, improve: (document.getElementById('drImprove') || {}).value, plan: (document.getElementById('drPlan') || {}).value
   });
   store.set('luo_dailyreview', list);
-  toast('复盘已保存'); renderDailyReview();
+  addPoints(2, true);
+  toast('复盘已保存 +2'); renderDailyReview();
 }
 function delDailyReview(i) { const l = store.get('luo_dailyreview', []); l.splice(i, 1); store.set('luo_dailyreview', l); renderDailyReview(); }
 
@@ -683,7 +1268,7 @@ function addBookNote() {
   if (!text) return toast('请输入书摘内容');
   const list = store.get('luo_booknotes', []);
   list.unshift({ book: (document.getElementById('bnBook') || {}).value, text, date: fmtDate() });
-  store.set('luo_booknotes', list); toast('书摘已保存'); renderBookNotes();
+  store.set('luo_booknotes', list); addPoints(2, true); toast('书摘已保存 +2'); renderBookNotes();
 }
 function delBookNote(i) { const l = store.get('luo_booknotes', []); l.splice(i, 1); store.set('luo_booknotes', l); renderBookNotes(); }
 
@@ -711,7 +1296,7 @@ function addFilm() {
   if (!name) return toast('请输入片名');
   const list = store.get('luo_films', []);
   list.unshift({ name, scene: (document.getElementById('fmScene') || {}).value, note: (document.getElementById('fmNote') || {}).value, date: fmtDate() });
-  store.set('luo_films', list); toast('拉片已保存'); renderFilm();
+  store.set('luo_films', list); addPoints(2, true); toast('拉片已保存 +2'); renderFilm();
 }
 function delFilm(i) { const l = store.get('luo_films', []); l.splice(i, 1); store.set('luo_films', l); renderFilm(); }
 
@@ -746,7 +1331,7 @@ function addAccounting() {
   if (!amount) return toast('请输入金额');
   const list = store.get('luo_accounting', []);
   list.unshift({ amount, cat: (document.getElementById('acCat') || {}).value, note: (document.getElementById('acNote') || {}).value, date: fmtDate() });
-  store.set('luo_accounting', list); toast('已记账'); renderAccounting();
+  store.set('luo_accounting', list); addPoints(2, true); toast('已记账 +2'); renderAccounting();
 }
 function delAccounting(i) { const l = store.get('luo_accounting', []); l.splice(i, 1); store.set('luo_accounting', l); renderAccounting(); }
 
@@ -754,6 +1339,14 @@ function delAccounting(i) { const l = store.get('luo_accounting', []); l.splice(
    时令菜品（按当前季节 + 物价 + 备菜流程）
    =================================================================== */
 const seasonalDishes = {
+  '春': [
+    { name: '春笋炒肉', price: '春笋约 4 元 + 肉 8 元', prep: '1. 春笋去壳切滚刀焯水去涩；2. 肉片滑炒；3. 合炒加盐。', tip: '春笋鲜嫩，焯水去草酸更爽口。' },
+    { name: '香椿炒蛋', price: '香椿约 6 元 + 蛋 2 元', prep: '1. 香椿焯水切碎；2. 蛋液混合；3. 少油摊熟。', tip: '焯水去亚硝酸盐，别贪生。' },
+    { name: '荠菜馄饨', price: '荠菜约 3 元 + 肉 8 元', prep: '1. 荠菜焯水挤干剁碎；2. 拌肉馅包馄饨；3. 汤底紫菜虾皮。', tip: '春天限定的清香，冷冻可存。' },
+    { name: '清炒芦笋', price: '芦笋约 6 元', prep: '1. 老根去皮切段；2. 蒜末快炒；3. 少盐出锅。', tip: '焯 30 秒更翠绿。' },
+    { name: '草莓奶昔', price: '草莓约 8 元 + 奶 3 元', prep: '1. 草莓去蒂；2. 加酸奶/牛奶打匀；3. 可加燕麦。', tip: '春日颜值饮品，低糖版用无糖酸奶。' },
+    { name: '韭菜炒河虾', price: '韭菜约 3 元 + 河虾 10 元', prep: '1. 河虾过油；2. 韭菜段大火快炒；3. 料酒提鲜。', tip: '春季韭菜最嫩，别炒老。' }
+  ],
   '夏': [
     { name: '蒜蓉拍黄瓜', price: '黄瓜约 2-3 元/根', prep: '1. 黄瓜拍裂切段；2. 蒜末+生抽+醋+少许糖；3. 冷藏 10 分钟更爽口。', tip: '末伏清热解腻，5 分钟搞定。' },
     { name: '清炒空心菜', price: '空心菜约 3-4 元/把', prep: '1. 梗叶分开；2. 热油蒜末爆香先下梗；3. 再下叶大火 30 秒。', tip: '火大速度快，避免出水变黑。' },
@@ -761,6 +1354,22 @@ const seasonalDishes = {
     { name: '丝瓜虾仁汤', price: '丝瓜约 3 元 + 虾仁 8-12 元', prep: '1. 丝瓜滚刀块；2. 少油煸软；3. 加水煮开下虾仁。', tip: '夏季补蛋白又清淡。' },
     { name: '冬瓜排骨汤', price: '冬瓜约 2 元 + 排骨 15 元', prep: '1. 排骨焯水；2. 冬瓜块同炖 40 分钟；3. 少盐。', tip: '末伏「冬瓜清热」经典，可加薏米。' },
     { name: '凉拌豇豆', price: '豇豆约 4 元', prep: '1. 整根焯熟切段；2. 蒜泥+辣油+生抽；3. 拌匀。', tip: '务必煮熟，生豇豆有毒。' }
+  ],
+  '秋': [
+    { name: '板栗烧鸡', price: '板栗约 5 元 + 鸡 12 元', prep: '1. 鸡块焯水；2. 炒糖色下鸡；3. 加板栗焖 20 分钟。', tip: '秋补经典，板栗粉糯。' },
+    { name: '莲藕排骨汤', price: '莲藕约 4 元 + 排骨 12 元', prep: '1. 排骨焯水；2. 莲藕块同炖 1 小时；3. 少盐。', tip: '秋燥润肺，藕选粉藕更糯。' },
+    { name: '南瓜浓汤', price: '南瓜约 3 元 + 奶 3 元', prep: '1. 南瓜蒸熟；2. 加奶打成泥；3. 回锅少煮。', tip: '无糖版也甜，适合早餐。' },
+    { name: '糖炒栗子', price: '栗子约 8 元', prep: '1. 栗子划口；2. 加糖油小火炒；3. 壳裂即熟。', tip: '划口防爆，街头同款。' },
+    { name: '桂花糯米藕', price: '藕约 4 元 + 糯米 2 元', prep: '1. 糯米塞藕孔；2. 红糖桂花煮 1 小时；3. 切片淋汁。', tip: '秋日限定甜品，冷藏更 Q。' },
+    { name: '山药炒木耳', price: '山药约 4 元 + 木耳 3 元', prep: '1. 山药去皮切片焯水；2. 木耳泡发；3. 清炒勾薄芡。', tip: '戴手套处理山药防痒。' }
+  ],
+  '冬': [
+    { name: '萝卜炖牛腩', price: '萝卜约 2 元 + 牛腩 18 元', prep: '1. 牛腩焯水；2. 萝卜块同炖 1.5 小时；3. 调味。', tip: '冬令进补，萝卜吸满肉香。' },
+    { name: '羊肉汤', price: '羊肉约 20 元', prep: '1. 羊肉焯水；2. 加姜葱白胡椒炖 1 小时；3. 撒香菜。', tip: '驱寒暖身，去膻靠焯水+白胡椒。' },
+    { name: '白菜猪肉饺', price: '白菜约 2 元 + 肉 8 元', prep: '1. 白菜剁碎挤水拌肉；2. 包饺；3. 水开三滚。', tip: '白菜挤水防出汤。' },
+    { name: '红薯粥', price: '红薯约 3 元', prep: '1. 红薯切块；2. 大米同煮成粥；3. 可加红枣。', tip: '暖胃早餐，天然甜。' },
+    { name: '红烧羊肉', price: '羊肉约 20 元', prep: '1. 羊肉焯水；2. 炒糖色加料焖 1 小时；3. 收汁。', tip: '冬季硬菜，配饭一绝。' },
+    { name: '腊味煲仔饭', price: '腊肠约 10 元 + 米 2 元', prep: '1. 米煮到半熟铺腊肠；2. 小火焖出饭焦；3. 淋酱汁。', tip: '锅巴是灵魂，注意火候。' }
   ]
 };
 function currentSeason() {
@@ -803,7 +1412,11 @@ const bookLearn = [
   { title: '《活着》', author: '余华', why: '极简叙事范本，学「用细节代替煽情」', split: ['开场：福贵自述视角', '结构：苦难的递进节奏', '留白：不写心理只写动作', '落地带：仿写一段「只写动作不写情绪」'], takeaway: '写作共鸣来自具体动作，而非形容词堆砌。' },
   { title: '《卡片笔记写作法》', author: '申克·阿伦斯', why: '建立个人知识库，写作不再从零开始', split: [' fleeting→literature→permanent 三层笔记', '每条 note 只写一个想法', '用链接代替分类', '落地带：今天写 3 张永久卡片'], takeaway: '写得多不如连得巧，让笔记自己生长。' },
   { title: '《认知觉醒》', author: '周岭', why: '元认知与习惯养成，适配你的每日计划', split: ['元认知：跳出自己看自己', '舒适区边缘：最近发展区练习', '早冥读写跑', '落地带：设定一个微习惯'], takeaway: '成长权重比：改变量 > 行动量 > 思考量 > 学习量。' },
-  { title: '《故事》', author: '罗伯特·麦基', why: '编剧圣经，直接服务小说/视频叙事', split: ['结构：激励事件→进展→危机→高潮', '人物：欲望+恐惧驱动', '鸿沟：预期与结果之间的差距制造张力', '落地带：给你主角写一个「激励事件」'], takeaway: '故事讲的不是堆事，而是价值在压力下的转折。' }
+  { title: '《故事》', author: '罗伯特·麦基', why: '编剧圣经，直接服务小说/视频叙事', split: ['结构：激励事件→进展→危机→高潮', '人物：欲望+恐惧驱动', '鸿沟：预期与结果之间的差距制造张力', '落地带：给你主角写一个「激励事件」'], takeaway: '故事讲的不是堆事，而是价值在压力下的转折。' },
+  { title: '《原子习惯》', author: '詹姆斯·克利尔', why: '把大目标拆成每天 1% 的系统', split: ['身份驱动：先成为再做', '两分钟法则：起步极小', '环境设计：让好习惯显眼', '落地带：写一个「我是__的人」'], takeaway: '你不是靠目标成功，而是靠系统。' },
+  { title: '《纳瓦尔宝典》', author: '埃里克·乔根森', why: '财富与幸福的底层逻辑，适配副业/创作', split: ['杠杆：代码与媒体边际成本为 0', '专精度：做到前 1%', '复利：声誉与关系', '落地带：列出你的 3 个独特优势'], takeaway: '用专精度 × 杠杆 × 复利，撬动长期价值。' },
+  { title: '《风格的练习》', author: '余光中/写作类', why: '学同一题材多种写法，直接提升文笔', split: ['同一句换 5 种句式', '长短句节奏控制', '具象代替抽象', '落地带：改写一段自己的旧文'], takeaway: '风格是反复锤炼出来的，不是天生的。' },
+  { title: '《非暴力沟通》', author: '马歇尔·卢森堡', why: '改善人际与表达，服务角色/文案共情', split: ['观察≠评价', '表达感受而非想法', '说出需要', '落地带：写一句今天想说却没说出口的话'], takeaway: '先连接需要，再谈解决。' }
 ];
 function renderBookLearn() {
   const el = document.getElementById('bookLearnBox'); if (!el) return;
@@ -825,6 +1438,7 @@ function toggleLearn(i, si) {
   const k = prog.indexOf(si);
   if (k >= 0) prog.splice(k, 1); else prog.push(si);
   store.set('luo_booklearn_' + i, prog);
+  addPoints(k >= 0 ? -1 : 1, true);
   renderBookLearn();
 }
 

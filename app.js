@@ -269,17 +269,57 @@ let todos = store.get('luo_todos', [
 let filter = 'all';
 let totalPoints = store.get('luo_total_points', 0);
 
+// 19 级玄幻境界阶梯：从现在（2026-08-18）到飞升之期 2027-06-21
+const REALM_GOAL_DATE = '2027-06-21';
+function flyDaysLeft() {
+  const goal = new Date(REALM_GOAL_DATE + 'T00:00:00');
+  const d = Math.ceil((goal - new Date()) / 86400000);
+  return d > 0 ? d : 0;
+}
+// need = 进入该境界所需的累计积分（第 1 级为 0）
+const LEVELS = [
+  { name: '凡境', sub: '尘世起点', need: 0 },
+  { name: '炼气期', sub: '引气入体', need: 60 },
+  { name: '筑基期', sub: '根基初成', need: 150 },
+  { name: '开光期', sub: '灵识初开', need: 280 },
+  { name: '融合期', sub: '天人合一', need: 450 },
+  { name: '金丹期', sub: '丹田凝丹', need: 650 },
+  { name: '元婴期', sub: '元神初诞', need: 900 },
+  { name: '出窍期', sub: '神游太虚', need: 1200 },
+  { name: '分神期', sub: '三花聚顶', need: 1550 },
+  { name: '合体期', sub: '身魂合一', need: 1950 },
+  { name: '洞虚期', sub: '洞悉虚空', need: 2400 },
+  { name: '大乘期', sub: '法力通玄', need: 2900 },
+  { name: '渡劫期', sub: '雷劫加身', need: 3450 },
+  { name: '地仙境', sub: '脱离轮回', need: 4050 },
+  { name: '天仙境', sub: '逍遥天地', need: 4700 },
+  { name: '金仙境', sub: '万法不侵', need: 5400 },
+  { name: '太乙境', sub: '道韵天成', need: 6150 },
+  { name: '大罗境', sub: '超脱时空', need: 6950 },
+  { name: '仙帝境', sub: '飞升之巅', need: 8000 }
+];
 function levelFor(pts) {
-  if (pts >= 2000) return { lv: 10, title: '全能王者' };
-  if (pts >= 1500) return { lv: 9, title: '自律大师' };
-  if (pts >= 1200) return { lv: 8, title: '进阶达人' };
-  if (pts >= 900) return { lv: 7, title: '学习标兵' };
-  if (pts >= 600) return { lv: 6, title: '执行高手' };
-  if (pts >= 400) return { lv: 5, title: '坚持之星' };
-  if (pts >= 250) return { lv: 4, title: '努力进阶' };
-  if (pts >= 150) return { lv: 3, title: '稳步提升' };
-  if (pts >= 80) return { lv: 2, title: '初出茅庐' };
-  return { lv: 1, title: '新手启程' };
+  let cur = LEVELS[0];
+  for (const L of LEVELS) { if (pts >= L.need) cur = L; else break; }
+  const idx = LEVELS.indexOf(cur);
+  const next = LEVELS[idx + 1] || null;
+  const span = next ? (next.need - cur.need) : 1;
+  const prog = next ? Math.min(100, Math.round((pts - cur.need) / span * 100)) : 100;
+  return {
+    lv: idx + 1, title: cur.name, sub: cur.sub, need: cur.need,
+    next: next ? next.name : null, nextPts: next ? next.need : null,
+    progress: prog, total: LEVELS.length
+  };
+}
+// 统一加分：持久化 + 刷新顶部等级显示（切实有效的积分规则核心）
+function addPoints(x, silent) {
+  totalPoints += x;
+  store.set('luo_total_points', totalPoints);
+  const lv = levelFor(totalPoints);
+  const sl = document.getElementById('statLevel');
+  if (sl) sl.textContent = 'Lv' + lv.lv;
+  if (!silent && typeof toast === 'function') toast('+' + x + ' 积分');
+  if (typeof renderRewards === 'function') { try { const rb = document.getElementById('rewardsBox'); if (rb && rb.offsetParent !== null) renderRewards(); } catch (e) {} }
 }
 
 function saveTodos() {
@@ -335,7 +375,7 @@ function renderTodos() {
   document.getElementById('statRate').textContent = rate + '%';
   document.getElementById('statPoints').textContent = todayPoints;
   const lvl = levelFor(totalPoints);
-  document.getElementById('statLevel').textContent = 'Lv' + lvl.lv;
+  document.getElementById('statLevel').textContent = 'Lv' + lvl.lv + ' · ' + lvl.title;
 
   document.getElementById('rewardRate').textContent = rate + '%';
   document.getElementById('rewardScore').textContent = todayPoints;
@@ -1132,10 +1172,11 @@ function addRecipe() {
   if (!name) return toast('请填写菜名');
   recipes.unshift({ id: Date.now(), name, price: document.getElementById('recipePrice').value, prep: document.getElementById('recipePrep').value, photo: pendingRecipePhoto, date: fmtDate() });
   store.set('luo_recipes', recipes);
+  addPoints(3, true);
   pendingRecipePhoto = '';
   document.getElementById('recipeName').value = ''; document.getElementById('recipePrice').value = ''; document.getElementById('recipePrep').value = ''; document.getElementById('recipePhoto').value = ''; document.getElementById('recipePhotoPreview').innerHTML = '';
   renderRecipes();
-  toast('已保存到菜谱');
+  toast('已保存到菜谱 +3');
 }
 function renderRecipes() {
   const list = document.getElementById('recipeList');
@@ -1217,10 +1258,12 @@ function addTravelPlan() {
   if (!dest) return toast('请填写目的地');
   travelPlans.unshift({ id: Date.now(), dest, days, plan });
   store.set('luo_travel_plans', travelPlans);
+  addPoints(3, true);
   document.getElementById('travelDest').value = '';
   document.getElementById('travelDays').value = '';
   document.getElementById('travelPlan').value = '';
   renderTravel();
+  toast('攻略已保存 +3');
 }
 function deleteTravelPlan(id) { travelPlans = travelPlans.filter(p => p.id !== id); store.set('luo_travel_plans', travelPlans); renderTravel(); }
 
