@@ -969,7 +969,26 @@ const novelSplits = [
   { title: '《山海情》群像叙事', tag: '主旋律/群像', points: '脱贫主线+多个立体配角+方言真实感', apply: '群像文给每个配角一个“自私又可爱”的动机' },
   { title: '校园文“破镜重圆”', tag: '言情/校园', points: '年少错过+成年重逢+未消的心结', apply: '用“那年的误会一直没解开”做重逢钩子' },
   { title: '悬疑“叙述性诡计”', tag: '推理/本格', points: '叙述视角误导+最后一页反转', apply: '让读者“知道全部细节却看错”，反转才炸' },
-  { title: '竖屏短剧“爽点密集”', tag: '短剧/竖屏', points: '每 10 秒一个冲突、每集一个反转', apply: '把长篇小说压缩成“每屏一个钩子”的节奏' }
+  { title: '竖屏短剧“爽点密集”', tag: '短剧/竖屏', points: '每 10 秒一个冲突、每集一个反转', apply: '把长篇小说压缩成“每屏一个钩子”的节奏' },
+  { title: '《长相思》古言虐恋拆解', tag: '古言/虐', points: '多角羁绊+宿命感+求而不得', apply: '用“求而不得”堆虐点，留白给读者脑补' },
+  { title: '《苍兰诀》仙侠甜虐', tag: '仙侠/甜虐', points: '月尊×小妖的反差人设+救赎', apply: '神魔身份反差制造天然张力' },
+  { title: '《三体》科幻叙事', tag: '科幻/硬核', points: '硬核设定+人性拷问+“未知”', apply: '用“未知”做终极钩子，留最大想象空间' },
+  { title: '《明朝那些事儿》通俗史', tag: '历史/通俗', points: '口语化讲史+现代梗', apply: '用现代梗拉近与读者的距离' },
+  { title: '《鬼吹灯》盗墓悬疑', tag: '悬疑/冒险', points: '民俗知识+探险+氛围', apply: '用真实民俗知识营造可信的惊悚' },
+  { title: '《斗破苍穹》升级流', tag: '男频/玄幻', points: '废柴逆袭+打脸+阶梯成长', apply: '明确大目标+一级级小成长，读者有奔头' },
+  { title: '《诡秘之主》克苏鲁体系', tag: '男频/克苏鲁', points: '序列体系+层层阴谋', apply: '用体系化设定撑起超长篇不崩' },
+  { title: '《大江大河》时代群像', tag: '现实/年代', points: '改革浪潮下的个人命运', apply: '大时代衬小人物，命运感最强' },
+  { title: '《欢乐颂》都市群像', tag: '都市/群像', points: '五女视角并行', apply: '多主角并行刻画，覆盖更广读者群' },
+  { title: '《白夜追凶》硬汉悬疑', tag: '悬疑/硬汉', points: '双胞胎身份错位', apply: '身份错位即钩子，悬念拉满' },
+  { title: '《沉默的真相》社会派', tag: '悬疑/社会', points: '三条时间线汇流揭真相', apply: '多线并行，结尾汇成一股爆发' },
+  { title: '《我的天才女友》女性成长', tag: '成长/女性', points: '友谊如镜像+互相成就', apply: '用“另一个自己”写成长最深刻' },
+  { title: '《小王子》寓言式', tag: '寓言/治愈', points: '童心哲思+简单意象', apply: '用最简单意象讲最深的道理' },
+  { title: '《哈利波特》英雄之旅', tag: '奇幻/成长', points: '学院框架+七年成长', apply: '用“学校”框住冒险，结构清晰' },
+  { title: '《花千骨》仙侠虐恋', tag: '仙侠/虐', points: '师徒虐恋+救赎', apply: '禁忌关系+救赎，虐点清晰' },
+  { title: '《香蜜沉沉烬如霜》仙侠', tag: '仙侠/误会', points: '陨丹设定制造误会', apply: '用一个设定锁死误会，推动全书' },
+  { title: '《逃出大英博物馆》微短剧', tag: '短剧/国潮', points: '文物拟人+情绪符号', apply: '用强情绪符号做社交传播' },
+  { title: '《孤注一掷》反诈现实', tag: '现实/悬疑', points: '真实事件改编+社会痛点', apply: '用社会痛点抓最大共鸣' },
+  { title: '《消失的她》悬疑反转', tag: '悬疑/反转', points: '层层反转+信任崩塌', apply: '用“信任崩塌”做爽点与后劲' }
 ];
 const novelTeaches = makeSearchItems([
   { icon: '✍️', title: '小说开头怎么写才吸引人', desc: '黄金三章与开头冲突设计', tags: ['写作技巧'] },
@@ -979,9 +998,9 @@ const novelTeaches = makeSearchItems([
 ], v => v.title);
 let scripts = store.get('luo_scripts', []);
 function renderNovel() {
-  const nsList = seededShuffle(novelSplits, todayKey()).slice(0, 8);
+  const nsList = seededShuffle(novelSplits, todayKey()).slice(0, 10);
   document.getElementById('novelSplitList').innerHTML =
-    `<div class="text-sm mb-2" style="color:#1565c0;font-weight:700">📅 每日更新 · ${todayKey()}（今日展示 8 / 共 ${novelSplits.length} 篇爆款，每天轮换不同书目）</div>` +
+    `<div class="text-sm mb-2" style="color:#1565c0;font-weight:700">📅 每日更新 · ${todayKey()}（从市面最火前 100 风格池抽取，今日展示 10 / 共 ${novelSplits.length} 篇爆款，每天轮换不同书目）</div>` +
     nsList.map(n => `
     <div class="card">
       <div class="font-bold mb-2">${n.title}</div>
@@ -1420,7 +1439,13 @@ const aiPrompts = [
   { title: '会议纪要：整理成行动清单', prompt: '请把下面这段会议记录整理成：① 决议事项 ② 待办（负责人+截止日）③ 遗留问题，用清单呈现。' },
   { title: '真诚表白：写一段心里话', prompt: '请帮我写一段给[对象]的真诚表白，不油腻、不套路，带点具体回忆，留出让我填名字和细节的空白。' },
   { title: '购物决策：对比两款产品', prompt: '我纠结[产品A]和[产品B]，请从价格、核心参数、适用场景、优缺点对比，最后给明确选购建议。' },
-  { title: '代码求助：解释这段报错', prompt: '我运行代码报了下面这个错，请用人话解释原因、定位可能出错的行，并给出修复方案：' }
+  { title: '代码求助：解释这段报错', prompt: '我运行代码报了下面这个错，请用人话解释原因、定位可能出错的行，并给出修复方案：' },
+  { title: '论文大纲：生成三级框架', prompt: '请为题目《[题目]》生成论文三级大纲：摘要要点、引言问题、3 个分论点及对应论据方向、结论，标注每部分字数建议。' },
+  { title: '职场周报：把流水账变成果', prompt: '请把我本周的工作流水整理成周报：① 关键成果（量化）② 进行中 ③ 风险与需协调 ④ 下周计划，语气专业简洁。' },
+  { title: '辩论陪练：正反方视角', prompt: '请就辩题「[辩题]」分别给出正方与反方各 3 个核心论点及论据，并指出对方可能的反驳，帮我做攻防准备。' },
+  { title: '情绪日记：梳理今日心情', prompt: '请听我讲讲今天发生的事，帮我识别背后的情绪（焦虑/委屈/开心），并给一句今晚可以对自己说的话。' },
+  { title: '拍照姿势：给旅行出构图', prompt: '我在[场景：海边/古城/咖啡馆]，请给我 5 个自然不尬的拍照姿势和构图思路，适合手机自拍/同伴帮拍。' },
+  { title: '代码注释：补中文说明', prompt: '请给下面这段函数逐行补上简洁中文注释，说明输入、输出与关键逻辑，保持代码不变：' }
 ];
 function renderAi() {
   const list = seededShuffle(aiPrompts, todayKey());
@@ -1676,44 +1701,69 @@ function renderJJWXC() {
   if (updEl) updEl.textContent = upd ? '上次联网刷新：' + upd : '当前为内置素材库（联网刷新可尝试最新榜单）';
   renderJJWXCRank(); renderJJWXCGenre(); renderJJWXCRule();
 }
+const jjwxcRankBooks = {
+  '校园': [
+    { title: '《某某》', author: '木苏里', tags: ['校园','纯爱','救赎'], hook: '盛望与江添，桀骜与温柔的少年羁绊', why: '青春遗憾与互相救赎写得极细腻', learn: '用教室、蝉鸣、晚自习等具体细节堆青春共鸣' },
+    { title: '《撒野》', author: '巫哲', tags: ['校园','现实','救赎'], hook: '蒋丞转学遇顾飞，两个破碎少年互相托底', why: '真实底层困境+向上力量', learn: '人物困境写透，读者才共情' },
+    { title: '《伪装学渣》', author: '木瓜黄', tags: ['校园','甜','反差'], hook: '两个学霸偏要装学渣', why: '反差喜剧+高糖', learn: '反差人设天然张力，甜而不腻' },
+    { title: '《轻狂》', author: '巫哲', tags: ['校园','热血'], hook: '篮球少年与学霸的碰撞', why: '热血治愈的少年感', learn: '用爱好承载人物成长线' },
+    { title: '《一个钢镚儿》', author: '巫哲', tags: ['校园','穷富'], hook: '穷小子与富少的羁绊', why: '质朴动人的情感', learn: '经济差可作人物障碍与张力' },
+    { title: '《白纸与喜欢》', tags: ['校园','暗恋','成长'], hook: '干净青涩的青春暗恋', why: '留白式甜，回味长', learn: '暗恋用“没说出口”写最戳' },
+    { title: '《风声》（校园型同人）', tags: ['同人','校园','悬疑'], hook: '校园背景下的悬疑同人改编', why: '经典 IP + 青春反差', learn: '同人二创如何借壳翻新' },
+    { title: '《放学别走》', author: '酱子贝', tags: ['校园','拉扯'], hook: '校霸与学霸的放学对峙', why: '推拉甜上头', learn: '校园 CP 用“靠近-疏远”拉扯' },
+    { title: '《你微笑时很美》', author: '青浼', tags: ['校园','电竞','甜'], hook: '电竞少女的校园恋', why: '热门 IP 跨界', learn: '跨圈层题材融合扩受众' },
+    { title: '《你的距离》', author: '公子优', tags: ['校园','师生'], hook: '师生间的边界拉扯', why: '禁忌感张力', learn: '用边界感与克制写张力' },
+    { title: '《奶油味暗恋》', author: '这碗粥', tags: ['校园','暗恋'], hook: '暗恋成真的甜', why: '甜蜜克制', learn: '暗恋心理细腻化、具象化' }
+  ],
+  '暗恋': [
+    { title: '《偷偷藏不住》', author: '竹已', tags: ['暗恋','甜','校园'], hook: '桑稚暗恋哥哥的朋友段嘉许', why: '甜度克制、年龄差拉扯', learn: '暗恋用“偷偷关注”细节堆' },
+    { title: '《难哄》', author: '竹已', tags: ['暗恋','破镜','甜'], hook: '桑延与温以凡的久别重逢', why: '暗恋+破镜双爽', learn: '重逢即钩子，慢热升温' },
+    { title: '《她的小梨涡》', author: '唧唧的猫', tags: ['暗恋','校园','甜'], hook: '校霸与软妹的暗恋成真', why: '反差甜上头', learn: '人设反差制造张力' },
+    { title: '《暗恋·橘生淮南》', author: '八月长安', tags: ['暗恋','青春'], hook: '洛枳多年暗恋盛淮南', why: '经典暗恋文学', learn: '暗恋的心理独白最戳' },
+    { title: '《奶油味暗恋》', author: '这碗粥', tags: ['暗恋','校园'], hook: '暗恋成真的甜', why: '甜蜜克制', learn: '暗恋心理具象化' },
+    { title: '《我喜欢你的信息素》', author: '引路星', tags: ['暗恋','ABO'], hook: '信息素牵引的暗恋', why: 'ABO+暗恋双梗', learn: '设定外化情绪' },
+    { title: '《小清欢》', author: '向日葵', tags: ['暗恋','甜'], hook: '暗恋到明恋的甜', why: '轻松治愈', learn: '糖点均匀分布不齁' },
+    { title: '《暗格里的秘密》', author: '耳东兔子', tags: ['暗恋','成长'], hook: '暗恋与共同成长', why: '暗恋+事业线', learn: '用事业线抵消悬浮' }
+  ],
+  '百合': [
+    { title: '《她的山，她的海》', author: '扶华', tags: ['百合','校园','救赎'], hook: '两个女孩相互救赎', why: '克制深情的百合经典', learn: '情感克制比直给更动人' },
+    { title: '《影后的自我修养》', author: '扶华', tags: ['百合','娱乐圈'], hook: '影后与替身的拉扯', why: '娱乐圈 GL 张力', learn: '身份差制造戏剧' },
+    { title: '《非友》', tags: ['百合','校园'], hook: '朋友以上恋人未满', why: '暧昧期最上头', learn: '“差一点”的关系写透' },
+    { title: '《与塞万提斯同行》', tags: ['百合','治愈'], hook: '温柔陪伴式百合', why: '治愈向', learn: '用日常细节写感情' },
+    { title: '《末日乐园》', tags: ['百合','科幻'], hook: '末世下的女性羁绊', why: '强设定+情感', learn: '大背景衬小情感' }
+  ],
+  '言情': [
+    { title: '《知否知否应是绿肥红瘦》', author: '关心则乱', tags: ['言情','古言','宅斗'], hook: '盛明兰的庶女逆袭', why: '古言宅斗标杆', learn: '群像+慢热布局' },
+    { title: '《何以笙箫默》', author: '顾漫', tags: ['言情','现言','破镜'], hook: '七年等待后的重逢', why: '深情破镜经典', learn: '“等待”作为情感钩子' },
+    { title: '《步步惊心》', author: '桐华', tags: ['言情','清穿'], hook: '现代女主穿越清朝', why: '清穿鼻祖', learn: '历史框架增厚重' },
+    { title: '《微微一笑很倾城》', author: '顾漫', tags: ['言情','校园','网游'], hook: '游戏里的大神与现实', why: '甜宠经典', learn: '双线身份制造甜' },
+    { title: '《打火机与公主裙》', author: 'Twentine', tags: ['言情','现实'], hook: '底层少年的执念与爱', why: '现实向虐甜', learn: '人物执念驱动' },
+    { title: '《那个不为人知的故事》', author: 'Twentine', tags: ['言情','现实','虐'], hook: '文物修复师与卧底', why: '后劲极大', learn: '留白与克制写深情' },
+    { title: '《一厘米的阳光》', author: '墨宝非宝', tags: ['言情','现言','治愈'], hook: '阳光少女融化阴郁少年', why: '治愈向', learn: '用反差救赎写甜' },
+    { title: '《你是我的荣耀》', author: '顾漫', tags: ['言情','现言','航天'], hook: '女明星与航天工程师', why: '成人浪漫', learn: '事业线并重不悬浮' },
+    { title: '《杉杉来吃》', author: '顾漫', tags: ['言情','甜','霸总'], hook: '吃货女孩被霸总盯上', why: '轻松甜', learn: '人设萌点设计' },
+    { title: '《暗格里的秘密》', author: '耳东兔子', tags: ['言情','暗恋','成长'], hook: '暗恋与共同成长', why: '暗恋+事业', learn: '事业线抵消悬浮' }
+  ]
+};
 function renderJJWXCRank() {
   const el = document.getElementById('jjwxcRankList'); if (!el) return;
-  const list = seededShuffle(jjwxcWorks, todayKey()).slice(0, 6);
-  el.innerHTML = '<div class="text-sm text-muted mb-2">📅 每日更新 · ' + todayKey() + '（今日展示 6 / 共 ' + jjwxcWorks.length + ' 本，每天轮换不同书目）</div>' + list.map((w, i) => {
-    const id = 'work-' + i;
-    const a = w.analysis, c = w.char;
-    return `<div class="card">
-      <div class="flex-between mb-1"><span class="font-bold">${esc(w.title)}</span><span class="tag tag-low">${esc(w.genre)}</span></div>
-      <div class="text-sm text-muted mb-1">作者：${esc(w.author)} · ${esc(w.status)} · ${esc(String(w.words))}字 · 积分${esc(w.points)}</div>
-      <div class="resource-tags mb-2">${w.tags.map(t => `<span class="resource-tag">${esc(t)}</span>`).join('')}</div>
-      <div class="mb-1"><span class="text-orange">吸引力：</span>${esc(w.hook)}</div>
-      <div class="mb-1"><span class="text-blue">为何火：</span>${esc(w.why)}</div>
-      <details><summary class="cursor-pointer text-sm" style="color:var(--blue)">▾ 拆解（剧情/人设/文笔/冲突/节奏/留白/心理/动作/钩子/对话/环境/主支线）</summary>
-        <div class="mt-2 text-sm" style="line-height:1.7">
-          <b>剧情设定：</b>${esc(a.plot)}<br>
-          <b>人物设定：</b>${esc(a.character)}<br>
-          <b>背景设定：</b>${esc(a.bg)}<br>
-          <b>文案/大纲：</b>${esc(a.copy)} / ${esc(a.outline)}<br>
-          <b>章纲：</b>${esc(a.chapter)}<br>
-          <b>文笔优点：</b>${esc(a.prose)}<br>
-          <b>冲突把握：</b>${esc(a.conflict)}<br>
-          <b>叙事节奏：</b>${esc(a.pace)}<br>
-          <b>留白：</b>${esc(a.blank)}<br>
-          <b>心理活动：</b>${esc(a.psychology)}<br>
-          <b>动作描写：</b>${esc(a.action)}<br>
-          <b>场景钩子：</b>${esc(a.hookScene)}<br>
-          <b>对话：</b>${esc(a.dialogue)}<br>
-          <b>神情：</b>${esc(a.expression)}<br>
-          <b>环境(天气)：</b>${esc(a.env)}<br>
-          <b>主/支线：</b>${esc(a.mainPlot)} / ${esc(a.subPlot)}<br>
-          <b>人物身世：</b>${esc(c.bg)} ｜ <b>性格底色：</b>${esc(c.base)} ｜ <b>动机：</b>${esc(c.motive)} ｜ <b>幼年经历：</b>${esc(c.child)}
-        </div>
-      </details>
-      <div class="mt-2 mb-1 text-sm"><span class="hl-rule">争议点：</span>${w.controversy.map(esc).join('；')}</div>
-      <div class="mb-1 text-sm"><span class="text-green">优点：</span>${w.merits.map(esc).join('、')}</div>
-      <div class="resource-actions"><a class="link-jjwxc" href="${searchLinks(w.title).jjwxc}" target="_blank">📚 晋江搜此书</a>${goldenStar(id)}</div>
-    </div>`;
-  }).join('');
+  const genres = ['校园', '暗恋', '百合', '言情'];
+  el.innerHTML = '<div class="text-sm mb-2" style="color:#1565c0;font-weight:700">📅 每日更新 · ' + todayKey() + '（以 校园 / 暗恋 / 百合 / 言情 为主，各类型从热度榜 top100 风格池每日轮换 5 本，可⭐收藏）</div>' +
+    genres.map(g => {
+      const pool = jjwxcRankBooks[g] || [];
+      const list = seededShuffle(pool, g + todayKey()).slice(0, 5);
+      return `<div class="mb-3">
+        <div class="font-bold mb-2" style="color:#1565c0">🔖 ${g} · 今日 ${list.length} 本（池中 ${pool.length} 本随日期轮换）</div>
+        ${list.map((w, i) => `<div class="card">
+          <div class="flex-between mb-1"><span class="font-bold">${esc(w.title)}</span>${w.author ? `<span class="text-sm text-muted">${esc(w.author)}</span>` : ''}</div>
+          <div class="resource-tags mb-2">${w.tags.map(t => `<span class="resource-tag">${esc(t)}</span>`).join('')}</div>
+          <div class="mb-1"><span class="text-orange">吸引力：</span>${esc(w.hook)}</div>
+          <div class="mb-1"><span class="text-blue">为何火：</span>${esc(w.why)}</div>
+          <div class="text-sm"><span class="text-green">可学写法：</span>${esc(w.learn)}</div>
+          <div class="resource-actions"><a class="link-jjwxc" href="${searchLinks(w.title).jjwxc}" target="_blank">📚 晋江搜此书</a>${goldenStar('rank-' + g + '-' + i)}</div>
+        </div>`).join('')}
+      </div>`;
+    }).join('');
 }
 function renderJJWXCGenre() {
   const el = document.getElementById('jjwxcGenreList'); if (!el) return;
