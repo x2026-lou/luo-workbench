@@ -1,44 +1,43 @@
 /* ================= Navigation ================= */
 const navItems = [
   { id: 'daily', icon: '📅', label: '每日计划' },
+  { id: 'dailyreview', icon: '🔁', label: '每日复盘' },
   { id: 'review', icon: '📊', label: '内容复盘' },
   { id: 'english', icon: '🌍', label: '英语学习' },
+  { id: 'vocab', icon: '🔤', label: '单词背诵' },
   { id: 'exam', icon: '📚', label: '考公考编学习' },
   { id: 'medical', icon: '🩺', label: '医学专业课学习' },
-  { id: 'inspiration', icon: '💡', label: '选题每日灵感' },
-  { id: 'viral', icon: '🔥', label: '爆款热点视频/二创' },
-  { id: 'edit', icon: '🎬', label: '拍摄剪辑学习' },
-  { id: 'recruit', icon: '💼', label: '招聘信息', badge: 3 },
-  { id: 'fitness', icon: '💪', label: '每日健身' },
-  { id: 'finance', icon: '💰', label: '理财基金金融学习' },
   { id: 'novel', icon: '✍️', label: '爆款小说拆分/写作教学' },
-  { id: 'image', icon: '🪞', label: '形象管理', new: true },
-  { id: 'books', icon: '📖', label: '书籍推荐/拆书', new: true },
-  { id: 'drawing', icon: '🎨', label: '实用绘画教学', new: true },
-  { id: 'guitar', icon: '🎸', label: '吉他实用教学', new: true },
-  { id: 'kitchen', icon: '🍳', label: '厨房小白/烹饪', new: true },
-  { id: 'media', icon: '📱', label: '自媒体干货学习', new: true },
-  { id: 'travel', icon: '✈️', label: '旅行攻略分享', new: true },
-  { id: 'office', icon: '💻', label: '办公技能学习', new: true },
-  { id: 'eq', icon: '💬', label: '情商提升', new: true },
-  { id: 'ai', icon: '🤖', label: 'AI口令/数据分析', new: true },
-  { id: 'jjwxc', icon: '📚', label: '晋江写作素材库', new: true },
-  { id: 'meme', icon: '🔥', label: '梗库', new: true },
-  { id: 'mine', icon: '🛡️', label: '避雷指南', new: true },
-  { id: 'genius', icon: '💡', label: '灵感生成器', new: true },
-  { id: 'material', icon: '🌐', label: '全网素材库', new: true },
-  { id: 'vocab', icon: '🔤', label: '单词背诵', new: true },
-  { id: 'novelcraft', icon: '✨', label: '小说创作进阶', new: true },
-  { id: 'videoscr', icon: '🎥', label: '视频脚本灵感', new: true },
-  { id: 'editcheck', icon: '✂️', label: '剪辑打卡', new: true },
-  { id: 'goods', icon: '🛍️', label: '好物记录', new: true },
-  { id: 'rewards', icon: '🏆', label: '奖励·每日评价', new: true },
-  { id: 'dailyreview', icon: '🔁', label: '每日复盘', new: true },
-  { id: 'booknotes', icon: '📑', label: '书摘收藏', new: true },
-  { id: 'film', icon: '🎞️', label: '拉片笔记', new: true },
-  { id: 'accounting', icon: '🧾', label: '每日记账', new: true },
-  { id: 'seasonaldish', icon: '🥗', label: '时令菜品', new: true },
-  { id: 'booklearn', icon: '📚', label: '好书拆分', new: true }
+  { id: 'jjwxc', icon: '📚', label: '晋江写作素材库' },
+  { id: 'novelcraft', icon: '✨', label: '小说创作进阶' },
+  { id: 'videoscr', icon: '🎥', label: '视频脚本灵感' },
+  { id: 'edit', icon: '🎬', label: '拍摄剪辑学习' },
+  { id: 'editcheck', icon: '✂️', label: '剪辑打卡' },
+  { id: 'media', icon: '📱', label: '自媒体干货学习' },
+  { id: 'viral', icon: '🔥', label: '爆款热点视频/二创' },
+  { id: 'material', icon: '🌐', label: '全网素材库' },
+  { id: 'genius', icon: '💡', label: '灵感生成器' },
+  { id: 'meme', icon: '🔥', label: '梗库' },
+  { id: 'mine', icon: '🛡️', label: '避雷指南' },
+  { id: 'drawing', icon: '🎨', label: '实用绘画教学' },
+  { id: 'guitar', icon: '🎸', label: '吉他实用教学' },
+  { id: 'kitchen', icon: '🍳', label: '厨房小白/烹饪' },
+  { id: 'travel', icon: '✈️', label: '旅行攻略分享' },
+  { id: 'image', icon: '🪞', label: '形象管理' },
+  { id: 'fitness', icon: '💪', label: '每日健身' },
+  { id: 'books', icon: '📖', label: '书籍推荐/拆书' },
+  { id: 'booknotes', icon: '📑', label: '书摘收藏' },
+  { id: 'booklearn', icon: '📚', label: '好书拆分' },
+  { id: 'film', icon: '🎞️', label: '拉片笔记' },
+  { id: 'office', icon: '💻', label: '办公技能学习' },
+  { id: 'ai', icon: '🤖', label: 'AI口令/数据分析' },
+  { id: 'eq', icon: '💬', label: '情商提升' },
+  { id: 'finance', icon: '💰', label: '理财基金金融学习' },
+  { id: 'recruit', icon: '💼', label: '招聘信息', badge: 3 },
+  { id: 'accounting', icon: '🧾', label: '每日记账' },
+  { id: 'goods', icon: '🛍️', label: '好物记录' },
+  { id: 'seasonaldish', icon: '🥗', label: '时令菜品' },
+  { id: 'rewards', icon: '🏆', label: '奖励·每日评价' }
 ];
 
 let currentPage = 'daily';
@@ -1200,7 +1199,42 @@ const drawingVideos = makeSearchItems([
   { icon: '✏️', title: '线条与笔刷练习', desc: '控笔训练提升线条干净度', tags: ['线条','练习'] },
   { icon: '🌈', title: '配色与光影基础', desc: '冷暖对比/环境光氛围', tags: ['配色','光影'] }
 ], v => v.title);
-function renderDrawing() { document.getElementById('drawingVideoList').innerHTML = videoList('drawing', drawingVideos); }
+const drawQQ = [
+  { title: '🧸 QQ人 · 头身比', points: ['最常用 1:1 ~ 1:2，头越大越萌', '肩宽 ≈ 头宽，身体用方块/圆柱概括', '四肢短粗，关节用球表示更灵活', '动作幅度大一点，可爱感翻倍'] },
+  { title: '😊 QQ人 · 表情库', points: ['眼睛占脸 1/2，高光决定灵气', '眉毛离眼睛越近越委屈/越凶', '嘴型用「△/▽/ω」快速出情绪', ' blush 用两点或短线，萌度暴涨'] },
+  { title: '🏃 QQ人 · 动作模板', points: ['站立：重心在一只脚，身体微侧', '奔跑：身体前倾，手脚形成对角线', '坐下：腿缩成一团，像小面包', '举手/挥动：手臂向上伸展，显活力'] },
+  { title: '👕 QQ人 · 服饰简化', points: ['褶皱只画受力点：腋下、手肘、腰部', '领子、袖口、下摆是识别角色的关键', '小配饰（蝴蝶结、铃铛）强化记忆点', '同一角色保持固定配色+标志物'] }
+];
+const drawCP = [
+  { title: '💑 CP · 经典站位', points: ['并肩：温馨日常，适合校园/甜文', '一前一后：景深+保护感，适合体型差', '背靠背：反差与信任，反差萌 CP 常用', '面对面：对视/额头相抵，糖分最高'] },
+  { title: '🤝 CP · 互动小动作', points: ['牵手：大拇指相扣比五指张开更自然', '整理衣领/头发：克制又亲密', '递东西时指尖相碰：暗恋名场面', '背后环抱：占有欲与安全感并存'] },
+  { title: '👀 CP · 眼神与氛围', points: ['视线交汇时其他元素虚化', '一人看镜头、一人看对方，故事感强', '用环境光（夕阳/路灯）染色', '留白背景+飘落物（花/雨/雪）增情绪'] },
+  { title: '🎭 CP · 体型差 & 属性差', points: ['身高差：站一起时头部错位明显', '年上×年下：姿态稳重 vs 活泼', '强强：肩膀平齐，眼神对抗', '温柔×暴躁：动作一收一放，张力足'] }
+];
+const drawStyle = [
+  { title: '✏️ 赛璐璐 · 平涂', points: ['线稿清晰闭合，方便后期选区', '色块平涂，阴影少且边缘硬', '高光形状明确，常用白色点/条', '适合立绘、头像、条漫'] },
+  { title: '🌫️ 伪厚涂 · 氛围', points: ['线稿较淡，后期可隐藏', '用喷枪过渡，肤色有冷暖变化', '背景与人物色调统一', '适合情绪插图、氛围头像'] },
+  { title: '🎨 色彩 · 配色公式', points: ['主色 60% + 辅色 30% + 点缀色 10%', '邻近色舒服，互补色抓眼', '阴影加入冷色/环境色，避免纯黑', '用正片叠底统一色调'] },
+  { title: '💡 光影 · 快速出效果', points: ['先定光源方向（顶光/侧光/逆光）', '受光面暖亮，背光面冷暗', '轮廓光/边缘光让人物从背景跳出', '强光下眯眼、阴影浓重，情绪更强'] }
+];
+function renderDrawing() {
+  const mode = document.querySelector('#drawTabs .tab.active')?.dataset.draw || 'qq';
+  document.getElementById('drawQQPanel').style.display = mode === 'qq' ? 'block' : 'none';
+  document.getElementById('drawCPPanel').style.display = mode === 'cp' ? 'block' : 'none';
+  document.getElementById('drawStylePanel').style.display = mode === 'style' ? 'block' : 'none';
+  document.getElementById('drawVideoPanel').style.display = mode === 'video' ? 'block' : 'none';
+  const card = (item) => `<div class="card"><div class="font-bold mb-2">${esc(item.title)}</div><div class="text-sm" style="line-height:1.8">${item.points.map(p => '· ' + esc(p)).join('<br>')}</div></div>`;
+  if (mode === 'qq') document.getElementById('drawQQPanel').innerHTML = drawQQ.map(card).join('');
+  if (mode === 'cp') document.getElementById('drawCPPanel').innerHTML = drawCP.map(card).join('');
+  if (mode === 'style') document.getElementById('drawStylePanel').innerHTML = drawStyle.map(card).join('');
+  if (mode === 'video') document.getElementById('drawingVideoList').innerHTML = videoList('drawing', drawingVideos);
+}
+document.querySelectorAll('#drawTabs .tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('#drawTabs .tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active'); renderDrawing();
+  };
+});
 
 /* ================= Guitar ================= */
 const guitarVideos = makeSearchItems([

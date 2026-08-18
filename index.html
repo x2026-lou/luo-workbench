@@ -318,7 +318,16 @@
         <div class="page" id="page-drawing">
           <div class="section-title"><div class="icon">🎨</div>实用绘画教学</div>
           <div class="section-sub">QQ人、CP产粮 2D 画风零基础入门</div>
-          <div id="drawingVideoList"></div>
+          <div class="tabs" id="drawTabs">
+            <div class="tab active" data-draw="qq">🧸 QQ人</div>
+            <div class="tab" data-draw="cp">💑 CP产粮</div>
+            <div class="tab" data-draw="style">🎨 2D画风</div>
+            <div class="tab" data-draw="video">📺 视频教程</div>
+          </div>
+          <div id="drawQQPanel" class="mt-2"></div>
+          <div id="drawCPPanel" class="mt-2" style="display:none"></div>
+          <div id="drawStylePanel" class="mt-2" style="display:none"></div>
+          <div id="drawVideoPanel" class="mt-2" style="display:none"><div id="drawingVideoList"></div></div>
         </div>
 
         <!-- Guitar -->
@@ -621,6 +630,7 @@
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
   <script src="app.js"></script>
+  <script src="cet4_full.js"></script>
   <script src="expansion.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
