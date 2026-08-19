@@ -401,16 +401,78 @@
         <!-- Travel -->
         <div class="page" id="page-travel">
           <div class="section-title"><div class="icon">✈️</div>旅行攻略分享</div>
-          <div class="section-sub">预留自己的攻略记录空间，收藏实用旅行视频</div>
-          <div id="travelVideoList"></div>
-          <div class="card">
-            <div class="font-bold mb-2">🗺️ 我的旅行攻略</div>
-            <div class="form-group"><input class="form-input" id="travelDest" placeholder="目的地"></div>
-            <div class="form-group"><input class="form-input" id="travelDays" placeholder="天数 / 预算"></div>
-            <div class="form-group"><textarea class="form-textarea" id="travelPlan" placeholder="行程、住宿、交通、打卡点"></textarea></div>
-            <button class="btn btn-primary" style="width:100%" onclick="addTravelPlan()">保存攻略</button>
+          <div class="section-sub">出发地+时长+主题+预算+行李清单+每日行程，生成本地方案并自由编辑</div>
+
+          <div class="card card-gradient-pink">
+            <div class="flex-between mb-2">
+              <span class="font-bold">✈️ 旅行规划</span>
+              <span class="tag tag-purple" id="travelLevelTag">起步 · 0</span>
+            </div>
+            <div class="text-sm text-muted mb-3">定位 · 方案 · 打卡贴纸</div>
+            <div class="progress-wrap">
+              <div class="flex-between text-sm mb-1"><span>熟练度</span><span id="travelMastery">0%</span></div>
+              <div class="progress-bar"><div class="progress-fill" id="travelMasteryBar" style="width:0%"></div></div>
+            </div>
+            <div class="reward-row mt-3">
+              <div class="reward-cell"><div class="reward-num" id="travelTaskCount">0/0</div><div class="reward-label">今日任务</div></div>
+              <div class="reward-cell"><div class="reward-num" id="travelDoneRate">0%</div><div class="reward-label">完成率</div></div>
+              <div class="reward-cell"><div class="reward-num" id="travelStickerCount">0</div><div class="reward-label">获得贴纸</div></div>
+            </div>
           </div>
-          <div id="travelPlanList"></div>
+
+          <div class="text-sm mb-3" style="color:#7B1FA2;font-weight:700">💡 方案由本地规则引擎依据「出发地+时长+主题」生成，可保存并自由编辑。</div>
+
+          <div class="card">
+            <div class="font-bold mb-2">🧭 当前定位</div>
+            <div class="travel-loc-row mb-2">
+              <span style="font-size:20px">📍</span>
+              <input class="form-input" id="travelDeparture" placeholder="例如：山东省 · 菏泽市">
+              <button class="btn btn-outline btn-small" onclick="locateTravelDeparture()">🛰️ 自动定位</button>
+              <button class="btn btn-outline btn-small" onclick="manualTravelDeparture()">切换地址</button>
+            </div>
+            <div class="text-sm text-muted">定位仅在本机计算，不上传任何数据。</div>
+          </div>
+
+          <div class="card">
+            <div class="font-bold mb-2">🗺️ 生成旅行方案</div>
+            <div class="tabs" id="travelTypeTabs">
+              <div class="tab active" data-ttype="short">🚗 短途</div>
+              <div class="tab" data-ttype="medium">🚄 中途</div>
+              <div class="tab" data-ttype="long">✈️ 长途</div>
+            </div>
+            <div class="text-sm text-muted mb-3" id="travelTypeDesc">1-2 天 · 周边可达</div>
+
+            <div class="form-group">
+              <label class="form-label">目的地</label>
+              <input class="form-input" id="travelDest" placeholder="例如：台东县">
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:1">
+                <label class="form-label">天数</label>
+                <input type="number" class="form-input" id="travelDays" value="2" min="1" max="14">
+              </div>
+              <div class="form-group" style="flex:1">
+                <label class="form-label">预算（元/人）</label>
+                <input type="number" class="form-input" id="travelBudget" placeholder="例如：2200">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">主题</label>
+              <input class="form-input" id="travelTheme" placeholder="例如：博物馆巡礼 / 美食探店 / 自然风光">
+            </div>
+            <div class="form-group">
+              <label class="form-label">携带行李清单（用顿号/逗号分隔）</label>
+              <textarea class="form-textarea" id="travelLuggage" placeholder="身份证、充电宝、轻便外套、舒适运动鞋、雨伞、常用药、洗漱用品、相机"></textarea>
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="generateTravelPlan()">🎲 生成方案</button>
+          </div>
+
+          <div id="travelPreview" style="display:none"></div>
+
+          <div class="card">
+            <div class="font-bold mb-2">📦 我的旅行方案</div>
+            <div id="travelPlanList"></div>
+          </div>
         </div>
 
         <!-- Office Skills -->

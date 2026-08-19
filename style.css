@@ -518,3 +518,12 @@ details[open] summary { margin-bottom:6px; }
   #app { max-width: 430px; margin: 0 auto; border-left: 1px solid var(--blue-light); border-right: 1px solid var(--blue-light); }
   .sidebar { max-width: 320px; }
 }
+
+/* ===== Travel Planner ===== */
+.travel-loc-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.travel-loc-row .form-input { flex: 1; min-width: 120px; }
+.travel-loc-row button { flex-shrink: 0; }
+.travel-day { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+.travel-day .day-label { flex-shrink: 0; min-width: 34px; text-align: center; background: var(--purple-light); color: #7B1FA2; border-radius: 8px; padding: 3px 6px; font-weight: 800; font-size: 12px; }
+.travel-day .day-text { flex: 1; font-size: 14px; line-height: 1.5; padding-top: 2px; }
+#travelPreview { margin-bottom: 14px; }

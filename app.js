@@ -1399,32 +1399,183 @@ const travelVideos = makeSearchItems([
   { icon: '🎒', title: '行李收纳清单', desc: '3-7 天出行必备物品', tags: ['收纳','清单'] },
   { icon: '🍜', title: '小众城市美食探店', desc: '如何找到本地人才知道的好店', tags: ['美食','探店'] }
 ], v => v.title);
+
+const TRIP_TYPES = {
+  short: { label: '短途', icon: '🚗', days: '1-2', desc: '1-2 天 · 周边可达', defaultDays: 2 },
+  medium: { label: '中途', icon: '🚄', days: '3-5', desc: '3-5 天 · 高铁可达', defaultDays: 4 },
+  long: { label: '长途', icon: '✈️', days: '6+', desc: '6 天以上 · 飞机/长途', defaultDays: 7 }
+};
+
 let travelPlans = store.get('luo_travel_plans', []);
+let currentTripType = 'short';
+let travelDraft = null;
+
 function renderTravel() {
-  document.getElementById('travelVideoList').innerHTML = videoList('travel', travelVideos);
-  document.getElementById('travelPlanList').innerHTML = travelPlans.length ? travelPlans.map(p => `
-    <div class="card-flat">
-      <div class="flex-between mb-2"><span class="font-bold">${p.dest}</span><span class="text-sm text-muted">${p.days}</span></div>
-      <div class="text-sm text-muted">${p.plan}</div>
-      <button class="btn btn-outline btn-small mt-2" onclick="deleteTravelPlan(${p.id})">删除</button>
-    </div>
-  `).join('') : '<div class="list-empty">暂无旅行攻略</div>';
+  const tv = document.getElementById('travelVideoList');
+  if (tv) tv.innerHTML = videoList('travel', travelVideos);
+  renderTravelTypeTabs();
+  renderTravelPlans();
+  renderTravelPreview();
+  renderTravelStats();
 }
-function addTravelPlan() {
+
+function renderTravelTypeTabs() {
+  const tabs = document.querySelectorAll('#travelTypeTabs .tab');
+  tabs.forEach(t => {
+    t.classList.toggle('active', t.dataset.ttype === currentTripType);
+    t.onclick = () => {
+      currentTripType = t.dataset.ttype;
+      renderTravelTypeTabs();
+      document.getElementById('travelTypeDesc').textContent = TRIP_TYPES[currentTripType].desc;
+      document.getElementById('travelDays').value = TRIP_TYPES[currentTripType].defaultDays;
+    };
+  });
+}
+
+function renderTravelStats() {
+  const total = travelPlans.length;
+  const done = travelPlans.filter(p => p.done).length;
+  const rate = total ? Math.round(done / total * 100) : 0;
+  const lv = total < 3 ? '起步' : total < 10 ? '进阶' : '达人';
+  document.getElementById('travelLevelTag').textContent = `${lv} · ${total}`;
+  document.getElementById('travelMastery').textContent = rate + '%';
+  document.getElementById('travelMasteryBar').style.width = rate + '%';
+  document.getElementById('travelTaskCount').textContent = `${done}/${total}`;
+  document.getElementById('travelDoneRate').textContent = rate + '%';
+  document.getElementById('travelStickerCount').textContent = Math.floor(done / 3);
+}
+
+function locateTravelDeparture() {
+  const input = document.getElementById('travelDeparture');
+  if (navigator.geolocation) {
+    toast('正在获取定位…');
+    navigator.geolocation.getCurrentPosition(pos => {
+      input.value = '当前定位 · ' + pos.coords.latitude.toFixed(2) + ', ' + pos.coords.longitude.toFixed(2);
+      toast('已获取坐标，建议手动改为城市名');
+    }, () => { toast('定位失败，请手动输入'); input.focus(); });
+  } else { toast('您的设备不支持自动定位'); input.focus(); }
+}
+function manualTravelDeparture() {
+  const input = document.getElementById('travelDeparture');
+  input.value = ''; input.focus();
+}
+
+function generateTravelPlan() {
+  const departure = document.getElementById('travelDeparture').value.trim();
   const dest = document.getElementById('travelDest').value.trim();
-  const days = document.getElementById('travelDays').value.trim();
-  const plan = document.getElementById('travelPlan').value.trim();
+  const days = parseInt(document.getElementById('travelDays').value, 10);
+  const budget = document.getElementById('travelBudget').value.trim();
+  const theme = document.getElementById('travelTheme').value.trim();
+  const luggageRaw = document.getElementById('travelLuggage').value.trim();
+  if (!departure) return toast('请填写出发地');
   if (!dest) return toast('请填写目的地');
-  travelPlans.unshift({ id: Date.now(), dest, days, plan });
+  if (!days || days < 1 || days > 14) return toast('请填写 1-14 天的天数');
+  const luggage = luggageRaw ? luggageRaw.split(/[，,、]/).map(s => s.trim()).filter(Boolean) : ['身份证', '充电宝', '轻便外套', '舒适运动鞋', '雨伞', '常用药', '洗漱用品', '相机'];
+  const schedule = [];
+  for (let d = 1; d <= days; d++) {
+    let text;
+    if (d === 1) text = `抵达${dest}，办理入住，开启「${theme || '当地特色'}」初体验`;
+    else if (d === days) text = `自由活动 + 采购伴手礼，返程回${departure}`;
+    else {
+      const opts = [
+        `${theme || '热门景点'}深度游，感受当地人文`, '探索街巷与本地小店，发现隐藏惊喜', '打卡地标建筑+品尝特色美食', '睡到自然醒后悠闲出行', '逛博物馆/文化馆/艺术馆，慢节奏一日游', '亲近自然：公园/山川/湖泊放松行程'
+      ];
+      text = opts[(d - 2) % opts.length];
+    }
+    schedule.push({ day: d, text });
+  }
+  travelDraft = { id: 'draft-' + Date.now(), departure, dest, type: currentTripType, days, budget, theme, luggage, schedule, createdAt: fmtDate(), done: false };
+  renderTravelPreview();
+}
+
+function renderTravelPreview() {
+  const el = document.getElementById('travelPreview'); if (!el) return;
+  if (!travelDraft) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const t = TRIP_TYPES[travelDraft.type];
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="card" style="background:linear-gradient(135deg,#F3E5F5,#fff)">
+      <div class="flex-between mb-2">
+        <span class="font-bold">${esc(travelDraft.departure)} → ${esc(travelDraft.dest)} · ${travelDraft.days}天${t.label}</span>
+        <span class="tag tag-purple">${t.icon} ${t.label}</span>
+      </div>
+      <div class="text-sm text-muted mb-2">主题：${esc(travelDraft.theme) || '无主题'}　预算：${travelDraft.budget ? '约 ' + esc(travelDraft.budget) + ' 元/人' : '未填写'}</div>
+      <div class="mb-2">
+        ${travelDraft.schedule.map(s => `<div class="travel-day"><span class="day-label">D${s.day}</span><div class="day-text">${esc(s.text)}</div></div>`).join('')}
+      </div>
+      <div class="text-sm mb-3">
+        <span class="font-bold">🎒 清单：</span>
+        ${travelDraft.luggage.map(x => `<span class="resource-tag">${esc(x)}</span>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="flex:1" onclick="saveTravelPlan()">💾 保存攻略</button>
+        <button class="btn btn-outline" onclick="clearTravelDraft()">清空</button>
+      </div>
+    </div>`;
+}
+
+function saveTravelPlan() {
+  if (!travelDraft) return toast('请先生成方案');
+  const idx = travelPlans.findIndex(p => p.id === travelDraft.id);
+  if (idx >= 0) { travelPlans[idx] = { ...travelDraft }; toast('攻略已更新'); }
+  else { travelPlans.unshift({ ...travelDraft, id: Date.now() }); toast('攻略已保存 +3'); addPoints(3, true); }
   store.set('luo_travel_plans', travelPlans);
-  addPoints(3, true);
-  document.getElementById('travelDest').value = '';
-  document.getElementById('travelDays').value = '';
-  document.getElementById('travelPlan').value = '';
+  travelDraft = null;
   renderTravel();
-  toast('攻略已保存 +3');
+}
+function clearTravelDraft() { travelDraft = null; renderTravelPreview(); }
+
+function renderTravelPlans() {
+  const el = document.getElementById('travelPlanList'); if (!el) return;
+  el.innerHTML = travelPlans.length ? travelPlans.map(p => {
+    const t = TRIP_TYPES[p.type];
+    return `<div class="card-flat">
+      <div class="flex-between mb-2">
+        <span class="font-bold">${esc(p.departure)} → ${esc(p.dest)} · ${p.days}天${t.label}</span>
+        <span class="tag tag-purple">${t.icon} ${t.label}</span>
+      </div>
+      <div class="text-sm text-muted mb-2">主题：${esc(p.theme) || '无主题'}　预算：${p.budget ? '约 ' + esc(p.budget) + ' 元/人' : '未填写'}</div>
+      <div class="mb-2">
+        ${p.schedule.map(s => `<div class="travel-day"><span class="day-label">D${s.day}</span><div class="day-text">${esc(s.text)}</div></div>`).join('')}
+      </div>
+      <div class="text-sm mb-2">
+        <span class="font-bold">🎒 清单：</span>
+        ${p.luggage.map(x => `<span class="resource-tag">${esc(x)}</span>`).join('')}
+      </div>
+      <div class="flex-between">
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline btn-small" onclick="editTravelPlan(${p.id})">编辑</button>
+          <button class="btn btn-outline btn-small" onclick="deleteTravelPlan(${p.id})">删除</button>
+        </div>
+        <button class="btn ${p.done ? 'btn-green' : 'btn-primary'} btn-small" onclick="toggleTravelDone(${p.id})">${p.done ? '✓ 已完成' : '完成打卡'}</button>
+      </div>
+    </div>`;
+  }).join('') : '<div class="list-empty">暂无旅行攻略，生成一条吧 ✈️</div>';
+}
+
+function editTravelPlan(id) {
+  const p = travelPlans.find(x => x.id === id); if (!p) return;
+  currentTripType = p.type || 'short';
+  document.getElementById('travelDeparture').value = p.departure;
+  document.getElementById('travelDest').value = p.dest;
+  document.getElementById('travelDays').value = p.days;
+  document.getElementById('travelBudget').value = p.budget || '';
+  document.getElementById('travelTheme').value = p.theme || '';
+  document.getElementById('travelLuggage').value = p.luggage.join('、');
+  travelDraft = { ...p };
+  renderTravelTypeTabs();
+  document.getElementById('travelTypeDesc').textContent = TRIP_TYPES[currentTripType].desc;
+  renderTravelPreview();
+  window.scrollTo(0, 0);
+  toast('已载入编辑，修改后点击预览卡片里的保存');
 }
 function deleteTravelPlan(id) { travelPlans = travelPlans.filter(p => p.id !== id); store.set('luo_travel_plans', travelPlans); renderTravel(); }
+function toggleTravelDone(id) {
+  const p = travelPlans.find(x => x.id === id); if (!p) return;
+  p.done = !p.done; store.set('luo_travel_plans', travelPlans); renderTravel();
+  toast(p.done ? '打卡成功 +2' : '已取消打卡');
+  if (p.done) addPoints(2, true);
+}
 
 /* ================= Office ================= */
 const officeVideos = makeSearchItems([
@@ -1737,47 +1888,162 @@ function renderJJWXC() {
 }
 const jjwxcRankBooks = {
   '校园': [
-    { title: '《某某》', author: '木苏里', tags: ['校园','纯爱','救赎'], hook: '盛望与江添，桀骜与温柔的少年羁绊', why: '青春遗憾与互相救赎写得极细腻', learn: '用教室、蝉鸣、晚自习等具体细节堆青春共鸣' },
-    { title: '《撒野》', author: '巫哲', tags: ['校园','现实','救赎'], hook: '蒋丞转学遇顾飞，两个破碎少年互相托底', why: '真实底层困境+向上力量', learn: '人物困境写透，读者才共情' },
-    { title: '《伪装学渣》', author: '木瓜黄', tags: ['校园','甜','反差'], hook: '两个学霸偏要装学渣', why: '反差喜剧+高糖', learn: '反差人设天然张力，甜而不腻' },
-    { title: '《轻狂》', author: '巫哲', tags: ['校园','热血'], hook: '篮球少年与学霸的碰撞', why: '热血治愈的少年感', learn: '用爱好承载人物成长线' },
-    { title: '《一个钢镚儿》', author: '巫哲', tags: ['校园','穷富'], hook: '穷小子与富少的羁绊', why: '质朴动人的情感', learn: '经济差可作人物障碍与张力' },
-    { title: '《白纸与喜欢》', tags: ['校园','暗恋','成长'], hook: '干净青涩的青春暗恋', why: '留白式甜，回味长', learn: '暗恋用“没说出口”写最戳' },
-    { title: '《风声》（校园型同人）', tags: ['同人','校园','悬疑'], hook: '校园背景下的悬疑同人改编', why: '经典 IP + 青春反差', learn: '同人二创如何借壳翻新' },
-    { title: '《放学别走》', author: '酱子贝', tags: ['校园','拉扯'], hook: '校霸与学霸的放学对峙', why: '推拉甜上头', learn: '校园 CP 用“靠近-疏远”拉扯' },
-    { title: '《你微笑时很美》', author: '青浼', tags: ['校园','电竞','甜'], hook: '电竞少女的校园恋', why: '热门 IP 跨界', learn: '跨圈层题材融合扩受众' },
-    { title: '《你的距离》', author: '公子优', tags: ['校园','师生'], hook: '师生间的边界拉扯', why: '禁忌感张力', learn: '用边界感与克制写张力' },
-    { title: '《奶油味暗恋》', author: '这碗粥', tags: ['校园','暗恋'], hook: '暗恋成真的甜', why: '甜蜜克制', learn: '暗恋心理细腻化、具象化' }
+    { title: '《某某》', tags: ['校园', '纯爱', '救赎'], author: '木苏里', hook: '两个少年在校园里互相靠近', why: '双向救赎的情感张力强', learn: '用日常细节写心动' },
+    { title: '《撒野》', tags: ['校园', '现实', '救赎'], author: '巫哲', hook: '两个少年在校园里互相靠近', why: '双向救赎的情感张力强', learn: '把成长烦恼与感情线交织' },
+    { title: '《伪装学渣》', tags: ['校园', '甜', '反差'], author: '木瓜黄', hook: '两个少年在校园里互相靠近', why: '校园背景天然纯爱，受众稳定', learn: '把成长烦恼与感情线交织' },
+    { title: '《轻狂》', tags: ['校园', '热血'], author: '巫哲', hook: '青春校园里的成长与羁绊', why: '少年感与成长线结合', learn: '用日常细节写心动' },
+    { title: '《一个钢镚儿》', tags: ['校园', '穷富'], author: '巫哲', hook: '青春校园里的成长与羁绊', why: '校园背景天然纯爱，受众稳定', learn: '把成长烦恼与感情线交织' },
+    { title: '《白纸与喜欢》', tags: ['校园', '暗恋', '成长'], hook: '青春校园里的成长与羁绊', why: '少年感与成长线结合', learn: '用日常细节写心动' },
+    { title: '《风声》（校园型同人）', tags: ['校园', '同人', '悬疑'], hook: '悬疑主线中交织的感情线', why: '校园背景天然纯爱，受众稳定', learn: '把成长烦恼与感情线交织' },
+    { title: '《放学别走》', tags: ['校园', '拉扯'], author: '酱子贝', hook: '教室、蝉鸣、晚自习的青春切片', why: '青春细节真实，极易代入', learn: '用教室、操场、晚自习等具体场景堆氛围' },
+    { title: '《你微笑时很美》', tags: ['校园', '电竞', '甜'], author: '青浼', hook: '电竞少年的校园热血与羁绊', why: '校园背景天然纯爱，受众稳定', learn: '把成长烦恼与感情线交织' },
+    { title: '《你的距离》', tags: ['校园', '师生'], author: '公子优', hook: '两个少年在校园里互相靠近', why: '校园背景天然纯爱，受众稳定', learn: '把成长烦恼与感情线交织' },
+    { title: '《奶油味暗恋》', tags: ['校园', '暗恋'], author: '这碗粥', hook: '两个少年在校园里互相靠近', why: '少年感与成长线结合', learn: '用日常细节写心动' },
+    { title: '《这题超纲了》', tags: ['校园', '甜', '反差'], author: '木瓜黄', hook: '少年感十足的校园故事', why: '青春细节真实，极易代入', learn: '用教室、操场、晚自习等具体场景堆氛围' },
+    { title: '《过门》', tags: ['校园', '成长'], author: 'priest', hook: '教室、蝉鸣、晚自习的青春切片', why: '校园背景天然纯爱，受众稳定', learn: '把成长烦恼与感情线交织' },
+    { title: '《狼行成双》', tags: ['校园', '热血'], author: '巫哲', hook: '两个少年在校园里互相靠近', why: '少年感与成长线结合', learn: '用日常细节写心动' },
+    { title: '《格格不入》', tags: ['校园', '救赎'], author: '巫哲', hook: '少年感十足的校园故事', why: '双向救赎的情感张力强', learn: '用日常细节写心动' },
+    { title: '《飞来横犬》', tags: ['校园', '成长'], author: '巫哲', hook: '青春校园里的成长与羁绊', why: '少年感与成长线结合', learn: '用日常细节写心动' },
+    { title: '《嚣张》', tags: ['校园', '热血'], author: '巫哲', hook: '教室、蝉鸣、晚自习的青春切片', why: '少年感与成长线结合', learn: '用日常细节写心动' },
+    { title: '《白日梦我》', tags: ['校园', '甜'], author: '栖见', hook: '青春校园里的成长与羁绊', why: '少年感与成长线结合', learn: '用日常细节写心动' },
+    { title: '《暗格里的秘密》', tags: ['校园', '暗恋', '成长'], author: '耳东兔子', hook: '青春校园里的成长与羁绊', why: '少年感与成长线结合', learn: '用日常细节写心动' },
+    { title: '《致我们单纯的小美好》', tags: ['校园', '甜'], author: '赵乾乾', hook: '教室、蝉鸣、晚自习的青春切片', why: '青春细节真实，极易代入', learn: '用教室、操场、晚自习等具体场景堆氛围' },
+    { title: '《最好的我们》', tags: ['校园', '青春'], author: '八月长安', hook: '少年感十足的校园故事', why: '校园背景天然纯爱，受众稳定', learn: '把成长烦恼与感情线交织' },
+    { title: '《你好，旧时光》', tags: ['校园', '成长'], author: '八月长安', hook: '教室、蝉鸣、晚自习的青春切片', why: '少年感与成长线结合', learn: '用日常细节写心动' },
+    { title: '《暗恋·橘生淮南》', tags: ['校园', '暗恋'], author: '八月长安', hook: '青春校园里的成长与羁绊', why: '青春细节真实，极易代入', learn: '用教室、操场、晚自习等具体场景堆氛围' },
+    { title: '《这么多年》', tags: ['校园', '成长'], author: '八月长安', hook: '教室、蝉鸣、晚自习的青春切片', why: '少年感与成长线结合', learn: '用日常细节写心动' },
+    { title: '《我才不要和你做朋友呢》', tags: ['校园', '穿越', '甜'], author: '陈昊宇', hook: '少年感十足的校园故事', why: '少年感与成长线结合', learn: '用日常细节写心动' },
+    { title: '《一闪一闪亮星星》', tags: ['校园', '暗恋'], author: '段余霜', hook: '两个少年在校园里互相靠近', why: '校园背景天然纯爱，受众稳定', learn: '把成长烦恼与感情线交织' },
+    { title: '《二进制恋爱》', tags: ['校园', '甜'], author: '庄达菲', hook: '青春校园里的成长与羁绊', why: '校园背景天然纯爱，受众稳定', learn: '把成长烦恼与感情线交织' },
+    { title: '《时光与他，恰是正好》', tags: ['校园', '甜'], author: '蒋牧童', hook: '少年感十足的校园故事', why: '校园背景天然纯爱，受众稳定', learn: '把成长烦恼与感情线交织' },
+    { title: '《她的小梨涡》', tags: ['校园', '甜', '暗恋'], author: '唧唧的猫', hook: '青春校园里的成长与羁绊', why: '青春细节真实，极易代入', learn: '用教室、操场、晚自习等具体场景堆氛围' },
+    { title: '《草莓印》', tags: ['校园', '甜'], author: '不止是颗菜', hook: '两个少年在校园里互相靠近', why: '青春细节真实，极易代入', learn: '用教室、操场、晚自习等具体场景堆氛围' },
   ],
   '暗恋': [
-    { title: '《偷偷藏不住》', author: '竹已', tags: ['暗恋','甜','校园'], hook: '桑稚暗恋哥哥的朋友段嘉许', why: '甜度克制、年龄差拉扯', learn: '暗恋用“偷偷关注”细节堆' },
-    { title: '《难哄》', author: '竹已', tags: ['暗恋','破镜','甜'], hook: '桑延与温以凡的久别重逢', why: '暗恋+破镜双爽', learn: '重逢即钩子，慢热升温' },
-    { title: '《她的小梨涡》', author: '唧唧的猫', tags: ['暗恋','校园','甜'], hook: '校霸与软妹的暗恋成真', why: '反差甜上头', learn: '人设反差制造张力' },
-    { title: '《暗恋·橘生淮南》', author: '八月长安', tags: ['暗恋','青春'], hook: '洛枳多年暗恋盛淮南', why: '经典暗恋文学', learn: '暗恋的心理独白最戳' },
-    { title: '《奶油味暗恋》', author: '这碗粥', tags: ['暗恋','校园'], hook: '暗恋成真的甜', why: '甜蜜克制', learn: '暗恋心理具象化' },
-    { title: '《我喜欢你的信息素》', author: '引路星', tags: ['暗恋','ABO'], hook: '信息素牵引的暗恋', why: 'ABO+暗恋双梗', learn: '设定外化情绪' },
-    { title: '《小清欢》', author: '向日葵', tags: ['暗恋','甜'], hook: '暗恋到明恋的甜', why: '轻松治愈', learn: '糖点均匀分布不齁' },
-    { title: '《暗格里的秘密》', author: '耳东兔子', tags: ['暗恋','成长'], hook: '暗恋与共同成长', why: '暗恋+事业线', learn: '用事业线抵消悬浮' }
+    { title: '《偷偷藏不住》', tags: ['暗恋', '甜', '校园'], author: '竹已', hook: '把没说出口的喜欢写进日常', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
+    { title: '《难哄》', tags: ['暗恋', '破镜', '甜'], author: '竹已', hook: '暗恋成真前的百转千回', why: '暗恋心理刻画精准', learn: '用"差一点"的关系写透心动' },
+    { title: '《她的小梨涡》', tags: ['暗恋', '校园', '甜'], author: '唧唧的猫', hook: '把没说出口的喜欢写进日常', why: '暗恋心理刻画精准', learn: '用"差一点"的关系写透心动' },
+    { title: '《暗恋·橘生淮南》', tags: ['暗恋', '青春'], author: '八月长安', hook: '把没说出口的喜欢写进日常', why: '暗恋心理刻画精准', learn: '用"差一点"的关系写透心动' },
+    { title: '《奶油味暗恋》', tags: ['暗恋', '校园'], author: '这碗粥', hook: '藏在眼神与细节里的心动', why: '读者能在细节里找到自己', learn: '让暗恋在细节中自然升温' },
+    { title: '《我喜欢你的信息素》', tags: ['暗恋', 'ABO'], author: '引路星', hook: '朋友以上恋人未满的拉扯', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
+    { title: '《小清欢》', tags: ['暗恋', '甜'], author: '向日葵', hook: '暗恋成真前的百转千回', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
+    { title: '《暗格里的秘密》', tags: ['暗恋', '成长'], author: '耳东兔子', hook: '把没说出口的喜欢写进日常', why: '读者能在细节里找到自己', learn: '让暗恋在细节中自然升温' },
+    { title: '《橘生淮南·暗恋》', tags: ['暗恋', '青春'], author: '八月长安', hook: '把没说出口的喜欢写进日常', why: '暗恋心理刻画精准', learn: '用"差一点"的关系写透心动' },
+    { title: '《告别薇安》', tags: ['暗恋', '都市'], author: '安妮宝贝', hook: '把没说出口的喜欢写进日常', why: '暗恋心理刻画精准', learn: '用"差一点"的关系写透心动' },
+    { title: '《匆匆那年》', tags: ['暗恋', '青春'], author: '九夜茴', hook: '朋友以上恋人未满的拉扯', why: '暗恋心理刻画精准', learn: '用"差一点"的关系写透心动' },
+    { title: '《致青春》', tags: ['暗恋', '都市'], author: '辛夷坞', hook: '朋友以上恋人未满的拉扯', why: '读者能在细节里找到自己', learn: '让暗恋在细节中自然升温' },
+    { title: '《何以笙箫默》', tags: ['暗恋', '现言', '破镜'], author: '顾漫', hook: '暗恋成真前的百转千回', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
+    { title: '《原来你还在这里》', tags: ['暗恋', '都市'], author: '辛夷坞', hook: '把没说出口的喜欢写进日常', why: '读者能在细节里找到自己', learn: '让暗恋在细节中自然升温' },
+    { title: '《致我们暖暖的小时光》', tags: ['暗恋', '甜'], author: '赵乾乾', hook: '朋友以上恋人未满的拉扯', why: '读者能在细节里找到自己', learn: '让暗恋在细节中自然升温' },
+    { title: '《我只喜欢你》', tags: ['暗恋', '甜'], author: '乔一', hook: '把没说出口的喜欢写进日常', why: '暗恋心理刻画精准', learn: '用"差一点"的关系写透心动' },
+    { title: '《大约是爱》', tags: ['暗恋', '甜'], author: '李李翔', hook: '把没说出口的喜欢写进日常', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
+    { title: '《半是蜜糖半是伤》', tags: ['暗恋', '都市'], author: '棋子', hook: '藏在眼神与细节里的心动', why: '读者能在细节里找到自己', learn: '让暗恋在细节中自然升温' },
+    { title: '《你是我的荣耀》', tags: ['暗恋', '现言', '航天'], author: '顾漫', hook: '朋友以上恋人未满的拉扯', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
+    { title: '《余生请多指教》', tags: ['暗恋', '甜'], author: '柏林石匠', hook: '把没说出口的喜欢写进日常', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
+    { title: '《亲爱的，热爱的》', tags: ['暗恋', '甜', '电竞'], author: '墨宝非宝', hook: '把没说出口的喜欢写进日常', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
+    { title: '《微微一笑很倾城》', tags: ['暗恋', '校园', '网游'], author: '顾漫', hook: '把没说出口的喜欢写进日常', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
+    { title: '《杉杉来吃》', tags: ['暗恋', '甜', '霸总'], author: '顾漫', hook: '暗恋成真前的百转千回', why: '读者能在细节里找到自己', learn: '让暗恋在细节中自然升温' },
+    { title: '《骄阳似我》', tags: ['暗恋', '甜'], author: '顾漫', hook: '藏在眼神与细节里的心动', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
+    { title: '《你是我的城池营垒》', tags: ['暗恋', '职场'], author: '沐清雨', hook: '把没说出口的喜欢写进日常', why: '读者能在细节里找到自己', learn: '让暗恋在细节中自然升温' },
+    { title: '《致我们终将逝去的青春》', tags: ['暗恋', '青春'], author: '辛夷坞', hook: '暗恋成真前的百转千回', why: '暗恋心理刻画精准', learn: '用"差一点"的关系写透心动' },
+    { title: '《我在时间尽头等你》', tags: ['暗恋', '奇幻'], author: '郑执', hook: '把没说出口的喜欢写进日常', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
+    { title: '《你的婚礼》', tags: ['暗恋', '青春'], author: '刘雨昕', hook: '暗恋成真前的百转千回', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
+    { title: '《我的刺猬女孩》', tags: ['暗恋', '校园'], author: '王鑫', hook: '朋友以上恋人未满的拉扯', why: '暗恋心理刻画精准', learn: '用"差一点"的关系写透心动' },
+    { title: '《一闪一闪亮星星》', tags: ['暗恋', '校园', '奇幻'], author: '段余霜', hook: '藏在眼神与细节里的心动', why: '克制与试探带来持续张力', learn: '用眼神、小动作、欲言又止堆情绪' },
   ],
   '百合': [
-    { title: '《她的山，她的海》', author: '扶华', tags: ['百合','校园','救赎'], hook: '两个女孩相互救赎', why: '克制深情的百合经典', learn: '情感克制比直给更动人' },
-    { title: '《影后的自我修养》', author: '扶华', tags: ['百合','娱乐圈'], hook: '影后与替身的拉扯', why: '娱乐圈 GL 张力', learn: '身份差制造戏剧' },
-    { title: '《非友》', tags: ['百合','校园'], hook: '朋友以上恋人未满', why: '暧昧期最上头', learn: '“差一点”的关系写透' },
-    { title: '《与塞万提斯同行》', tags: ['百合','治愈'], hook: '温柔陪伴式百合', why: '治愈向', learn: '用日常细节写感情' },
-    { title: '《末日乐园》', tags: ['百合','科幻'], hook: '末世下的女性羁绊', why: '强设定+情感', learn: '大背景衬小情感' }
+    { title: '《她的山，她的海》', tags: ['百合', '校园', '救赎'], author: '扶华', hook: '温柔陪伴式的女性情感', why: '双向救赎的情感张力强', learn: '用日常细节写感情，克制更动人' },
+    { title: '《影后的自我修养》', tags: ['百合', '娱乐圈'], author: '扶华', hook: '聚光灯下的身份差与情感拉扯', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《非友》', tags: ['百合', '校园'], hook: '两个女孩之间的羁绊与救赎', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《与塞万提斯同行》', tags: ['百合', '治愈'], hook: '温柔陪伴式的女性情感', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《末日乐园》', tags: ['百合', '科幻'], hook: '两个女孩之间的羁绊与救赎', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《探虚陵》', tags: ['百合', '悬疑', '古风'], author: '君sola', hook: '悬疑主线中交织的感情线', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《我亲爱的法医小姐》', tags: ['百合', '悬疑', '职场'], author: '酒暖春深', hook: '悬疑主线中交织的感情线', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《余生为期》', tags: ['百合', '现代', '年上'], author: '闵然', hook: '两个女孩之间的羁绊与救赎', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《她是第三种绝色》', tags: ['百合', '娱乐圈'], author: '天若悬河', hook: '聚光灯下的身份差与情感拉扯', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《全世界都在等你心动》', tags: ['百合', '校园'], author: '素衣只一', hook: '身份差与情感张力的碰撞', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《半只橙》', tags: ['百合', '现代', '暗恋'], author: '米闹闹', hook: '两个女孩之间的羁绊与救赎', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《予她半城》', tags: ['百合', '现代', '破镜'], author: '苏难', hook: '两个女孩之间的羁绊与救赎', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《宇宙第一可爱》', tags: ['百合', '星际'], author: '叶涩', hook: '细腻柔软的双女主故事', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《她的学生们》', tags: ['百合', '校园'], author: '南柯十三殿', hook: '温柔陪伴式的女性情感', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《山河不夜天》', tags: ['百合', '古风'], author: '莫晨欢', hook: '古风背景下的双女主/言情纠葛', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《向你而行》', tags: ['百合', '职场'], author: '玄笺', hook: '两个女孩之间的羁绊与救赎', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《微光》', tags: ['百合', '治愈'], author: '鱼霜', hook: '身份差与情感张力的碰撞', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《靠近你，淹没我》', tags: ['百合', '娱乐圈'], author: '三国大王', hook: '聚光灯下的身份差与情感拉扯', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《有几分像》', tags: ['百合', '现代'], author: '挽瞳', hook: '温柔陪伴式的女性情感', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《禁止动心》', tags: ['百合', '校园'], author: '潩清', hook: '温柔陪伴式的女性情感', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《窒息》', tags: ['百合', '悬疑'], author: '红烧肉', hook: '悬疑主线中交织的感情线', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《瓜田李下》', tags: ['百合', '古风'], author: '许温柔', hook: '古风背景下的双女主/言情纠葛', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《浅尝辄止》', tags: ['百合', '现代'], author: '不要胡萝卜', hook: '细腻柔软的双女主故事', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《余情可待》', tags: ['百合', '破镜'], author: '闵然', hook: '温柔陪伴式的女性情感', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《头号玩家》', tags: ['百合', '电竞'], author: '多梨', hook: '温柔陪伴式的女性情感', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《她吻》', tags: ['百合', '现代'], author: '池袋最强', hook: '细腻柔软的双女主故事', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《失重》', tags: ['百合', '职场'], author: '咬鸦', hook: '温柔陪伴式的女性情感', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《单向通行》', tags: ['百合', '暗恋'], author: '花生糖', hook: '细腻柔软的双女主故事', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《她是我的小可爱》', tags: ['百合', '校园'], author: '故砚', hook: '细腻柔软的双女主故事', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《养兽为妃》', tags: ['百合', '古风'], author: '鲤乐', hook: '古风背景下的双女主/言情纠葛', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《我的同桌是omega》', tags: ['百合', 'ABO', '校园'], author: '倒吊人大叔', hook: '两个女孩之间的羁绊与救赎', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《王妃》', tags: ['百合', '古风'], author: '易人北', hook: '古风背景下的双女主/言情纠葛', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《狐言》', tags: ['百合', '玄幻'], author: '水千丞', hook: '细腻柔软的双女主故事', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《她比烟花寂寞》', tags: ['百合', '娱乐圈'], author: '花田', hook: '聚光灯下的身份差与情感拉扯', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《风吹过的夏天》', tags: ['百合', '校园'], author: '林子', hook: '温柔陪伴式的女性情感', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《暗恋这件小事》', tags: ['百合', '暗恋'], author: '一只狐狸', hook: '身份差与情感张力的碰撞', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《今天也没变成猫》', tags: ['百合', '现代'], author: '酒小七', hook: '温柔陪伴式的女性情感', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《失控》', tags: ['百合', '悬疑'], author: '龙柒', hook: '悬疑主线中交织的感情线', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《我在逃生游戏里做主播》', tags: ['百合', '无限流'], author: '扶华', hook: '细腻柔软的双女主故事', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《女将军和长公主》', tags: ['百合', '古风'], author: '请君莫笑', hook: '古风背景下的双女主/言情纠葛', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《快穿之绝世宠妃》', tags: ['百合', '快穿', '古风'], author: '柒殇祭', hook: '古风背景下的双女主/言情纠葛', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《和女主对照组HE了》', tags: ['百合', '穿书'], author: '姜沉漾', hook: '两个女孩之间的羁绊与救赎', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《病美人师尊的千层套路》', tags: ['百合', '仙侠'], author: '食鹿客', hook: '古风背景下的双女主/言情纠葛', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《全校只有我是人》', tags: ['百合', '奇幻', '校园'], author: '凤久安', hook: '温柔陪伴式的女性情感', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《我的房东是冥王》', tags: ['百合', '灵异'], author: '小狐昔里', hook: '身份差与情感张力的碰撞', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《影后今天被告白了吗》', tags: ['百合', '娱乐圈'], author: '鸽', hook: '聚光灯下的身份差与情感拉扯', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《穿成反派的我靠沙雕苟活》', tags: ['百合', '穿书'], author: '马户子君', hook: '身份差与情感张力的碰撞', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《白月光Omega总想独占我》', tags: ['百合', 'ABO'], author: '海大人', hook: '温柔陪伴式的女性情感', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《她属于我》', tags: ['百合', '现代'], author: '三月图腾', hook: '温柔陪伴式的女性情感', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《操纵我心》', tags: ['百合', '娱乐圈'], author: '青山', hook: '聚光灯下的身份差与情感拉扯', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《魔女时间》', tags: ['百合', '奇幻'], author: '蛋挞鲨', hook: '两个女孩之间的羁绊与救赎', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《春风不度》', tags: ['百合', '古风'], author: '热到昏厥', hook: '古风背景下的双女主/言情纠葛', why: '情感克制比直给更动人', learn: '双女主互动要层层递进' },
+    { title: '《见光死》', tags: ['百合', '现代'], author: '瓜子猫', hook: '两个女孩之间的羁绊与救赎', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《摘星》', tags: ['百合', '娱乐圈'], author: '若花辞树', hook: '聚光灯下的身份差与情感拉扯', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《月下美人》', tags: ['百合', '古风'], author: '边巡', hook: '古风背景下的双女主/言情纠葛', why: '双女主互动张力足', learn: '用身份差/反差制造戏剧' },
+    { title: '《贪恋》', tags: ['百合', '现代'], author: '今轲', hook: '两个女孩之间的羁绊与救赎', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《孤掷温柔》', tags: ['百合', '现代'], author: '闵然', hook: '细腻柔软的双女主故事', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
+    { title: '《跌落暮色》', tags: ['百合', '校园', '救赎'], author: '渐却', hook: '两个女孩之间的羁绊与救赎', why: '双向救赎的情感张力强', learn: '双女主互动要层层递进' },
+    { title: '《夜尽天明》', tags: ['百合', '悬疑'], author: '一冉', hook: '悬疑主线中交织的感情线', why: '女性情感刻画细腻', learn: '用日常细节写感情，克制更动人' },
   ],
   '言情': [
-    { title: '《知否知否应是绿肥红瘦》', author: '关心则乱', tags: ['言情','古言','宅斗'], hook: '盛明兰的庶女逆袭', why: '古言宅斗标杆', learn: '群像+慢热布局' },
-    { title: '《何以笙箫默》', author: '顾漫', tags: ['言情','现言','破镜'], hook: '七年等待后的重逢', why: '深情破镜经典', learn: '“等待”作为情感钩子' },
-    { title: '《步步惊心》', author: '桐华', tags: ['言情','清穿'], hook: '现代女主穿越清朝', why: '清穿鼻祖', learn: '历史框架增厚重' },
-    { title: '《微微一笑很倾城》', author: '顾漫', tags: ['言情','校园','网游'], hook: '游戏里的大神与现实', why: '甜宠经典', learn: '双线身份制造甜' },
-    { title: '《打火机与公主裙》', author: 'Twentine', tags: ['言情','现实'], hook: '底层少年的执念与爱', why: '现实向虐甜', learn: '人物执念驱动' },
-    { title: '《那个不为人知的故事》', author: 'Twentine', tags: ['言情','现实','虐'], hook: '文物修复师与卧底', why: '后劲极大', learn: '留白与克制写深情' },
-    { title: '《一厘米的阳光》', author: '墨宝非宝', tags: ['言情','现言','治愈'], hook: '阳光少女融化阴郁少年', why: '治愈向', learn: '用反差救赎写甜' },
-    { title: '《你是我的荣耀》', author: '顾漫', tags: ['言情','现言','航天'], hook: '女明星与航天工程师', why: '成人浪漫', learn: '事业线并重不悬浮' },
-    { title: '《杉杉来吃》', author: '顾漫', tags: ['言情','甜','霸总'], hook: '吃货女孩被霸总盯上', why: '轻松甜', learn: '人设萌点设计' },
-    { title: '《暗格里的秘密》', author: '耳东兔子', tags: ['言情','暗恋','成长'], hook: '暗恋与共同成长', why: '暗恋+事业', learn: '事业线抵消悬浮' }
-  ]
+    { title: '《知否知否应是绿肥红瘦》', tags: ['言情', '古言', '宅斗'], author: '关心则乱', hook: '事业与爱情双线并行', why: '情感张力到位', learn: '用反差人设制造戏剧冲突' },
+    { title: '《何以笙箫默》', tags: ['言情', '现言', '破镜'], author: '顾漫', hook: '甜虐交织的感情线', why: '甜宠与现实感平衡', learn: '深情靠克制与留白写' },
+    { title: '《步步惊心》', tags: ['言情', '清穿'], author: '桐华', hook: '人设反差带来的化学反应', why: '人物执念驱动剧情', learn: '让事业线为感情线背书' },
+    { title: '《微微一笑很倾城》', tags: ['言情', '校园', '网游'], author: '顾漫', hook: '事业与爱情双线并行', why: '甜宠与现实感平衡', learn: '深情靠克制与留白写' },
+    { title: '《打火机与公主裙》', tags: ['言情', '现实'], author: 'Twentine', hook: '甜虐交织的感情线', why: '甜宠与现实感平衡', learn: '深情靠克制与留白写' },
+    { title: '《那个不为人知的故事》', tags: ['言情', '现实', '虐'], author: 'Twentine', hook: '人设反差带来的化学反应', why: '情感张力到位', learn: '用反差人设制造戏剧冲突' },
+    { title: '《一厘米的阳光》', tags: ['言情', '现言', '治愈'], author: '墨宝非宝', hook: '人设反差带来的化学反应', why: '人物执念驱动剧情', learn: '让事业线为感情线背书' },
+    { title: '《你是我的荣耀》', tags: ['言情', '现言', '航天'], author: '顾漫', hook: '人设反差带来的化学反应', why: '甜宠与现实感平衡', learn: '深情靠克制与留白写' },
+    { title: '《杉杉来吃》', tags: ['言情', '甜', '霸总'], author: '顾漫', hook: '甜虐交织的感情线', why: '情感张力到位', learn: '用反差人设制造戏剧冲突' },
+    { title: '《暗格里的秘密》', tags: ['言情', '暗恋', '成长'], author: '耳东兔子', hook: '事业与爱情双线并行', why: '情感张力到位', learn: '用反差人设制造戏剧冲突' },
+    { title: '《甄嬛传》', tags: ['言情', '古言', '宫斗'], author: '流潋紫', hook: '人设反差带来的化学反应', why: '人物执念驱动剧情', learn: '让事业线为感情线背书' },
+    { title: '《如懿传》', tags: ['言情', '古言', '宫斗'], author: '流潋紫', hook: '事业与爱情双线并行', why: '情感张力到位', learn: '用反差人设制造戏剧冲突' },
+    { title: '《琅琊榜》', tags: ['言情', '古言', '权谋'], author: '海宴', hook: '人设反差带来的化学反应', why: '情感张力到位', learn: '用反差人设制造戏剧冲突' },
+    { title: '《三生三世十里桃花》', tags: ['言情', '仙侠', '虐恋'], author: '唐七', hook: '古风背景下的双女主/言情纠葛', why: '人物执念驱动剧情', learn: '让事业线为感情线背书' },
+    { title: '《花千骨》', tags: ['言情', '仙侠', '师徒'], author: 'Fresh果果', hook: '古风背景下的双女主/言情纠葛', why: '人物执念驱动剧情', learn: '让事业线为感情线背书' },
+    { title: '《香蜜沉沉烬如霜》', tags: ['言情', '仙侠', '虐恋'], author: '电线', hook: '古风背景下的双女主/言情纠葛', why: '情感张力到位', learn: '用反差人设制造戏剧冲突' },
+    { title: '《东宫》', tags: ['言情', '古言', '虐恋'], author: '匪我思存', hook: '人设反差带来的化学反应', why: '人物执念驱动剧情', learn: '让事业线为感情线背书' },
+    { title: '《梦华录》', tags: ['言情', '古言', '女性'], author: '关汉卿', hook: '事业与爱情双线并行', why: '人物执念驱动剧情', learn: '让事业线为感情线背书' },
+    { title: '《庆余年》', tags: ['言情', '权谋'], author: '猫腻', hook: '人设反差带来的化学反应', why: '甜宠与现实感平衡', learn: '深情靠克制与留白写' },
+    { title: '《赘婿》', tags: ['言情', '历史', '赘婿'], author: '愤怒的香蕉', hook: '人设反差带来的化学反应', why: '人物执念驱动剧情', learn: '让事业线为感情线背书' },
+    { title: '《御赐小仵作》', tags: ['言情', '悬疑', '古言'], author: '清闲丫头', hook: '悬疑主线中交织的感情线', why: '情感张力到位', learn: '用反差人设制造戏剧冲突' },
+    { title: '《星汉灿烂》', tags: ['言情', '古言', '宅斗'], author: '关心则乱', hook: '事业与爱情双线并行', why: '情感张力到位', learn: '用反差人设制造戏剧冲突' },
+    { title: '《苍兰诀》', tags: ['言情', '仙侠', '甜宠'], author: '九鹭非香', hook: '古风背景下的双女主/言情纠葛', why: '情感张力到位', learn: '用反差人设制造戏剧冲突' },
+    { title: '《卿卿日常》', tags: ['言情', '古言', '甜宠'], author: '多木木多', hook: '人设反差带来的化学反应', why: '甜宠与现实感平衡', learn: '深情靠克制与留白写' },
+    { title: '《长月烬明》', tags: ['言情', '仙侠', '虐恋'], author: '藤萝为枝', hook: '古风背景下的双女主/言情纠葛', why: '人物执念驱动剧情', learn: '让事业线为感情线背书' },
+    { title: '《宁安如梦》', tags: ['言情', '古言', '重生'], author: '时镜', hook: '甜虐交织的感情线', why: '情感张力到位', learn: '用反差人设制造戏剧冲突' },
+    { title: '《以爱为营》', tags: ['言情', '现言', '甜宠'], author: '翘摇', hook: '事业与爱情双线并行', why: '情感张力到位', learn: '用反差人设制造戏剧冲突' },
+    { title: '《偷偷藏不住》', tags: ['言情', '现言', '暗恋'], author: '竹已', hook: '事业与爱情双线并行', why: '甜宠与现实感平衡', learn: '深情靠克制与留白写' },
+    { title: '《难哄》', tags: ['言情', '现言', '破镜'], author: '竹已', hook: '甜虐交织的感情线', why: '人物执念驱动剧情', learn: '让事业线为感情线背书' },
+    { title: '《她的小梨涡》', tags: ['言情', '校园', '甜宠'], author: '唧唧的猫', hook: '事业与爱情双线并行', why: '人物执念驱动剧情', learn: '让事业线为感情线背书' },
+  ],
 };
 function renderJJWXCRank() {
   const el = document.getElementById('jjwxcRankList'); if (!el) return;
