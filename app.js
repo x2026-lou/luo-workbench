@@ -1,56 +1,77 @@
 /* ================= Navigation ================= */
+/* 同类型板块整合在一起，按 9 大分类分组；renderNav 会自动标序号 */
 const navItems = [
-  { id: 'daily', icon: '📅', label: '每日计划' },
-  { id: 'dailyreview', icon: '🔁', label: '每日复盘' },
-  { id: 'review', icon: '📊', label: '内容复盘' },
-  { id: 'english', icon: '🌍', label: '英语学习' },
-  { id: 'vocab', icon: '🔤', label: '单词背诵' },
-  { id: 'exam', icon: '📚', label: '考公考编学习' },
-  { id: 'medical', icon: '🩺', label: '医学专业课学习' },
-  { id: 'novel', icon: '✍️', label: '爆款小说拆分/写作教学' },
-  { id: 'jjwxc', icon: '📚', label: '晋江写作素材库' },
-  { id: 'novelcraft', icon: '✨', label: '小说创作进阶' },
-  { id: 'videoscr', icon: '🎥', label: '视频脚本灵感' },
-  { id: 'edit', icon: '🎬', label: '拍摄剪辑学习' },
-  { id: 'editcheck', icon: '✂️', label: '剪辑打卡' },
-  { id: 'media', icon: '📱', label: '自媒体干货学习' },
-  { id: 'viral', icon: '🔥', label: '爆款热点视频/二创' },
-  { id: 'material', icon: '🌐', label: '全网素材库' },
-  { id: 'genius', icon: '💡', label: '灵感生成器' },
-  { id: 'meme', icon: '🔥', label: '梗库' },
-  { id: 'mine', icon: '🛡️', label: '避雷指南' },
-  { id: 'drawing', icon: '🎨', label: '实用绘画教学' },
-  { id: 'guitar', icon: '🎸', label: '吉他实用教学' },
-  { id: 'kitchen', icon: '🍳', label: '厨房小白/烹饪' },
-  { id: 'travel', icon: '✈️', label: '旅行攻略分享' },
-  { id: 'image', icon: '🪞', label: '形象管理' },
-  { id: 'fitness', icon: '💪', label: '每日健身' },
-  { id: 'books', icon: '📖', label: '书籍推荐/拆书' },
-  { id: 'booknotes', icon: '📑', label: '书摘收藏' },
-  { id: 'booklearn', icon: '📚', label: '好书拆分' },
-  { id: 'film', icon: '🎞️', label: '拉片笔记' },
-  { id: 'office', icon: '💻', label: '办公技能学习' },
-  { id: 'ai', icon: '🤖', label: 'AI口令/数据分析' },
-  { id: 'eq', icon: '💬', label: '情商提升' },
-  { id: 'finance', icon: '💰', label: '理财基金金融学习' },
-  { id: 'recruit', icon: '💼', label: '招聘信息', badge: 3 },
-  { id: 'accounting', icon: '🧾', label: '每日记账' },
-  { id: 'goods', icon: '🛍️', label: '好物记录' },
-  { id: 'seasonaldish', icon: '🥗', label: '时令菜品' },
-  { id: 'rewards', icon: '🏆', label: '奖励·每日评价' }
+  // 1. 每日规划与复盘
+  { id: 'daily', icon: '📅', label: '每日计划', group: '每日规划与复盘' },
+  { id: 'dailyreview', icon: '🔁', label: '每日复盘', group: '每日规划与复盘' },
+  { id: 'review', icon: '📊', label: '内容复盘', group: '每日规划与复盘' },
+  { id: 'rewards', icon: '🏆', label: '奖励·每日评价', group: '每日规划与复盘' },
+  // 2. 学习备考
+  { id: 'english', icon: '🌍', label: '英语学习', group: '学习备考' },
+  { id: 'vocab', icon: '🔤', label: '单词背诵', group: '学习备考' },
+  { id: 'exam', icon: '📚', label: '考公考编学习', group: '学习备考' },
+  { id: 'medical', icon: '🩺', label: '医学专业课学习', group: '学习备考' },
+  // 3. 创作与写作
+  { id: 'novel', icon: '✍️', label: '爆款小说拆分/写作教学', group: '创作与写作' },
+  { id: 'jjwxc', icon: '📚', label: '晋江写作素材库', group: '创作与写作' },
+  { id: 'novelcraft', icon: '✨', label: '小说创作进阶', group: '创作与写作' },
+  { id: 'videoscr', icon: '🎥', label: '视频脚本灵感', group: '创作与写作' },
+  // 4. 自媒体与剪辑
+  { id: 'edit', icon: '🎬', label: '拍摄剪辑学习', group: '自媒体与剪辑' },
+  { id: 'editcheck', icon: '✂️', label: '剪辑打卡', group: '自媒体与剪辑' },
+  { id: 'media', icon: '📱', label: '自媒体干货学习', group: '自媒体与剪辑' },
+  { id: 'viral', icon: '🔥', label: '爆款热点视频/二创', group: '自媒体与剪辑' },
+  { id: 'material', icon: '🌐', label: '全网素材库', group: '自媒体与剪辑' },
+  { id: 'genius', icon: '💡', label: '灵感生成器', group: '自媒体与剪辑' },
+  { id: 'meme', icon: '🔥', label: '梗库', group: '自媒体与剪辑' },
+  { id: 'mine', icon: '🛡️', label: '避雷指南', group: '自媒体与剪辑' },
+  // 5. 技能与兴趣
+  { id: 'drawing', icon: '🎨', label: '实用绘画教学', group: '技能与兴趣' },
+  { id: 'guitar', icon: '🎸', label: '吉他实用教学', group: '技能与兴趣' },
+  { id: 'kitchen', icon: '🍳', label: '厨房小白/烹饪', group: '技能与兴趣' },
+  { id: 'office', icon: '💻', label: '办公技能学习', group: '技能与兴趣' },
+  // 6. 生活与健康
+  { id: 'travel', icon: '✈️', label: '旅行攻略分享', group: '生活与健康' },
+  { id: 'image', icon: '🪞', label: '形象管理', group: '生活与健康' },
+  { id: 'fitness', icon: '💪', label: '每日健身', group: '生活与健康' },
+  { id: 'seasonaldish', icon: '🥗', label: '时令菜品', group: '生活与健康' },
+  // 7. 阅读与影视
+  { id: 'books', icon: '📖', label: '书籍推荐/拆书', group: '阅读与影视' },
+  { id: 'booknotes', icon: '📑', label: '书摘收藏', group: '阅读与影视' },
+  { id: 'booklearn', icon: '📚', label: '好书拆分', group: '阅读与影视' },
+  { id: 'film', icon: '🎞️', label: '拉片笔记', group: '阅读与影视' },
+  // 8. 理财与事务
+  { id: 'finance', icon: '💰', label: '理财基金金融学习', group: '理财与事务' },
+  { id: 'recruit', icon: '💼', label: '招聘信息', badge: 3, group: '理财与事务' },
+  { id: 'accounting', icon: '🧾', label: '每日记账', group: '理财与事务' },
+  { id: 'goods', icon: '🛍️', label: '好物记录', group: '理财与事务' },
+  // 9. 思维与情商
+  { id: 'ai', icon: '🤖', label: 'AI口令/数据分析', group: '思维与情商' },
+  { id: 'eq', icon: '💬', label: '情商提升', group: '思维与情商' }
 ];
 
 let currentPage = 'daily';
 function renderNav() {
   const list = document.getElementById('navList');
-  list.innerHTML = navItems.map(item => `
+  let html = '';
+  let lastGroup = null;
+  let idx = 0;
+  navItems.forEach(item => {
+    idx++;
+    if (item.group !== lastGroup) {
+      html += `<div class="nav-group">${item.group}</div>`;
+      lastGroup = item.group;
+    }
+    html += `
     <div class="nav-item ${item.id === currentPage ? 'active' : ''}" data-id="${item.id}" onclick="goPage('${item.id}')">
+      <div class="nav-idx">${String(idx).padStart(2,'0')}</div>
       <div class="nav-icon">${item.icon}</div>
       <div class="nav-text">${item.label}</div>
       ${item.badge ? `<div class="nav-badge">${item.badge}</div>` : ''}
       ${item.new ? `<div class="nav-new">NEW</div>` : ''}
-    </div>
-  `).join('');
+    </div>`;
+  });
+  list.innerHTML = html;
 }
 
 function goPage(id) {
@@ -2052,18 +2073,49 @@ function renderJJWXCRank() {
     genres.map(g => {
       const pool = jjwxcRankBooks[g] || [];
       const list = seededShuffle(pool, g + todayKey()).slice(0, 5);
+      let _jj = 0;
       return `<div class="mb-3">
         <div class="font-bold mb-2" style="color:#1565c0">🔖 ${g} · 今日 ${list.length} 本（池中 ${pool.length} 本随日期轮换）</div>
-        ${list.map((w, i) => `<div class="card">
+        ${list.map((w, i) => {
+          const aid = 'jjwxc-' + g + '-' + i + '-' + (_jj++);
+          const a = (window.buildJJWXC ? window.buildJJWXC(w, g) : null);
+          return `<div class="card">
           <div class="flex-between mb-1"><span class="font-bold">${esc(w.title)}</span>${w.author ? `<span class="text-sm text-muted">${esc(w.author)}</span>` : ''}</div>
           <div class="resource-tags mb-2">${w.tags.map(t => `<span class="resource-tag">${esc(t)}</span>`).join('')}</div>
           <div class="mb-1"><span class="text-orange">吸引力：</span>${esc(w.hook)}</div>
           <div class="mb-1"><span class="text-blue">为何火：</span>${esc(w.why)}</div>
-          <div class="text-sm"><span class="text-green">可学写法：</span>${esc(w.learn)}</div>
+          <div class="text-sm mb-2"><span class="text-green">可学写法：</span>${esc(w.learn)}</div>
+          <button class="btn btn-ghost btn-sm mb-2" onclick="toggleJJWXC('${aid}')">📖 深度扒文（简介/人设/逻辑/大纲/章纲…）</button>
+          <div id="${aid}" class="jjwxc-analysis" style="display:none">${renderJJWXCAnalysis(a)}</div>
           <div class="resource-actions"><a class="link-jjwxc" href="${searchLinks(w.title).jjwxc}" target="_blank">📚 晋江搜此书</a>${goldenStar('rank-' + g + '-' + i)}</div>
-        </div>`).join('')}
+        </div>`;
+        }).join('')}
       </div>`;
     }).join('');
+}
+function renderJJWXCAnalysis(a) {
+  if (!a) return '';
+  const block = (t, b) => `<div class="ana-block"><div class="ana-h">${t}</div><div class="ana-b">${b}</div></div>`;
+  return [
+    block('📝 简介', esc(a.intro)),
+    block('👥 人设分析', esc(a.charAnalysis)),
+    block('🧩 小说逻辑', esc(a.logic)),
+    block('🪝 钩子设置', esc(a.hookSetup)),
+    block('✍️ 文案组织', esc(a.copywriting)),
+    block('🎬 叙事节奏', esc(a.pacing)),
+    block('💞 吸引读者共鸣点', esc(a.resonance)),
+    block('⚔️ 矛盾点 / 冲突', esc(a.conflict)),
+    block('👁 第一人称描写角度', esc(a.pov)),
+    block('💎 全书金句', a.quotes.map(q => `<div class="ana-quote">“${esc(q)}”</div>`).join('')),
+    block('🔥 梗', (a.memes || []).map(m => `<span class="resource-tag">${esc(m)}</span>`).join(' ')),
+    block('🛠 创作建议', (a.advice || []).map(x => `<div class="ana-li">· ${esc(x)}</div>`).join('')),
+    block('🗺 全书大纲' + (a.isTemplate ? '（题材通用模板）' : ''), (a.bookOutline || []).map((o, i) => `<div class="ana-li"><b>${i + 1}.</b> ${esc(o)}</div>`).join('')),
+    block('📑 章纲' + (a.isTemplate ? '（题材通用骨架）' : ''), (a.chapterOutline || []).map((o, i) => `<div class="ana-li">${esc(o)}</div>`).join(''))
+  ].join('');
+}
+function toggleJJWXC(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = (el.style.display === 'none') ? 'block' : 'none';
 }
 function renderJJWXCGenre() {
   const el = document.getElementById('jjwxcGenreList'); if (!el) return;

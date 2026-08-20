@@ -33,6 +33,17 @@ const cetWords = window.cet4FullWords || [
 ];
 const VOCAB_BATCH = 10;
 let vocabState = store.get('luo_vocab_state', { batch: 0, learned: [] });
+
+/* 单词增强：考频标注 + 有趣助记（来自 cet4_enhance.js，运行一次） */
+(function enrichCetWords() {
+  const high = new Set(window.cet4FreqHigh || []);
+  const mid = new Set(window.cet4FreqMid || []);
+  const gen = window.cet4GenMnem;
+  cetWords.forEach(w => {
+    if (!w.freq) w.freq = high.has(w.w) ? '高' : mid.has(w.w) ? '中' : '低';
+    if (!w.mnem && gen) { const m = gen(w.w, w.cn); if (m) w.mnem = m; }
+  });
+})();
 function vocabBatches() {
   const arr = [];
   for (let i = 0; i < cetWords.length; i += VOCAB_BATCH) arr.push(cetWords.slice(i, i + VOCAB_BATCH));
@@ -65,6 +76,10 @@ function renderVocab() {
           <div class="word-ph">${w.ph || ''} <span class="text-muted">${w.pos || ''}</span></div>
           <div class="word-cn">${w.cn || '（查词典）'}</div>
           <div class="word-ex">${w.ex ? '📌 ' + w.ex : ''}</div>
+          <div class="word-mnem ${w.mnem ? '' : 'mnem-muted'}" onclick="event.stopPropagation();this.classList.toggle('open')">
+            <span class="mnem-ico">💡</span>
+            <span class="mnem-body">${w.mnem ? esc(w.mnem) : '🔗 联想记忆：' + esc(w.cn || '')}</span>
+          </div>
           <div class="word-done">${done ? '✓ 已背' : '点击标记'}</div>
         </div>`;
       }).join('')}
