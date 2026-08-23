@@ -133,11 +133,22 @@
         <!-- Civil Service -->
         <div class="page" id="page-exam">
           <div class="section-title"><div class="icon">📚</div>考公考编学习</div>
-          <div class="section-sub">免费网课、行测申论刷题、招聘公告</div>
-          <div id="examVideoList"></div>
-          <div class="card"><div class="font-bold mb-2">✏️ 行测随堂练习</div><div id="examQuiz"></div></div>
-          <div class="card"><div class="font-bold mb-2">📰 适配招聘公告</div><div id="examJobs"></div></div>
-          <div id="examDailyBox"></div>
+          <div class="section-sub">行测/申论知识库 · 每日时政 · 刷题 · 招聘 · App 直达</div>
+          <div id="examAppBox" class="mb-2"></div>
+          <div class="tabs" id="examTabs">
+            <div class="tab active" data-exam="video">🎬 视频课程</div>
+            <div class="tab" data-exam="xingce">📐 行测知识库</div>
+            <div class="tab" data-exam="shenlun">✍️ 申论素材库</div>
+            <div class="tab" data-exam="shizheng">📰 每日时政</div>
+            <div class="tab" data-exam="quiz">✏️ 每日一测</div>
+            <div class="tab" data-exam="jobs">💼 招聘公告</div>
+          </div>
+          <div id="examVideoPanel"><div id="examVideoList"></div></div>
+          <div id="examXingcePanel" style="display:none"><div id="examXingce"></div></div>
+          <div id="examShenlunPanel" style="display:none"><div id="examShenlun"></div></div>
+          <div id="examShizhengPanel" style="display:none"><div id="examShizheng"></div></div>
+          <div id="examQuizPanel" style="display:none"><div class="card"><div class="font-bold mb-2">✏️ 行测随堂练习</div><div id="examQuiz"></div></div></div>
+          <div id="examJobsPanel" style="display:none"><div class="card"><div class="font-bold mb-2">📰 适配招聘公告</div><div id="examJobs"></div></div></div>
         </div>
 
         <!-- Medical -->
@@ -262,11 +273,16 @@
           <div class="section-sub">少年感中性风：妆容、穿搭、电子衣柜、改善建议</div>
           <div class="tabs" id="imageTabs">
             <div class="tab active" data-img="makeup">妆容教学</div>
+            <div class="tab" data-img="retouch">后期p图</div>
             <div class="tab" data-img="outfit">穿搭教学</div>
             <div class="tab" data-img="wardrobe">电子衣柜</div>
             <div class="tab" data-img="advice">穿搭建议</div>
           </div>
-          <div id="imageMakeupPanel"><div id="makeupVideoList"></div></div>
+          <div id="imageMakeupPanel">
+            <div id="makeupTeach"></div>
+            <div id="makeupVideoList"></div>
+          </div>
+          <div id="imageRetouchPanel" style="display:none"><div id="retouchTeach"></div></div>
           <div id="imageOutfitPanel" style="display:none"><div id="outfitVideoList"></div></div>
           <div id="imageWardrobePanel" style="display:none">
             <div class="card">
@@ -318,6 +334,7 @@
         <div class="page" id="page-drawing">
           <div class="section-title"><div class="icon">🎨</div>实用绘画教学</div>
           <div class="section-sub">QQ人、CP产粮 2D 画风零基础入门</div>
+          <div id="drawAppBox" class="mb-2"></div>
           <div class="tabs" id="drawTabs">
             <div class="tab active" data-draw="qq">🧸 QQ人</div>
             <div class="tab" data-draw="cp">💑 CP产粮</div>
@@ -479,7 +496,20 @@
         <div class="page" id="page-office">
           <div class="section-title"><div class="icon">💻</div>办公技能学习</div>
           <div class="section-sub">WPS、计算机二级 Excel/PPT/Word 实用技巧</div>
+          <div id="officeAppBox" class="mb-2"></div>
           <div id="officeVideoList"></div>
+        </div>
+
+        <!-- Photography -->
+        <div class="page" id="page-photography">
+          <div class="section-title"><div class="icon">📷</div>摄影姿势与技巧</div>
+          <div class="section-sub">生活场景摆拍 + 构图/角度/距离/光影基础</div>
+          <div class="tabs" id="photoTabs">
+            <div class="tab active" data-photo="poses">📸 摆拍姿势</div>
+            <div class="tab" data-photo="basics">🎨 摄影基础</div>
+          </div>
+          <div id="photoPosesPanel" class="mt-2"></div>
+          <div id="photoBasicsPanel" class="mt-2" style="display:none"></div>
         </div>
 
         <!-- EQ -->
@@ -588,6 +618,17 @@
         <div class="page" id="page-vocab">
           <div class="section-title"><div class="icon">🔤</div>单词背诵（四六级）</div>
           <div class="section-sub">考频标注 · 分组背诵 · 背完换下一批 · 随堂测试 · 语法+口语</div>
+          <div id="vocabAppBox" class="mb-2"></div>
+          <div class="card mt-2">
+            <div class="font-bold mb-2">📥 导入我的单词书</div>
+            <p class="text-sm text-muted mb-2">每行一个单词，格式：<b>英文 | 音标 | 词性 | 中文 | 例句</b>（音标/词性/例句可省略，用 | 分隔）。导入后合并进词库，可随时背诵。</p>
+            <textarea class="form-textarea" id="vocabImportInput" placeholder="abandon | /əˈbændən/ | v. | 放弃；抛弃 | He abandoned the plan.&#10;ability | /əˈbɪləti/ | n. | 能力"></textarea>
+            <div class="flex-between mt-2">
+              <button class="btn btn-orange" onclick="importWords()">导入并合并到词库</button>
+              <button class="btn btn-outline" onclick="clearImportedWords()">清空我导入的词</button>
+            </div>
+            <div id="vocabImportMsg" class="text-sm mt-2"></div>
+          </div>
           <div id="vocabBox"></div>
         </div>
 
@@ -609,6 +650,7 @@
         <div class="page" id="page-editcheck">
           <div class="section-title"><div class="icon">✂️</div>剪辑打卡</div>
           <div class="section-sub">转场 / 变速 / 调色 / 卡点 · 每日任务与连续打卡</div>
+          <div id="editCheckAppBox" class="mb-2"></div>
           <div id="editCheckBox"></div>
         </div>
 
@@ -691,11 +733,11 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=2"></script>
-  <script src="cet4_full.js?v=2"></script>
-  <script src="cet4_enhance.js?v=2"></script>
-  <script src="expansion.js?v=2"></script>
-  <script src="jjwxc_analysis.js?v=2"></script>
+  <script src="app.js?v=3"></script>
+  <script src="cet4_full.js?v=3"></script>
+  <script src="cet4_enhance.js?v=3"></script>
+  <script src="expansion.js?v=3"></script>
+  <script src="jjwxc_analysis.js?v=3"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then(reg => {

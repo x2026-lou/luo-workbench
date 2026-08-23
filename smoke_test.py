@@ -4,7 +4,8 @@ errors = []
 pages = ['english', 'medical', 'novel', 'ai', 'jjwxc', 'meme', 'mine', 'genius', 'material',
          'vocab', 'novelcraft', 'videoscr', 'editcheck', 'goods',
          'rewards', 'dailyreview', 'booknotes', 'film', 'accounting',
-         'seasonaldish', 'booklearn', 'exam', 'recruit', 'travel', 'drawing', 'office', 'eq']
+         'seasonaldish', 'booklearn', 'exam', 'recruit', 'travel', 'drawing', 'office', 'eq',
+         'image', 'photography', 'edit', 'media', 'books', 'kitchen', 'guitar', 'fitness', 'finance']
 
 with sync_playwright() as p:
     b = p.chromium.launch()

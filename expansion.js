@@ -28,7 +28,7 @@ function switchTab(tabEl, panelId) {
    说明：以下为基于近5年（2021-2025）四级真题词频整理的高频词精选集，
         考频标注 高/中/低；背完一组自动换下一批，随堂测试实时出题。
    =================================================================== */
-const cetWords = window.cet4FullWords || [
+let cetWords = window.cet4FullWords || [
   { w: 'abandon', ph: '/əˈbændən/', pos: 'v.', cn: '放弃；抛弃', freq: '高', ex: 'He abandoned the plan.' }
 ];
 const VOCAB_BATCH = 10;
@@ -44,6 +44,53 @@ let vocabState = store.get('luo_vocab_state', { batch: 0, learned: [] });
     if (!w.mnem && gen) { const m = gen(w.w, w.cn); if (m) w.mnem = m; }
   });
 })();
+/* 导入词典：合并用户自定义单词（持久化 luo_vocab_custom） */
+const VOCAB_CUSTOM_KEY = 'luo_vocab_custom';
+let vocabCustom = store.get(VOCAB_CUSTOM_KEY, []);
+function applyCustomWords() {
+  if (vocabCustom.length) {
+    vocabCustom.forEach(c => cetWords.push({ w: c.w, ph: c.ph || '', pos: c.pos || '', cn: c.cn, ex: c.ex || '', freq: '自', mnem: c.mnem || '' }));
+  }
+}
+applyCustomWords();
+function importWords() {
+  const ta = document.getElementById('vocabImportInput'); if (!ta) return;
+  const lines = ta.value.split('\n').map(s => s.trim()).filter(Boolean);
+  let added = 0;
+  lines.forEach(line => {
+    const p = line.split('|').map(s => s.trim());
+    if (!p[0]) return;
+    const w = {
+      w: p[0], ph: p[1] || '', pos: p[2] || '', cn: p[3] || '（查词典）',
+      ex: p[4] || '', freq: '自', mnem: ''
+    };
+    if (cetWords.some(x => x.w.toLowerCase() === w.w.toLowerCase())) return;
+    vocabCustom.push(w); cetWords.push(w); added++;
+  });
+  store.set(VOCAB_CUSTOM_KEY, vocabCustom);
+  const msg = document.getElementById('vocabImportMsg');
+  if (msg) msg.innerHTML = added > 0
+    ? `<span style="color:#2e7d32">✅ 已导入 ${added} 个新单词并合并进词库，去下面背一背吧～</span>`
+    : `<span style="color:#c62828">⚠️ 没有新增（可能格式为空或单词已存在）。</span>`;
+  if (ta) ta.value = '';
+  renderVocab();
+  toast('已导入 ' + added + ' 个单词');
+}
+function clearImportedWords() {
+  cetWords = cetWords.filter(w => w.freq !== '自');
+  vocabCustom = []; store.set(VOCAB_CUSTOM_KEY, vocabCustom);
+  const msg = document.getElementById('vocabImportMsg');
+  if (msg) msg.innerHTML = `<span style="color:#1565c0">🧹 已清空你导入的单词。</span>`;
+  renderVocab();
+}
+function renderVocabApps() {
+  const el = document.getElementById('vocabAppBox'); if (!el) return;
+  el.innerHTML = appLinkRow([
+    { name: '奶酪单词', scheme: '', url: 'https://www.baidu.com/s?wd=奶酪单词', icon: '🧀' },
+    { name: '不背单词', scheme: '', url: 'https://www.frdic.com/', icon: '🦋' },
+    { name: '百词斩', scheme: '', url: 'https://www.baicizhan.com/', icon: '🍊' }
+  ]);
+}
 function vocabBatches() {
   const arr = [];
   for (let i = 0; i < cetWords.length; i += VOCAB_BATCH) arr.push(cetWords.slice(i, i + VOCAB_BATCH));
@@ -97,6 +144,7 @@ function renderVocab() {
       <div class="font-bold mb-2">💬 实用口语（每组轮换）</div>
       <div class="text-sm">${vocabSpoken()}</div>
     </div>`;
+  renderVocabApps();
 }
 function vocabGrammar() {
   const tips = [
@@ -510,6 +558,10 @@ const editTasks = [
 ];
 function renderEditCheck() {
   const el = document.getElementById('editCheckBox'); if (!el) return;
+  const ab = document.getElementById('editCheckAppBox');
+  if (ab) ab.innerHTML = appLinkRow([
+    { name: '剪映', scheme: 'snssdk1128://', url: 'https://lv.ulikecam.com/', icon: '✂️' }
+  ]);
   const tk = todayKey();
   let done = store.get('luo_editcheck_' + tk, {});
   let streak = store.get('luo_edit_streak', 0);

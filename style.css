@@ -181,6 +181,17 @@ body {
   background: linear-gradient(135deg, #F3E5F5, #E8EAF6); color: #6A1B9A; border: 1px solid #E1BEE7;
   box-shadow: none;
 }
+/* ---- App 直达按钮 ---- */
+.app-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-app {
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px;
+  border: 1px solid var(--blue-light); background: linear-gradient(135deg, #EAF1FF, #F2F7FF);
+  color: var(--blue-dark); font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap;
+}
+.btn-app:active { transform: scale(0.97); }
+.app-ico { font-size: 16px; }
+.app-go { color: var(--blue-main); font-weight: 800; }
+.text-red { color: #E53935; }
 /* ---- 晋江深度扒文分析块 ---- */
 .jjwxc-analysis {
   margin: 4px 0 10px; padding: 10px 12px; border-radius: 12px;
@@ -191,6 +202,7 @@ body {
 .ana-h { font-size: 12.5px; font-weight: 800; color: #6A1B9A; margin-bottom: 3px; }
 .ana-b { font-size: 12.5px; line-height: 1.6; color: var(--text-strong); }
 .ana-quote { font-size: 12.5px; line-height: 1.6; color: #37474F; padding-left: 8px; border-left: 3px solid #CE93D8; margin: 3px 0; font-style: italic; }
+.ana-quote-famous { border-left-color: #FFB300; color: #5D4037; font-weight: 700; }
 .ana-li { font-size: 12.5px; line-height: 1.6; color: var(--text-strong); margin: 2px 0; }
 
 .sidebar {
