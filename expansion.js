@@ -86,11 +86,50 @@ function clearImportedWords() {
 function renderVocabApps() {
   const el = document.getElementById('vocabAppBox'); if (!el) return;
   el.innerHTML = appLinkRow([
-    { name: '奶酪单词', scheme: '', url: 'https://www.baidu.com/s?wd=奶酪单词', icon: '🧀' },
-    { name: '不背单词', scheme: '', url: 'https://www.frdic.com/', icon: '🦋' },
-    { name: '百词斩', scheme: '', url: 'https://www.baicizhan.com/', icon: '🍊' }
+    { name: '百词斩', pkg: 'com.maimemo.android.baicizhan', url: 'https://www.baicizhan.com/', icon: '🍊' },
+    { name: '不背单词', pkg: 'cn.com.langeasy.LangEasyLexis', url: 'https://www.frdic.com/', icon: '🦋' },
+    { name: '奶酪单词', pkg: 'com.jdjdc.jdfastjdc', url: 'https://www.cheeseword.com/', icon: '🧀' }
   ]);
 }
+function renderVocabApps() {
+  const el = document.getElementById('vocabAppBox'); if (!el) return;
+  el.innerHTML = appLinkRow([
+    { name: '百词斩', pkg: 'com.maimemo.android.baicizhan', url: 'https://www.baicizhan.com/', icon: '🍊' },
+    { name: '不背单词', pkg: 'cn.com.langeasy.LangEasyLexis', url: 'https://www.frdic.com/', icon: '🦋' },
+    { name: '奶酪单词', pkg: 'com.jdjdc.jdfastjdc', url: 'https://www.cheeseword.com/', icon: '🧀' }
+  ]);
+}
+/* 抖音式记单词：拆分 + 故事化记忆法（模仿抖音博主“看一遍就记住”风格） */
+const vocabMemoryData = [
+  { w: 'ambulance', ph: '/ˈæmbjələns/', cn: 'n. 救护车', split: 'am(俺) + bu(不) + lan(能) + ce(死)', story: '“俺不能死！”——快叫救护车 🚑' },
+  { w: 'pest', ph: '/pest/', cn: 'n. 害虫', split: 'pe(拍) + st(死它)', story: '看到害虫，第一反应就是“拍死它” 🪳' },
+  { w: 'ambition', ph: '/æmˈbɪʃən/', cn: 'n. 雄心，抱负', split: 'am(俺) + bi(必) + tion(神)', story: '“俺必胜”的雄心壮志 🔥' },
+  { w: 'famine', ph: '/ˈfæmɪn/', cn: 'n. 饥荒', split: 'fa(发) + mi(米) + ne(呢)', story: '闹饥荒了，快“发米呢”！🌾' },
+  { w: 'candidate', ph: '/ˈkændɪdət/', cn: 'n. 候选人', split: 'can(能) + did(做) + ate(吃)', story: '又能做又能吃 → 当候选人没毛病 😋' },
+  { w: 'economy', ph: '/ɪˈkɒnəmi/', cn: 'n. 经济', split: 'e(鹅) + con(看) + o(蛋) + my(米)', story: '鹅看着蛋和米 → 这是 economy（经济）💰' },
+  { w: 'gesture', ph: '/ˈdʒestʃə/', cn: 'n. 手势，姿态', split: 'ge(哥) + st(手势) + ure(儿)', story: '哥做手势逗小儿 → gesture 🙌' },
+  { w: 'innocent', ph: '/ˈɪnəsnt/', cn: 'adj. 天真无邪的', split: 'in(在…里) + no(没有) + cent(分)', story: '口袋里“没有一分钱”的孩子 → 天真无邪 👶' },
+  { w: 'hesitate', ph: '/ˈhezɪteɪt/', cn: 'v. 犹豫', split: 'he(他) + sit(坐) + ate(吃)', story: '他坐着吃东西，犹豫要不要走 🍜' },
+  { w: 'mansion', ph: '/ˈmænʃn/', cn: 'n. 豪宅，大厦', split: 'man(男人) + sion(神)', story: '男人住得像神一样 → 豪宅 🏰' },
+  { w: 'genuine', ph: '/ˈdʒenjuɪn/', cn: 'adj. 真正的，真诚的', split: 'gen(真) + u(你) + ine(因)', story: '“真你因” → 真诚 genuine 💗' },
+  { w: 'island', ph: '/ˈaɪlənd/', cn: 'n. 岛（s 不发音）', split: 'i(我) + s(Silent!哑巴) + land(陆地)', story: '我(s 不发音)站在陆地边 → 岛 🏝️ 口诀：岛上的 s 是哑巴' },
+  { w: 'forbid', ph: '/fəˈbɪd/', cn: 'v. 禁止', split: 'for(为了) + bid(出价/投标)', story: '为了公平，禁止私下出价 🚫' },
+  { w: 'budget', ph: '/ˈbʌdʒɪt/', cn: 'n. 预算', split: 'bu(不) + dge(挤) + t(他)', story: '预算有限，不挤“他”的钱包 💸' },
+  { w: 'bride', ph: '/braɪd/', cn: 'n. 新娘', split: 'b(不) + ride(骑马)', story: '古代新娘“不骑马”坐花轿 → bride 👰' },
+  { w: 'chimney', ph: '/ˈtʃɪmni/', cn: 'n. 烟囱', split: 'chi(吃) + m(烟) + ney(腻)', story: '吃烟吃得腻 → 烟囱冒烟 🔥' }
+];
+let vocabMemorySeed = 0;
+function renderVocabDouyin() {
+  const el = document.getElementById('vocabDouyinBox'); if (!el) return;
+  const picked = seededShuffle(vocabMemoryData, todayKey() + '_mem_' + vocabMemorySeed).slice(0, 6);
+  el.innerHTML = picked.map(m => `
+    <div class="mem-card">
+      <div class="mem-head"><span class="mem-word">${esc(m.w)}</span><span class="mem-ph">${esc(m.ph)}</span><span class="mem-cn">${esc(m.cn)}</span></div>
+      <div class="mem-split"><b>🔪 拆分：</b>${esc(m.split)}</div>
+      <div class="mem-story"><b>📖 故事：</b>${esc(m.story)}</div>
+    </div>`).join('');
+}
+function refreshVocabMemory() { vocabMemorySeed = (vocabMemorySeed + 1) % 7; renderVocabDouyin(); toast('已换一批记忆法 🎲'); }
 function vocabBatches() {
   const arr = [];
   for (let i = 0; i < cetWords.length; i += VOCAB_BATCH) arr.push(cetWords.slice(i, i + VOCAB_BATCH));
@@ -145,6 +184,7 @@ function renderVocab() {
       <div class="text-sm">${vocabSpoken()}</div>
     </div>`;
   renderVocabApps();
+  renderVocabDouyin();
 }
 function vocabGrammar() {
   const tips = [
@@ -560,7 +600,7 @@ function renderEditCheck() {
   const el = document.getElementById('editCheckBox'); if (!el) return;
   const ab = document.getElementById('editCheckAppBox');
   if (ab) ab.innerHTML = appLinkRow([
-    { name: '剪映', scheme: 'snssdk1128://', url: 'https://lv.ulikecam.com/', icon: '✂️' }
+    { name: '剪映', pkg: 'com.lemon.lv', url: 'https://lv.ulikecam.com/', icon: '✂️' }
   ]);
   const tk = todayKey();
   let done = store.get('luo_editcheck_' + tk, {});

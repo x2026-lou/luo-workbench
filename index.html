@@ -82,9 +82,19 @@
           <div class="add-box">
             <input type="text" id="todoInput" placeholder="输入新任务…" maxlength="40">
             <select id="todoPriority"><option value="high">高</option><option value="mid" selected>中</option><option value="low">低</option></select>
-            <button class="btn btn-primary" onclick="addTodo()">+</button>
+              <button class="btn btn-primary" onclick="addTodo()">+</button>
+            </div>
+            <div class="card mt-3">
+              <div class="font-bold mb-2">💾 数据备份与恢复</div>
+              <p class="text-sm text-muted mb-2">工作台数据只存在本机浏览器（localStorage）。<b>换手机 / 卸载 PWA / 清缓存都会丢</b>。建议考前定期导出备份，换新机或误清后一键导入恢复。</p>
+              <div class="flex-between">
+                <button class="btn btn-primary" onclick="exportData()">⬇️ 导出备份</button>
+                <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">⬆️ 导入恢复</button>
+                <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(this)">
+              </div>
+              <div id="backupMsg" class="text-sm mt-2"></div>
+            </div>
           </div>
-        </div>
 
         <!-- Content Review -->
         <div class="page" id="page-review">
@@ -116,6 +126,7 @@
             <div class="tab active" data-eng="words">单词背诵</div>
             <div class="tab" data-eng="quiz">随堂测试</div>
             <div class="tab" data-eng="videos">配套视频</div>
+            <div class="tab" data-eng="prep">🎯 四六级备考</div>
           </div>
           <div id="engWordsPanel">
             <div class="word-card"><div class="word-en" id="wordEn">abundant</div><div class="word-pho" id="wordPho">/əˈbʌndənt/</div><div class="word-cn" id="wordCn">丰富的；充裕的</div></div>
@@ -128,6 +139,7 @@
             <div class="card"><div class="font-bold mb-3" id="quizQuestion">Question</div><div id="quizOptions"></div><div class="quiz-result" id="quizResult"></div><button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="nextQuiz()">下一题</button></div>
           </div>
           <div id="engVideoPanel" style="display:none"><div id="englishVideoList"></div></div>
+          <div id="engPrepPanel" style="display:none"><div id="cetPrepBox"></div></div>
         </div>
 
         <!-- Civil Service -->
@@ -629,6 +641,12 @@
             </div>
             <div id="vocabImportMsg" class="text-sm mt-2"></div>
           </div>
+          <div class="card mt-2">
+            <div class="font-bold mb-2">🎬 抖音式记单词（拆分 / 故事化记忆法）</div>
+            <p class="text-sm text-muted mb-2">模仿抖音博主：把单词拆成熟悉的部件，编成画面 / 谐音故事，看一遍就忘不掉。每天自动换一批。</p>
+            <div id="vocabDouyinBox"></div>
+            <button class="btn btn-outline mt-2" style="width:100%" onclick="refreshVocabMemory()">🎲 换一批记忆法</button>
+          </div>
           <div id="vocabBox"></div>
         </div>
 
@@ -733,11 +751,11 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=3"></script>
-  <script src="cet4_full.js?v=3"></script>
-  <script src="cet4_enhance.js?v=3"></script>
-  <script src="expansion.js?v=3"></script>
-  <script src="jjwxc_analysis.js?v=3"></script>
+  <script src="app.js?v=4"></script>
+  <script src="cet4_full.js?v=4"></script>
+  <script src="cet4_enhance.js?v=4"></script>
+  <script src="expansion.js?v=4"></script>
+  <script src="jjwxc_analysis.js?v=4"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then(reg => {

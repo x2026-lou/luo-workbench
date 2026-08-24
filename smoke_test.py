@@ -78,6 +78,25 @@ with sync_playwright() as p:
     # 收藏星标
     pg.evaluate("()=>{ var g=document.querySelector('.golden-star'); if(g) g.click(); }")
     pg.wait_for_timeout(300)
+
+    # 英语：切换到「四六级备考」tab，触发渲染 + 打卡 + 设日期
+    pg.evaluate("()=>{ if(window.goPage) goPage('english'); }")
+    pg.wait_for_timeout(150)
+    pg.evaluate("()=>{ var t=document.querySelector('#engTabs .tab[data-eng=\"prep\"]'); if(t) t.click(); }")
+    pg.wait_for_timeout(200)
+    pg.evaluate("()=>{ if(window.toggleCetTask) toggleCetTask('word'); if(window.toggleCetTask) toggleCetTask('listen'); }")
+    pg.evaluate("()=>{ if(window.setCetDate) setCetDate('2026-12-14'); }")
+    pg.wait_for_timeout(150)
+    # 单词：抖音式记单词换一批
+    pg.evaluate("()=>{ if(window.goPage) goPage('vocab'); }")
+    pg.wait_for_timeout(150)
+    pg.evaluate("()=>{ if(window.refreshVocabMemory) refreshVocabMemory(); }")
+    pg.wait_for_timeout(100)
+    # 数据备份导出（首页）
+    pg.evaluate("()=>{ if(window.goPage) goPage('daily'); }")
+    pg.wait_for_timeout(100)
+    pg.evaluate("()=>{ try{ if(window.exportData) exportData(); }catch(e){ console.log('export skip: '+e); } }")
+    pg.wait_for_timeout(150)
     b.close()
 
 print('ERRORS_COUNT=' + str(len(errors)))

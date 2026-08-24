@@ -596,9 +596,90 @@ document.querySelectorAll('#engTabs .tab').forEach(tab => {
     document.getElementById('engWordsPanel').style.display = mode === 'words' ? 'block' : 'none';
     document.getElementById('engQuizPanel').style.display = mode === 'quiz' ? 'block' : 'none';
     document.getElementById('engVideoPanel').style.display = mode === 'videos' ? 'block' : 'none';
+    document.getElementById('engPrepPanel').style.display = mode === 'prep' ? 'block' : 'none';
     if (mode === 'quiz') renderQuiz();
+    if (mode === 'prep') renderCetPrep();
   };
 });
+
+/* ================= 四六级备考计划 ================= */
+let cetState = { date: store.get('luo_cet_date', '') };
+function nextCetDate() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const cands = [new Date(y, 5, 14), new Date(y, 11, 14), new Date(y + 1, 5, 14)];
+  for (const d of cands) if (d > now) return d;
+  return cands[cands.length - 1];
+}
+function renderCetPrep() {
+  const box = document.getElementById('cetPrepBox'); if (!box) return;
+  const dateStr = cetState.date || '';
+  const target = dateStr ? new Date(dateStr + 'T00:00:00') : nextCetDate();
+  const today = new Date(); today.setHours(0, 0, 0, 0); target.setHours(0, 0, 0, 0);
+  const days = Math.round((target - today) / 86400000);
+  const tk = todayKey();
+  const done = store.get('luo_cet_daily_' + tk, {});
+  const tasks = [
+    { id: 'word', name: '背单词', detail: '核心词汇 50 个（百词斩 / 不背 / 奶酪）', icon: '🔤' },
+    { id: 'listen', name: '听力练习', detail: '精听 30 分钟（真题 / 新闻 / 对话）', icon: '🎧' },
+    { id: 'read', name: '阅读练习', detail: '仔细阅读 2 篇 + 长篇阅读 1 篇', icon: '📖' },
+    { id: 'write', name: '写作', detail: '1 篇（按话题模板写 + 改）', icon: '✍️' },
+    { id: 'translate', name: '翻译', detail: '1 段（中国文化 / 社会热点）', icon: '🌐' }
+  ];
+  const phases = [
+    { name: '基础期', weeks: '第 1–3 周', tip: '词汇过一遍 + 听力磨耳朵，打牢地基' },
+    { name: '强化期', weeks: '第 4–6 周', tip: '分项突破：阅读提速、写作模板、翻译高频词' },
+    { name: '冲刺期', weeks: '第 7–8 周', tip: '真题模考 + 查漏补缺，固定生物钟' }
+  ];
+  const weekPlan = [
+    { d: '周一', t: '词汇复盘 + 听力精听' },
+    { d: '周二', t: '阅读理解 2 篇 + 长阅读' },
+    { d: '周三', t: '写作 1 篇 + 范文拆解' },
+    { d: '周四', t: '翻译 1 段 + 高频词' },
+    { d: '周五', t: '整套真题限时模考' },
+    { d: '周六', t: '错题复盘 + 弱项专练' },
+    { d: '周日', t: '休息 / 轻松输入（美剧·播客）' }
+  ];
+  const fmt = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  box.innerHTML = `
+    <div class="card card-gradient-blue mb-2">
+      <div class="flex-between mb-2">
+        <div class="font-bold">🎯 四六级备考倒计时</div>
+        <div class="stat-num" style="font-size:22px;color:#1565c0">${days >= 0 ? days : 0} 天</div>
+      </div>
+      <div class="form-group"><label class="form-label">我的考试日期</label><input class="form-input" id="cetDateInput" type="date" value="${esc(dateStr)}" onchange="setCetDate(this.value)"></div>
+      <div class="text-sm text-muted">目标日：${esc(fmt(target))}（未设置则默认最近一次四六级）</div>
+    </div>
+    <div class="card mb-2">
+      <div class="font-bold mb-2">🗺️ 三阶段备考路线</div>
+      ${phases.map(p => `<div class="cet-phase"><b>${esc(p.name)}</b><span class="cet-week">${esc(p.weeks)}</span><div class="text-sm text-muted">${esc(p.tip)}</div></div>`).join('')}
+    </div>
+    <div class="card mb-2">
+      <div class="font-bold mb-2">✅ 今日任务（打卡 · ${esc(tk)}）</div>
+      <div class="cet-tasks">
+        ${tasks.map(t => `<div class="cet-task ${done[t.id] ? 'done' : ''}" onclick="toggleCetTask('${t.id}')">
+          <span class="cet-task-ico">${t.icon}</span>
+          <span class="cet-task-body"><b>${esc(t.name)}</b><span class="text-sm text-muted">${esc(t.detail)}</span></span>
+          <span class="cet-task-check">${done[t.id] ? '✓' : ''}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card mb-2">
+      <div class="font-bold mb-2">📅 每周计划表</div>
+      ${weekPlan.map(w => `<div class="cet-week-row"><b>${esc(w.d)}</b><span class="text-sm">${esc(w.t)}</span></div>`).join('')}
+    </div>
+    <div id="englishVideoList2"></div>`;
+  const vp = document.getElementById('englishVideoList2');
+  if (vp) vp.innerHTML = `<div class="font-bold mb-2 mt-2">📺 备考配套视频（四六级）</div>` + videoList('cet', englishVideos.filter(v => (v.tags || []).some(t => t.includes('四六级'))));
+}
+function setCetDate(v) { cetState.date = v; store.set('luo_cet_date', v); renderCetPrep(); }
+function toggleCetTask(id) {
+  const tk = todayKey();
+  const done = store.get('luo_cet_daily_' + tk, {});
+  done[id] = !done[id];
+  store.set('luo_cet_daily_' + tk, done);
+  renderCetPrep();
+}
 
 /* ================= Exam ================= */
 const examVideos = makeSearchItems([
@@ -690,8 +771,8 @@ function renderExam() {
     </div>
   `).join('');
   const aEl = document.getElementById('examAppBox'); if (aEl) aEl.innerHTML = appLinkRow([
-    { name: '粉笔', scheme: 'fenbi://', url: 'https://www.fenbi.com/', icon: '🟢' },
-    { name: '亦申', scheme: '', url: 'https://www.baidu.com/s?wd=亦申公考', icon: '🔵' }
+    { name: '粉笔', pkg: 'com.fenbi.android.solar', url: 'https://www.fenbi.com/', icon: '🟢' },
+    { name: '亦申', pkg: 'com.baijiayun.yishenwangxiao', url: 'https://www.baidu.com/s?wd=亦申公考', icon: '🔵' }
   ]);
   document.querySelectorAll('#examTabs .tab').forEach(tab => {
     tab.onclick = () => {
@@ -1647,7 +1728,7 @@ const drawStyle = [
 function renderDrawing() {
   const ab = document.getElementById('drawAppBox');
   if (ab) ab.innerHTML = appLinkRow([
-    { name: '画世界Pro', scheme: 'hwpaint://', url: 'https://www.baidu.com/s?wd=画世界Pro', icon: '🎨' }
+    { name: '画世界Pro', pkg: 'net.huanci.hsjpro', url: 'https://www.baidu.com/s?wd=画世界Pro', icon: '🎨' }
   ]);
   const mode = document.querySelector('#drawTabs .tab.active')?.dataset.draw || 'qq';
   document.getElementById('drawQQPanel').style.display = mode === 'qq' ? 'block' : 'none';
@@ -2021,7 +2102,7 @@ function renderOffice() {
   const el = document.getElementById('officeVideoList'); if (el) el.innerHTML = videoList('office', officeVideos);
   const box = document.getElementById('officeAppBox');
   if (box) box.innerHTML = appLinkRow([
-    { name: 'WPS Office', scheme: 'wps://', url: 'https://www.wps.cn/', icon: '📄' }
+    { name: 'WPS Office', pkg: 'cn.wps.moffice', url: 'https://www.wps.cn/', icon: '📄' }
   ]);
 }
 
@@ -2143,27 +2224,67 @@ function copyPrompt(i) {
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function escB(s) { return esc(s).replace(/&lt;(\/?b)&gt;/gi, '<$1>'); }
 
-/* ================= App 直达助手（Android 唤起 + 网页兜底） ================= */
-/* 优先尝试 scheme 唤起 App，失败（1.2s 内未离开页面）则打开官网/下载页兜底。
-   在 Web/PWA 场景下，最稳妥的“直接跳转”是打开 App 官方页面，故兜底链接用官网。 */
-function openApp(name, scheme, url) {
+/* ================= App 直达助手（Android intent 深链，直接唤起已装 App） ================= */
+/* 直接按包名唤起手机上的 App（与 B站/抖音/小红书 配套视频“一点就进 App”的体验一致）；
+   若未安装，1.5s 内未离开页面则兜底打开官网/下载页。Honor 安卓 + PWA 下 intent:// 会直接拉起 App。 */
+function openApp(name, pkg, url) {
+  const fb = encodeURIComponent(url);
+  const intent = `intent://#Intent;package=${pkg};scheme=app;S.browser_fallback_url=${fb};end`;
   let left = false;
   const onHide = () => { left = true; };
   document.addEventListener('visibilitychange', onHide, { once: true });
-  try { if (scheme) window.location.href = scheme; } catch (e) {}
+  try { window.location.href = intent; } catch (e) {}
   setTimeout(() => {
     document.removeEventListener('visibilitychange', onHide);
     if (!left) window.open(url, '_blank');
-  }, 1200);
+  }, 1500);
   toast('正在唤起「' + name + '」…');
 }
-function appLinkBtn(name, scheme, url, icon) {
+function appLinkBtn(name, pkg, url, icon) {
   icon = icon || '📲';
-  return `<button class="btn btn-app" onclick="openApp('${esc(name)}','${esc(scheme)}','${esc(url)}')">
+  return `<button class="btn btn-app" onclick="openApp('${esc(name)}','${esc(pkg)}','${esc(url)}')">
     <span class="app-ico">${icon}</span><span>${esc(name)}</span><span class="app-go">直达 ›</span></button>`;
 }
 function appLinkRow(list) {
-  return `<div class="app-row">${list.map(a => appLinkBtn(a.name, a.scheme, a.url, a.icon)).join('')}</div>`;
+  return `<div class="app-row">${list.map(a => appLinkBtn(a.name, a.pkg, a.url, a.icon)).join('')}</div>`;
+}
+
+/* ================= 数据备份 / 恢复（导出导入 localStorage 的 luo_ 键） ================= */
+function exportData() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.indexOf('luo_') === 0) data[k] = localStorage.getItem(k);
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'luo_workbench_backup_' + todayKey() + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  const msg = document.getElementById('backupMsg');
+  if (msg) msg.innerHTML = '<span style="color:#1565c0">✅ 已导出 ' + Object.keys(data).length + ' 项数据，请保存到手机/云盘。</span>';
+  toast('备份已导出');
+}
+function importData(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      let n = 0;
+      for (const k in data) { if (k.indexOf('luo_') === 0) { localStorage.setItem(k, data[k]); n++; } }
+      const msg = document.getElementById('backupMsg');
+      if (msg) msg.innerHTML = '<span style="color:#1565c0">✅ 已恢复 ' + n + ' 项数据，刷新页面后生效。</span>';
+      toast('备份已恢复，请刷新页面');
+    } catch (e) {
+      const msg = document.getElementById('backupMsg');
+      if (msg) msg.innerHTML = '<span class="text-red">❌ 文件格式有误，导入失败。</span>';
+    }
+    input.value = '';
+  };
+  reader.readAsText(f);
 }
 
 /* ---- 收藏（核心金句 / 好评 / 雷点） ---- */
