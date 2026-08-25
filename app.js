@@ -771,8 +771,8 @@ function renderExam() {
     </div>
   `).join('');
   const aEl = document.getElementById('examAppBox'); if (aEl) aEl.innerHTML = appLinkRow([
-    { name: '粉笔', pkg: 'com.fenbi.android.solar', url: 'https://www.fenbi.com/', icon: '🟢' },
-    { name: '亦申', pkg: 'com.baijiayun.yishenwangxiao', url: 'https://www.baidu.com/s?wd=亦申公考', icon: '🔵' }
+    { name: '粉笔', pkg: 'com.fenbi.android.solar', url: 'https://www.fenbi.com/', scheme: 'com.fenbi.android.solar', icon: '🟢' },
+    { name: '亦申', pkg: 'com.baijiayun.yishenwangxiao', url: 'https://www.yishenvip.com/', scheme: 'com.baijiayun.yishenwangxiao', icon: '🔵' }
   ]);
   document.querySelectorAll('#examTabs .tab').forEach(tab => {
     tab.onclick = () => {
@@ -1728,7 +1728,7 @@ const drawStyle = [
 function renderDrawing() {
   const ab = document.getElementById('drawAppBox');
   if (ab) ab.innerHTML = appLinkRow([
-    { name: '画世界Pro', pkg: 'net.huanci.hsjpro', url: 'https://www.baidu.com/s?wd=画世界Pro', icon: '🎨' }
+    { name: '画世界Pro', pkg: 'net.huanci.hsjpro', url: 'https://hsjpro.mojing.art/', scheme: 'net.huanci.hsjpro', icon: '🎨' }
   ]);
   const mode = document.querySelector('#drawTabs .tab.active')?.dataset.draw || 'qq';
   document.getElementById('drawQQPanel').style.display = mode === 'qq' ? 'block' : 'none';
@@ -2102,7 +2102,7 @@ function renderOffice() {
   const el = document.getElementById('officeVideoList'); if (el) el.innerHTML = videoList('office', officeVideos);
   const box = document.getElementById('officeAppBox');
   if (box) box.innerHTML = appLinkRow([
-    { name: 'WPS Office', pkg: 'cn.wps.moffice', url: 'https://www.wps.cn/', icon: '📄' }
+    { name: 'WPS Office', pkg: 'cn.wps.moffice', url: 'https://www.wps.cn/', scheme: 'cn.wps.moffice', icon: '📄' }
   ]);
 }
 
@@ -2224,34 +2224,65 @@ function copyPrompt(i) {
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 function escB(s) { return esc(s).replace(/&lt;(\/?b)&gt;/gi, '<$1>'); }
 
-/* ================= App 直达助手（Android intent 深链，直接唤起已装 App） ================= */
+/* ================= App 直达助手（Android intent / scheme 深链，直接唤起已装 App） ================= */
 /* 直接按包名唤起手机上的 App（与 B站/抖音/小红书 配套视频“一点就进 App”的体验一致）；
-   若未安装，1.5s 内未离开页面则兜底打开官网/下载页。Honor 安卓 + PWA 下 intent:// 会直接拉起 App。 */
-function openApp(name, pkg, url) {
-  const fb = encodeURIComponent(url);
-  const intent = `intent://#Intent;package=${pkg};S.browser_fallback_url=${fb};end`;
+   若未安装，1.6s 内未离开页面则兜底打开官网/下载页。
+   策略：Chrome / Harmony 优先 intent://；Edge / 华为浏览器 / 其他浏览器优先 scheme://；
+   最终兜底 market:// 应用商店或官网，避免再跳到百度搜索。 */
+function openApp(name, pkg, url, scheme) {
+  scheme = scheme || pkg;                 // 默认用包名作为 scheme（很多 App 会注册自己包名）
+  const market = `market://details?id=${pkg}`;
+  const fbMarket = encodeURIComponent(market);
+  const intent = `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${pkg};S.browser_fallback_url=${fbMarket};end`;
+  const schemeUrl = `${scheme}://`;
+
+  const ua = navigator.userAgent;
+  const isAndroid = /Android/i.test(ua);
+  const isChrome = /Chrome/i.test(ua) && !/Edg/i.test(ua) && !/MicroMessenger/i.test(ua) && !/QQBrowser/i.test(ua) && !/Quark/i.test(ua);
+  const isHarmony = /HarmonyOS/i.test(ua);
+
   let left = false;
   const onHide = () => { left = true; };
   document.addEventListener('visibilitychange', onHide, { once: true });
-  // 用 <a> 点击触发 Android intent 深链：已装 App 直接唤起，未装则走兜底官网
-  try {
-    const a = document.createElement('a');
-    a.href = intent; a.style.display = 'none';
-    document.body.appendChild(a); a.click(); a.remove();
-  } catch (e) {}
+
+  const tryNav = (href) => {
+    try {
+      const a = document.createElement('a');
+      a.href = href; a.style.display = 'none';
+      document.body.appendChild(a); a.click(); a.remove();
+    } catch (e) {}
+  };
+
+  // 第一步：按浏览器类型选择最佳唤起方式
+  if (isAndroid && (isChrome || isHarmony)) {
+    tryNav(intent);
+  } else {
+    window.location.href = schemeUrl;
+  }
+
   setTimeout(() => {
     document.removeEventListener('visibilitychange', onHide);
-    if (!left) window.open(url, '_blank');
-  }, 1500);
+    if (!left && !document.hidden) {
+      // 第一步未唤起，换备用方案
+      if (isAndroid && (isChrome || isHarmony)) {
+        window.location.href = schemeUrl;
+        setTimeout(() => { if (!document.hidden) window.location.href = url; }, 1200);
+      } else {
+        tryNav(intent);
+        setTimeout(() => { if (!document.hidden) window.location.href = market; }, 1200);
+      }
+    }
+  }, 1600);
   toast('正在唤起「' + name + '」…');
 }
-function appLinkBtn(name, pkg, url, icon) {
+function appLinkBtn(name, pkg, url, icon, scheme) {
   icon = icon || '📲';
-  return `<button class="btn btn-app" onclick="openApp('${esc(name)}','${esc(pkg)}','${esc(url)}')">
+  const schemeArg = scheme ? `,'${esc(scheme)}'` : '';
+  return `<button class="btn btn-app" onclick="openApp('${esc(name)}','${esc(pkg)}','${esc(url)}'${schemeArg})">
     <span class="app-ico">${icon}</span><span>${esc(name)}</span><span class="app-go">直达 ›</span></button>`;
 }
 function appLinkRow(list) {
-  return `<div class="app-row">${list.map(a => appLinkBtn(a.name, a.pkg, a.url, a.icon)).join('')}</div>`;
+  return `<div class="app-row">${list.map(a => appLinkBtn(a.name, a.pkg, a.url, a.icon, a.scheme)).join('')}</div>`;
 }
 
 /* ================= 数据备份 / 恢复（导出导入 localStorage 的 luo_ 键） ================= */
