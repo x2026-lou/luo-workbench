@@ -2225,72 +2225,75 @@ function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<':
 function escB(s) { return esc(s).replace(/&lt;(\/?b)&gt;/gi, '<$1>'); }
 
 /* ================= App 直达助手（Android intent / scheme 深链，直接唤起已装 App） ================= */
-/* 直接按包名唤起手机上的 App（与 B站/抖音/小红书 配套视频“一点就进 App”的体验一致）。
-   策略：优先尝试多个常见 scheme://；Chrome / Harmony 再尝试 intent://；
-   若都唤不起，弹框让用户选择"打开应用商店"或"访问官网"，避免自动跳到商店造成困扰。
-   提示：用系统浏览器 / Chrome 打开 PWA，唤起成功率最高。 */
+/* 直接按包名唤起手机上的 App。
+   策略：① Chrome / Harmony 优先用 intent://（最可靠，能唤起任何已装 App）；
+        ② 依次用 iframe 安静尝试多个 scheme://（无效 scheme 不会触发浏览器搜索）；
+        ③ 其它浏览器补一次 intent；
+        ④ 全部失败：静默打开官网（不弹窗、不跳商店）。
+   提示：用系统浏览器 / Chrome 打开本站，App 唤起成功率最高。 */
 function openApp(name, pkg, url, schemes) {
-  // schemes 可以是字符串或数组；默认先用常见短 scheme，再用包名
   let list = [];
   if (Array.isArray(schemes) && schemes.length) list = schemes.slice();
   else if (typeof schemes === 'string' && schemes.trim()) list = [schemes.trim()];
   if (list.indexOf(pkg) < 0) list.push(pkg);
 
-  const market = `market://details?id=${pkg}`;
-  const fbMarket = encodeURIComponent(market);
-  const intent = `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${pkg};S.browser_fallback_url=${fbMarket};end`;
-
   const ua = navigator.userAgent;
   const isAndroid = /Android/i.test(ua);
   const isChrome = /Chrome/i.test(ua) && !/Edg/i.test(ua) && !/MicroMessenger/i.test(ua) && !/QQBrowser/i.test(ua) && !/Quark/i.test(ua);
   const isHarmony = /HarmonyOS/i.test(ua);
-  let step = 0; // 0..list.length-1 尝试 scheme，list.length 尝试 intent
 
-  const tryNav = (href) => {
+  const intent = `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${pkg};S.browser_fallback_url=${encodeURIComponent(url)};end`;
+
+  // 监听页面是否进入后台（App 被唤起时触发）
+  const listenHide = () => new Promise(resolve => {
+    let left = false;
+    const onHide = () => { left = true; };
+    document.addEventListener('visibilitychange', onHide, { once: true });
+    setTimeout(() => { document.removeEventListener('visibilitychange', onHide); resolve(left); }, 1100);
+  });
+
+  const tryIntent = async () => {
     try {
       const a = document.createElement('a');
-      a.href = href; a.style.display = 'none';
+      a.href = intent; a.style.display = 'none';
       document.body.appendChild(a); a.click(); a.remove();
     } catch (e) {}
+    return await listenHide();
   };
 
-  const askFallback = () => {
-    // 全部唤起失败，让用户选择下一步，而不是自动跳转
-    setTimeout(() => {
-      const goMarket = confirm(`未检测到「${name}」已安装，或当前浏览器限制了 App 唤起。\n点【确定】打开应用商店下载/更新；\n点【取消】访问官方网站。`);
-      if (goMarket) window.location.href = market;
-      else window.open(url, '_blank');
-    }, 200);
-  };
+  // 用隐藏 iframe 安静尝试 scheme：无效 scheme 只会在 iframe 内失败，不会触发顶层搜索
+  const trySchemeIframe = (schemeUrl) => new Promise(resolve => {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'display:none;width:0;height:0;border:0;position:absolute;left:-9999px';
+    let done = false;
+    const finish = (ok) => { if (done) return; done = true; try { iframe.remove(); } catch (e) {} resolve(ok); };
+    let left = false;
+    const onHide = () => { left = true; };
+    document.addEventListener('visibilitychange', onHide, { once: true });
+    const t = setTimeout(() => { document.removeEventListener('visibilitychange', onHide); finish(left); }, 1000);
+    iframe.onload = () => finish(false);
+    iframe.onerror = () => finish(false);
+    document.body.appendChild(iframe);
+    iframe.src = schemeUrl;
+  });
 
-  const nextTry = () => {
-    if (step < list.length) {
-      const schemeUrl = `${list[step]}://`;
-      step++;
-      let left = false;
-      const onHide = () => { left = true; };
-      document.addEventListener('visibilitychange', onHide, { once: true });
-      window.location.href = schemeUrl;
-      setTimeout(() => {
-        document.removeEventListener('visibilitychange', onHide);
-        if (!left && !document.hidden) nextTry();
-      }, 900);
-    } else if (isAndroid && (isChrome || isHarmony)) {
-      // scheme 全失败，再试 intent（Chrome/Harmony 有效）
-      let left = false;
-      const onHide = () => { left = true; };
-      document.addEventListener('visibilitychange', onHide, { once: true });
-      tryNav(intent);
-      setTimeout(() => {
-        document.removeEventListener('visibilitychange', onHide);
-        if (!left && !document.hidden) askFallback();
-      }, 1100);
-    } else {
-      askFallback();
+  (async () => {
+    // ① Chrome / Harmony 优先 intent（最可靠）
+    if (isAndroid && (isChrome || isHarmony)) {
+      if (await tryIntent()) { toast('已唤起「' + name + '」'); return; }
     }
-  };
+    // ② 安静尝试所有 scheme
+    for (const s of list) {
+      if (await trySchemeIframe(s + '://')) { toast('已唤起「' + name + '」'); return; }
+    }
+    // ③ 其它浏览器补一次 intent
+    if (!(isAndroid && (isChrome || isHarmony))) {
+      if (await tryIntent()) { toast('已唤起「' + name + '」'); return; }
+    }
+    // ④ 全部失败：静默打开官网（不弹窗）
+    window.open(url, '_blank');
+  })();
 
-  nextTry();
   toast('正在唤起「' + name + '」…');
 }
 function appLinkBtn(name, pkg, url, icon, schemes) {
@@ -2303,7 +2306,7 @@ function appLinkBtn(name, pkg, url, icon, schemes) {
 }
 function appLinkRow(list) {
   return `<div class="app-row">${list.map(a => appLinkBtn(a.name, a.pkg, a.url, a.icon, a.schemes)).join('')}</div>
-    <div class="text-sm text-muted" style="margin-top:6px">💡 若无法直接唤起，请尝试用系统浏览器/Chrome打开本站，或点击按钮后选择"打开应用商店"</div>`;
+    <div class="text-sm text-muted" style="margin-top:6px">💡 若无法直接唤起，请尝试用系统浏览器/Chrome打开本站，或点击后自动访问官网</div>`;
 }
 
 /* ================= 数据备份 / 恢复（导出导入 localStorage 的 luo_ 键） ================= */
