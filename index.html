@@ -138,7 +138,17 @@
           <div id="engQuizPanel" style="display:none">
             <div class="card"><div class="font-bold mb-3" id="quizQuestion">Question</div><div id="quizOptions"></div><div class="quiz-result" id="quizResult"></div><button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="nextQuiz()">下一题</button></div>
           </div>
-          <div id="engVideoPanel" style="display:none"><div id="englishVideoList"></div></div>
+          <div id="engVideoPanel" style="display:none">
+            <div id="englishVideoList"></div>
+            <div class="card mt-2">
+              <div class="know-title">📚 英语学习干货 · 详细文字教学</div>
+              <div class="know-block"><div class="know-h">▶ 听力：精听三步法</div><div class="know-b">①盲听抓大意 → ②对照文本跟读、圈出生词 → ③脱稿复听直到能跟读。每天 20 分钟精听，比泛听 2 小时更提分。</div></div>
+              <div class="know-block"><div class="know-h">▶ 口语：影子跟读</div><div class="know-b">原声播放同时小声跟读（shadowing），模仿语音语调与节奏；优先练 5 类高频场景：点餐 / 问路 / 购物 / 面试 / 电话。</div></div>
+              <div class="know-block"><div class="know-h">▶ 阅读：长难句拆解法</div><div class="know-b">先找 <b>主干主谓宾</b>，再处理定从 / 状从；遇生词先猜后查，别卡住打断节奏。段落先看首尾句抓主旨。</div></div>
+              <div class="know-block"><div class="know-h">▶ 词汇：词根词缀记忆</div><div class="know-b">如 -spect(看)→inspect / respect / prospect；按"家族"记，一词串一串，比单背高效且不易忘。</div></div>
+              <div class="know-block"><div class="know-h">▶ 写作：逻辑连接词</div><div class="know-b">因果 therefore/thus、转折 however、递进 furthermore；用对连接词，作文立刻有"骨架"，阅卷更顺眼。</div></div>
+            </div>
+          </div>
           <div id="engPrepPanel" style="display:none"><div id="cetPrepBox"></div></div>
         </div>
 
@@ -155,7 +165,16 @@
             <div class="tab" data-exam="quiz">✏️ 每日一测</div>
             <div class="tab" data-exam="jobs">💼 招聘公告</div>
           </div>
-          <div id="examVideoPanel"><div id="examVideoList"></div></div>
+          <div id="examVideoPanel"><div id="examVideoList"></div>
+            <div class="card mt-2">
+              <div class="know-title">📚 考公干货 · 详细文字教学</div>
+              <div class="know-block"><div class="know-h">▶ 行测：时间分配</div><div class="know-b">推荐顺序 <b>常识→言语→资料→判断→数量</b>；资料分析力争 90% 正确率（提分高地），数量难的最后做、保住性价比。</div></div>
+              <div class="know-block"><div class="know-h">▶ 资料分析：速算</div><div class="know-b"><b>截位直除</b>（选项差距大直接截两位）、<b>百化分</b>（1/8=12.5% 等熟记）；先估算后精算，省时间。</div></div>
+              <div class="know-block"><div class="know-h">▶ 申论：大作文框架</div><div class="know-b">开头(背景+亮明总论点)→分论点①②③(论点句+论据+分析)→结尾(回扣+升华)；字迹工整、分条清晰、宁超勿缺。</div></div>
+              <div class="know-block"><div class="know-h">▶ 常识：积累节奏</div><div class="know-b">时政+法律+科技文史；考前集中刷当年政府工作报告与重要会议，日常按模块碎片化积累。</div></div>
+              <div class="know-block"><div class="know-h">▶ 复盘：错题本</div><div class="know-b">按模块归类错题，每周复盘易错点，避免"换个马甲还错"；错题比新题更值钱。</div></div>
+            </div>
+          </div>
           <div id="examXingcePanel" style="display:none"><div id="examXingce"></div></div>
           <div id="examShenlunPanel" style="display:none"><div id="examShenlun"></div></div>
           <div id="examShizhengPanel" style="display:none"><div id="examShizheng"></div></div>
@@ -203,6 +222,14 @@
           <div class="section-sub">零基础短视频拍摄+剪辑系统教程，每日推送一节</div>
           <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="editProgress" style="width:0%"></div></div><div class="progress-text" id="editProgressText">学习进度 0%</div></div>
           <div id="editList"></div>
+          <div class="card mt-2">
+            <div class="know-title">📚 剪辑干货 · 详细文字教学</div>
+            <div class="know-block"><div class="know-h">▶ 结构：钩子框架</div><div class="know-b">用 <b>"钩子+3要点+金句结尾"</b> 框架，先写脚本再剪，不沉迷素材。</div></div>
+            <div class="know-block"><div class="know-h">▶ 转场：少即是多</div><div class="know-b">同景别不硬切、用 J/L 切(声音先入)更顺；花哨转场少用，干净更高级。</div></div>
+            <div class="know-block"><div class="know-h">▶ 调色：统一基调</div><div class="know-b">全片统一冷暖与亮度，先校色再去色；对比度+色温+暗角一套用到底。</div></div>
+            <div class="know-block"><div class="know-h">▶ 卡点：听鼓点</div><div class="know-b">先标 BGM 重音 beat，再按重音下刀切镜头；节奏卡准完播率更高。</div></div>
+            <div class="know-block"><div class="know-h">▶ 字幕：安全区</div><div class="know-b">字幕放屏幕下 1/10 安全区、别压脸；双语字幕可关闭，花字别挡主体。</div></div>
+          </div>
         </div>
 
         <!-- Recruitment -->
@@ -293,6 +320,14 @@
           <div id="imageMakeupPanel">
             <div id="makeupTeach"></div>
             <div id="makeupVideoList"></div>
+            <div class="card mt-2">
+              <div class="know-title">📚 形象管理干货 · 妆容 / 穿搭 / 后期</div>
+              <div class="know-block"><div class="know-h">▶ 底妆：干净不卡粉</div><div class="know-b">先判断肤质(干/油/混)，妆前补水/控油；粉底少量多次、点拍开；定妆喷雾+散粉 T 区重点。</div></div>
+              <div class="know-block"><div class="know-h">▶ 眉眼：少年感</div><div class="know-b">眉形自然微挑、别画太细；眼影用 <b>大地色</b> 打底+加深眼尾，眼线只填睫毛根，拒绝全包眼线。</div></div>
+              <div class="know-block"><div class="know-h">▶ 修容：顺骨骼</div><div class="know-b">发际线/颧骨下方/下颌线轻扫，遵循"想收哪里扫哪里"；高光打鼻梁与颧骨上方，量要少。</div></div>
+              <div class="know-block"><div class="know-h">▶ 穿搭：中性少年感</div><div class="know-b">版型选直筒/微宽松，配色低饱和(白灰藏蓝卡其)；棒球帽+帆布包+银饰小件提气质。</div></div>
+              <div class="know-block"><div class="know-h">▶ 后期：自然感</div><div class="know-b">磨皮≤30% 保留皮肤纹理，别把脸"磨平"；瘦脸液化少量、保留原骨相；调色统一冷暖，别高饱和失真。</div></div>
+            </div>
           </div>
           <div id="imageRetouchPanel" style="display:none"><div id="retouchTeach"></div></div>
           <div id="imageOutfitPanel" style="display:none"><div id="outfitVideoList"></div></div>
@@ -364,6 +399,14 @@
           <div class="section-title"><div class="icon">🎸</div>吉他实用简要教学</div>
           <div class="section-sub">乐谱知识、指法练习、每日弹唱打卡</div>
           <div id="guitarVideoList"></div>
+          <div class="card mt-2">
+            <div class="know-title">📚 吉他学习干货 · 详细文字教学</div>
+            <div class="know-block"><div class="know-h">▶ 持琴：放松是前提</div><div class="know-b">右腿踩高(脚凳)、琴体贴身；左手虎口空、不紧握琴颈，按弦用指尖垂直发力，手越紧越哑。</div></div>
+            <div class="know-block"><div class="know-h">▶ 和弦：C-G-Am-F</div><div class="know-b">先单练每个和弦"干净不闷"，再练两两切换；慢→稳→快，每天 10 分钟比突击有效。</div></div>
+            <div class="know-block"><div class="know-h">▶ 节奏：下上扫弦</div><div class="know-b">基础型 <b>下-下上-上下上</b>，手腕放松靠惯性；先跟节拍器，再跟鼓点。</div></div>
+            <div class="know-block"><div class="know-h">▶ 大横按：F 和弦</div><div class="know-b">食指侧边压弦、拇指顶琴颈后方；先练"能响"再练"干净"，一周可见突破。</div></div>
+            <div class="know-block"><div class="know-h">▶ 耳朵：音程训练</div><div class="know-b">听辨大三/小三、纯四/纯五的色彩差异；配合唱音阶，弹唱更准更稳。</div></div>
+          </div>
           <div class="card">
             <div class="font-bold mb-2">⏱️ 今日练习计时</div>
             <div class="flex-between mb-3"><span class="text-muted text-sm">目标：1 小时</span><span class="font-bold" id="guitarTime">00:00</span></div>
@@ -425,6 +468,14 @@
           <div class="section-title"><div class="icon">📱</div>自媒体干货学习</div>
           <div class="section-sub">平台运营、涨粉、变现、内容策略</div>
           <div id="mediaVideoList"></div>
+          <div class="card mt-2">
+            <div class="know-title">📚 自媒体干货 · 详细文字教学</div>
+            <div class="know-block"><div class="know-h">▶ 算法：完播优先</div><div class="know-b">平台先看 <b>完播率+互动率</b>；前 3 秒必须抓人，视频前 30% 别注水。</div></div>
+            <div class="know-block"><div class="know-h">▶ 人设：清晰定位</div><div class="know-b">用"我是谁+给谁看+提供什么"三句话定调；持续垂直内容，算法才推得准。</div></div>
+            <div class="know-block"><div class="know-h">▶ 选题：情绪价值</div><div class="know-b">痛点(焦虑/迷茫)、爽点(逆袭/解气)、干货(可复制)；标题带具体数字/结果更吸点。</div></div>
+            <div class="know-block"><div class="know-h">▶ 变现：路径</div><div class="know-b">平台分成→商单→带货→知识付费，按粉丝量递进；先有稳定内容再谈变现。</div></div>
+            <div class="know-block"><div class="know-h">▶ 复盘：看数据</div><div class="know-b">每周看"哪类完播高、哪类掉粉"，复制爆款结构、砍掉低效选题。</div></div>
+          </div>
         </div>
 
         <!-- Travel -->
@@ -510,6 +561,14 @@
           <div class="section-sub">WPS、计算机二级 Excel/PPT/Word 实用技巧</div>
           <div id="officeAppBox" class="mb-2"></div>
           <div id="officeVideoList"></div>
+          <div class="card mt-2">
+            <div class="know-title">📚 办公技能干货 · 详细文字教学</div>
+            <div class="know-block"><div class="know-h">▶ Excel：查表与汇总</div><div class="know-b"><b>VLOOKUP/XLOOKUP</b> 跨表取数、数据透视表一键分组汇总；处理报表先想"要什么结果"再选函数。</div></div>
+            <div class="know-block"><div class="know-h">▶ PPT：高级感</div><div class="know-b">对齐(网格线)+留白+统一配色(主色60/辅色30/点缀10)；一页一个观点，字少图清。</div></div>
+            <div class="know-block"><div class="know-h">▶ Word：长文档</div><div class="know-b">用"样式"管理标题→自动生成目录；参考文献用"引用"插入，改顺序不崩。</div></div>
+            <div class="know-block"><div class="know-h">▶ 效率：快捷键</div><div class="know-b">Ctrl+方向键跳区域、F4 重复上一步、Alt+= 快速求和；把重复操作做成模板。</div></div>
+            <div class="know-block"><div class="know-h">▶ 二级：得分点</div><div class="know-b">选择题刷真题找规律，操作题记"菜单路径"(如 插入→页眉页脚)，考前两周集中练手感。</div></div>
+          </div>
         </div>
 
         <!-- Photography -->
@@ -522,6 +581,14 @@
           </div>
           <div id="photoPosesPanel" class="mt-2"></div>
           <div id="photoBasicsPanel" class="mt-2" style="display:none"></div>
+          <div class="card mt-2">
+            <div class="know-title">📚 摄影干货 · 详细文字教学</div>
+            <div class="know-block"><div class="know-h">▶ 构图：三分法</div><div class="know-b">打开网格线，主体放交叉点；想显高"脚贴底边、头留空"，想情绪用中心构图+留白。</div></div>
+            <div class="know-block"><div class="know-h">▶ 角度：仰拍显高</div><div class="know-b">手机略低于胸口、镜头朝上 15–30° 显腿长气场；俯拍(高 20–40°)显脸小可爱。</div></div>
+            <div class="know-block"><div class="know-h">▶ 光线：黄金时刻</div><div class="know-b">日出后/日落前 1 小时最柔；逆光拍发丝光、侧光塑立体，避开正午顶光"阴阳脸"。</div></div>
+            <div class="know-block"><div class="know-h">▶ 距离：景别</div><div class="know-b">全身 2–3m、半身 1–1.5m、特写 0.5m；离太近畸变、太远主体小。</div></div>
+            <div class="know-block"><div class="know-h">▶ 剪辑：黄金 3 秒</div><div class="know-b">开头抛钩子(反差/悬念/冲突)留住人；中段控制节奏(快慢结合)，结尾留记忆点。</div></div>
+          </div>
         </div>
 
         <!-- EQ -->
@@ -655,6 +722,14 @@
           <div class="section-title"><div class="icon">✨</div>小说创作进阶</div>
           <div class="section-sub">逻辑 / 钩子 / 文案 / 叙事节奏 / 读者共鸣</div>
           <div id="novelCraftBox" data-cat="全部"></div>
+          <div class="card mt-2">
+            <div class="know-title">📚 写作教学干货 · 详细文字教学</div>
+            <div class="know-block"><div class="know-h">▶ 人设：立体角色</div><div class="know-b">给角色定 <b>欲望+缺陷+秘密</b> 三件套；越具体越有记忆点（如"想证明自己却怕被看见"）。</div></div>
+            <div class="know-block"><div class="know-h">▶ 钩子：前 3 章</div><div class="know-b">开篇抛核心冲突或悬念（失踪/秘密/背叛），让读者"非看下去不可"；别用大段背景铺垫暖场。</div></div>
+            <div class="know-block"><div class="know-h">▶ 视角：第三人称限知</div><div class="know-b">新手优先用 <b>第三人称限知</b>，只写当前视角角色所见所感，用信息差制造悬念。</div></div>
+            <div class="know-block"><div class="know-h">▶ 节奏：张弛有度</div><div class="know-b">高潮前压、低谷里埋伏笔；用"小目标→小阻碍→小胜利"维持追更欲。</div></div>
+            <div class="know-block"><div class="know-h">▶ 对话：潜台词</div><div class="know-b">好的对话说"表面"藏"真实"；用动作 / 沉默代替直白解释，信息量更大更有味。</div></div>
+          </div>
         </div>
 
         <!-- 视频脚本灵感 -->
@@ -751,11 +826,11 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=4"></script>
-  <script src="cet4_full.js?v=4"></script>
-  <script src="cet4_enhance.js?v=4"></script>
-  <script src="expansion.js?v=4"></script>
-  <script src="jjwxc_analysis.js?v=4"></script>
+  <script src="app.js?v=5"></script>
+  <script src="cet4_full.js?v=5"></script>
+  <script src="cet4_enhance.js?v=5"></script>
+  <script src="expansion.js?v=5"></script>
+  <script src="jjwxc_analysis.js?v=5"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then(reg => {

@@ -621,3 +621,11 @@ details[open] summary { margin-bottom:6px; }
 .cet-week-row { display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px dashed #E0E0E0; align-items: center; }
 .cet-week-row:last-child { border-bottom: none; }
 .cet-week-row > b { min-width: 38px; color: #1565C0; }
+
+/* ---- 版块干货 · 详细文字教学 ---- */
+.know-title { font-size: 14px; font-weight: 800; color: #1565C0; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.know-block { padding: 8px 0; border-bottom: 1px dashed #E3E8F0; }
+.know-block:last-child { border-bottom: none; }
+.know-h { font-size: 13px; font-weight: 800; color: var(--text-strong); margin-bottom: 3px; }
+.know-b { font-size: 12.5px; line-height: 1.7; color: #455A64; }
+.know-b b { color: #1565C0; }

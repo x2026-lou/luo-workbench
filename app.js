@@ -2229,11 +2229,16 @@ function escB(s) { return esc(s).replace(/&lt;(\/?b)&gt;/gi, '<$1>'); }
    若未安装，1.5s 内未离开页面则兜底打开官网/下载页。Honor 安卓 + PWA 下 intent:// 会直接拉起 App。 */
 function openApp(name, pkg, url) {
   const fb = encodeURIComponent(url);
-  const intent = `intent://#Intent;package=${pkg};scheme=app;S.browser_fallback_url=${fb};end`;
+  const intent = `intent://#Intent;package=${pkg};S.browser_fallback_url=${fb};end`;
   let left = false;
   const onHide = () => { left = true; };
   document.addEventListener('visibilitychange', onHide, { once: true });
-  try { window.location.href = intent; } catch (e) {}
+  // 用 <a> 点击触发 Android intent 深链：已装 App 直接唤起，未装则走兜底官网
+  try {
+    const a = document.createElement('a');
+    a.href = intent; a.style.display = 'none';
+    document.body.appendChild(a); a.click(); a.remove();
+  } catch (e) {}
   setTimeout(() => {
     document.removeEventListener('visibilitychange', onHide);
     if (!left) window.open(url, '_blank');
