@@ -513,21 +513,83 @@ function deleteDailyReview(date) {
 }
 
 /* ================= English ================= */
-const words = [
-  { en: 'abundant', pho: '/əˈbʌndənt/', cn: '丰富的；充裕的' },
-  { en: 'contribute', pho: '/kənˈtrɪbjuːt/', cn: '贡献；促成' },
-  { en: 'efficient', pho: '/ɪˈfɪʃnt/', cn: '高效的' },
-  { en: 'opportunity', pho: '/ˌɒpəˈtjuːnəti/', cn: '机会' },
-  { en: 'phenomenon', pho: '/fəˈnɒmɪnən/', cn: '现象' },
-  { en: 'schedule', pho: '/ˈʃedjuːl/', cn: '日程表；安排' },
-  { en: 'strategy', pho: '/ˈstrætədʒi/', cn: '策略' },
-  { en: 'temporary', pho: '/ˈtemprəri/', cn: '暂时的' },
-  { en: 'vocabulary', pho: '/vəˈkæbjələri/', cn: '词汇' },
-  { en: 'widespread', pho: '/ˈwaɪdspred/', cn: '广泛的' }
-];
+let words = [];
+let quizData = [];
+let wordsReady = false;
+
+/* 每日单词：四级真题高频词，过滤掉高考英语核心词 */
+function initDailyWords() {
+  if (wordsReady) return;
+  wordsReady = true;
+  const high = window.cet4FreqHigh || [];
+  const mid = window.cet4FreqMid || [];
+  const full = window.cet4FullWords || [];
+  const gaokao = window.GAO_KAO_CORE || new Set();
+  const map = {};
+  full.forEach(x => { if (x.w) map[x.w.toLowerCase()] = x; });
+  // 额外排除一些虽在四级高频、但对高考水平仍偏基础的词
+  const tooBasic = new Set(['phone','phrase','probably','third','till','worse','would','peak','photo','according','analyze','others']);
+  const seen = new Set();
+  const filtered = [];
+  for (const w of [...high, ...mid]) {
+    const key = w.toLowerCase();
+    if (seen.has(key) || gaokao.has(key) || tooBasic.has(key)) continue;
+    seen.add(key);
+    const x = map[key];
+    if (!x) continue;
+    filtered.push({ en: x.w, pho: x.ph || '', cn: x.cn });
+  }
+  let list = [];
+  if (filtered.length) {
+    // 按日期轮换取 10 个，保证每日新鲜且均为高考范围外四级高频词
+    const dayOffset = (new Date().getDate() - 1) % filtered.length;
+    for (let i = 0; i < 10; i++) {
+      list.push(filtered[(dayOffset + i) % filtered.length]);
+    }
+  } else {
+    // 兜底：若过滤后为空，使用精选四级高频词
+    list = [
+      { en: 'abundant', pho: '/əˈbʌndənt/', cn: '丰富的；充裕的' },
+      { en: 'contribute', pho: '/kənˈtrɪbjuːt/', cn: '贡献；促成' },
+      { en: 'efficient', pho: '/ɪˈfɪʃnt/', cn: '高效的' },
+      { en: 'opportunity', pho: '/ˌɒpəˈtjuːnəti/', cn: '机会' },
+      { en: 'phenomenon', pho: '/fəˈnɒmɪnən/', cn: '现象' },
+      { en: 'schedule', pho: '/ˈʃedjuːl/', cn: '日程表；安排' },
+      { en: 'strategy', pho: '/ˈstrætədʒi/', cn: '策略' },
+      { en: 'temporary', pho: '/ˈtemprəri/', cn: '暂时的' },
+      { en: 'vocabulary', pho: '/vəˈkæbjələri/', cn: '词汇' },
+      { en: 'widespread', pho: '/ˈwaɪdspred/', cn: '广泛的' }
+    ];
+  }
+  words = list;
+  buildQuizData();
+}
+
+function buildQuizData() {
+  const list = words.slice(0, 30);
+  quizData = list.slice(0, 5).map((w, i) => {
+    const wrong = [];
+    for (let j = 1; wrong.length < 2 && j < list.length; j++) {
+      const cand = list[(i + j) % list.length].en;
+      if (cand !== w.en) wrong.push(cand);
+    }
+    const opts = [w.en, ...wrong];
+    for (let k = opts.length - 1; k > 0; k--) {
+      const r = Math.floor(Math.random() * (k + 1));
+      [opts[k], opts[r]] = [opts[r], opts[k]];
+    }
+    let cn = w.cn.replace(/^(a|ad|vt|vi|v|n|aux|num|prep|conj|art|pron)\.(\\s| )*/, '').replace(/[；;,.].*$/, '');
+    return { q: `“${cn}”对应的英文是？`, opts, a: opts.indexOf(w.en) };
+  });
+  if (!quizData.length) {
+    quizData = [{ q: '“丰富的；充裕的”对应的英文是？', opts: ['abundant', 'absent', 'absolute'], a: 0 }];
+  }
+}
 let wordIdx = store.get('luo_word_idx', 0);
 let learnedWords = store.get('luo_learned_words', []);
 function showWord() {
+  initDailyWords();
+  if (!words.length) return;
   const w = words[wordIdx % words.length];
   document.getElementById('wordEn').textContent = w.en;
   document.getElementById('wordPho').textContent = w.pho;
@@ -549,15 +611,9 @@ function markWordLearned() {
   showWord(); toast('已标记掌握');
 }
 
-const quizData = [
-  { q: '“贡献；促成”对应的英文是？', opts: ['contribute', 'attribute', 'distribute'], a: 0 },
-  { q: '“高效的”英文是？', opts: ['effective', 'efficient', 'effortless'], a: 1 },
-  { q: '“广泛的”英文是？', opts: ['worldwide', 'widespread', 'wide'], a: 1 },
-  { q: '“机会”英文是？', opts: ['chance', 'opportunity', 'choice'], a: 1 },
-  { q: '“日程表”英文是？', opts: ['schedule', 'scheme', 'school'], a: 0 }
-];
 let quizIdx = 0, answered = false;
 function renderQuiz() {
+  initDailyWords();
   const q = quizData[quizIdx];
   document.getElementById('quizQuestion').textContent = `第 ${quizIdx + 1}/${quizData.length} 题：${q.q}`;
   document.getElementById('quizOptions').innerHTML = q.opts.map((opt, i) => `<button class="quiz-opt" onclick="answerQuiz(${i})">${opt}</button>`).join('');
@@ -585,6 +641,7 @@ const englishVideos = makeSearchItems([
 ], v => v.title);
 
 function renderEnglish() {
+  initDailyWords();
   showWord();
   document.getElementById('englishVideoList').innerHTML = videoList('english', englishVideos);
 }
@@ -2226,11 +2283,10 @@ function escB(s) { return esc(s).replace(/&lt;(\/?b)&gt;/gi, '<$1>'); }
 
 /* ================= App 直达助手（Android intent / scheme 深链，直接唤起已装 App） ================= */
 /* 直接按包名唤起手机上的 App。
-   策略：① Chrome / Harmony 优先用 intent://（最可靠，能唤起任何已装 App）；
-        ② 依次用 iframe 安静尝试多个 scheme://（无效 scheme 不会触发浏览器搜索）；
-        ③ 其它浏览器补一次 intent；
-        ④ 全部失败：静默打开官网（不弹窗、不跳商店）。
-   提示：用系统浏览器 / Chrome 打开本站，App 唤起成功率最高。 */
+   策略：① Chromium 系浏览器（Chrome / Edge / 三星 / 小米等，均支持 intent://）优先用 intent；
+        ② 再用 a.click() 逐个尝试 scheme://（顶层唤起，比 iframe 可靠）；
+        ③ 全部失败：静默打开官网（不弹窗、不跳商店、不搜索）。
+   说明：intent 能唤起任何已装 App（无需知道 scheme）；scheme 仅作兜底。 */
 function openApp(name, pkg, url, schemes) {
   let list = [];
   if (Array.isArray(schemes) && schemes.length) list = schemes.slice();
@@ -2238,62 +2294,57 @@ function openApp(name, pkg, url, schemes) {
   if (list.indexOf(pkg) < 0) list.push(pkg);
 
   const ua = navigator.userAgent;
-  const isAndroid = /Android/i.test(ua);
-  const isChrome = /Chrome/i.test(ua) && !/Edg/i.test(ua) && !/MicroMessenger/i.test(ua) && !/QQBrowser/i.test(ua) && !/Quark/i.test(ua);
-  const isHarmony = /HarmonyOS/i.test(ua);
+  // Edge 也是 Chromium 内核，支持 intent://，必须包含；排除微信/QQ/夸克/UC 等有限制的内置浏览器
+  const isChromium = /Chrome|Edg|Brave|SamsungBrowser|MiuiBrowser|HuaweiBrowser|OPR/i.test(ua)
+    && !/MicroMessenger/i.test(ua) && !/QQBrowser/i.test(ua) && !/Quark/i.test(ua) && !/UCBrowser/i.test(ua);
 
   const intent = `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${pkg};S.browser_fallback_url=${encodeURIComponent(url)};end`;
 
-  // 监听页面是否进入后台（App 被唤起时触发）
-  const listenHide = () => new Promise(resolve => {
-    let left = false;
-    const onHide = () => { left = true; };
-    document.addEventListener('visibilitychange', onHide, { once: true });
-    setTimeout(() => { document.removeEventListener('visibilitychange', onHide); resolve(left); }, 1100);
-  });
-
-  const tryIntent = async () => {
+  const tryNav = (href) => {
     try {
       const a = document.createElement('a');
-      a.href = intent; a.style.display = 'none';
+      a.href = href; a.style.display = 'none';
       document.body.appendChild(a); a.click(); a.remove();
     } catch (e) {}
-    return await listenHide();
   };
 
-  // 用隐藏 iframe 安静尝试 scheme：无效 scheme 只会在 iframe 内失败，不会触发顶层搜索
-  const trySchemeIframe = (schemeUrl) => new Promise(resolve => {
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'display:none;width:0;height:0;border:0;position:absolute;left:-9999px';
-    let done = false;
-    const finish = (ok) => { if (done) return; done = true; try { iframe.remove(); } catch (e) {} resolve(ok); };
-    let left = false;
-    const onHide = () => { left = true; };
-    document.addEventListener('visibilitychange', onHide, { once: true });
-    const t = setTimeout(() => { document.removeEventListener('visibilitychange', onHide); finish(left); }, 1000);
-    iframe.onload = () => finish(false);
-    iframe.onerror = () => finish(false);
-    document.body.appendChild(iframe);
-    iframe.src = schemeUrl;
-  });
-
-  (async () => {
-    // ① Chrome / Harmony 优先 intent（最可靠）
-    if (isAndroid && (isChrome || isHarmony)) {
-      if (await tryIntent()) { toast('已唤起「' + name + '」'); return; }
+  let step = 0;
+  const nextTry = () => {
+    // ① Chromium 系优先 intent（最可靠，能唤起任何已装 App）
+    if (isChromium && step === 0) {
+      step = 1;
+      let left = false;
+      const onHide = () => { left = true; };
+      document.addEventListener('visibilitychange', onHide, { once: true });
+      tryNav(intent);
+      setTimeout(() => {
+        document.removeEventListener('visibilitychange', onHide);
+        if (!left && !document.hidden) nextTry();
+        else if (left) toast('已唤起「' + name + '」');
+      }, 1300);
+      return;
     }
-    // ② 安静尝试所有 scheme
-    for (const s of list) {
-      if (await trySchemeIframe(s + '://')) { toast('已唤起「' + name + '」'); return; }
+    // ② 逐个尝试 scheme（a.click 顶层唤起）
+    const idx = step - (isChromium ? 1 : 0);
+    if (idx < list.length) {
+      const schemeUrl = list[idx] + '://';
+      step++;
+      let left = false;
+      const onHide = () => { left = true; };
+      document.addEventListener('visibilitychange', onHide, { once: true });
+      tryNav(schemeUrl);
+      setTimeout(() => {
+        document.removeEventListener('visibilitychange', onHide);
+        if (!left && !document.hidden) nextTry();
+        else if (left) toast('已唤起「' + name + '」');
+      }, 1000);
+      return;
     }
-    // ③ 其它浏览器补一次 intent
-    if (!(isAndroid && (isChrome || isHarmony))) {
-      if (await tryIntent()) { toast('已唤起「' + name + '」'); return; }
-    }
-    // ④ 全部失败：静默打开官网（不弹窗）
+    // ③ 全部失败：静默打开官网（不弹窗）
     window.open(url, '_blank');
-  })();
+  };
 
+  nextTry();
   toast('正在唤起「' + name + '」…');
 }
 function appLinkBtn(name, pkg, url, icon, schemes) {
