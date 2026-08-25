@@ -86,9 +86,9 @@ function clearImportedWords() {
 function renderVocabApps() {
   const el = document.getElementById('vocabAppBox'); if (!el) return;
   el.innerHTML = appLinkRow([
-    { name: '百词斩', pkg: 'com.maimemo.android.baicizhan', url: 'https://www.baicizhan.com/', scheme: 'com.maimemo.android.baicizhan', icon: '🍊' },
-    { name: '不背单词', pkg: 'cn.com.langeasy.LangEasyLexis', url: 'https://www.bbdc.cn/', scheme: 'cn.com.langeasy.LangEasyLexis', icon: '🦋' },
-    { name: '奶酪单词', pkg: 'com.jdjdc.jdfastjdc', url: 'https://www.cheeseword.com/', scheme: 'com.jdjdc.jdfastjdc', icon: '🧀' }
+    { name: '百词斩', pkg: 'com.maimemo.android.baicizhan', url: 'https://www.baicizhan.com/', schemes: ['baicizhan', 'com.maimemo.android.baicizhan'], icon: '🍊' },
+    { name: '不背单词', pkg: 'cn.com.langeasy.LangEasyLexis', url: 'https://www.bbdc.cn/', schemes: ['bbdc', 'langeasy', 'cn.com.langeasy.LangEasyLexis'], icon: '🦋' },
+    { name: '奶酪单词', pkg: 'com.jdjdc.jdfastjdc', url: 'https://www.cheeseword.com/', schemes: ['cheeseword', 'jdjdc', 'com.jdjdc.jdfastjdc'], icon: '🧀' }
   ]);
 }
 /* 抖音式记单词：拆分 + 故事化记忆法（模仿抖音博主“看一遍就记住”风格） */
@@ -592,7 +592,7 @@ function renderEditCheck() {
   const el = document.getElementById('editCheckBox'); if (!el) return;
   const ab = document.getElementById('editCheckAppBox');
   if (ab) ab.innerHTML = appLinkRow([
-    { name: '剪映', pkg: 'com.lemon.lv', url: 'https://lv.ulikecam.com/', scheme: 'com.lemon.lv', icon: '✂️' }
+    { name: '剪映', pkg: 'com.lemon.lv', url: 'https://lv.ulikecam.com/', schemes: ['capcut', 'jianying', 'com.lemon.lv'], icon: '✂️' }
   ]);
   const tk = todayKey();
   let done = store.get('luo_editcheck_' + tk, {});

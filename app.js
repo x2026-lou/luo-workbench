@@ -771,8 +771,8 @@ function renderExam() {
     </div>
   `).join('');
   const aEl = document.getElementById('examAppBox'); if (aEl) aEl.innerHTML = appLinkRow([
-    { name: '粉笔', pkg: 'com.fenbi.android.solar', url: 'https://www.fenbi.com/', scheme: 'com.fenbi.android.solar', icon: '🟢' },
-    { name: '亦申', pkg: 'com.baijiayun.yishenwangxiao', url: 'https://www.yishenvip.com/', scheme: 'com.baijiayun.yishenwangxiao', icon: '🔵' }
+    { name: '粉笔', pkg: 'com.fenbi.android.solar', url: 'https://www.fenbi.com/', schemes: ['fenbi', 'com.fenbi.android.solar'], icon: '🟢' },
+    { name: '亦申', pkg: 'com.baijiayun.yishenwangxiao', url: 'https://www.yishenvip.com/', schemes: ['yishen', 'com.baijiayun.yishenwangxiao'], icon: '🔵' }
   ]);
   document.querySelectorAll('#examTabs .tab').forEach(tab => {
     tab.onclick = () => {
@@ -1728,7 +1728,7 @@ const drawStyle = [
 function renderDrawing() {
   const ab = document.getElementById('drawAppBox');
   if (ab) ab.innerHTML = appLinkRow([
-    { name: '画世界Pro', pkg: 'net.huanci.hsjpro', url: 'https://hsjpro.mojing.art/', scheme: 'net.huanci.hsjpro', icon: '🎨' }
+    { name: '画世界Pro', pkg: 'net.huanci.hsjpro', url: 'https://hsjpro.mojing.art/', schemes: ['huanci', 'hsjpro', 'net.huanci.hsjpro'], icon: '🎨' }
   ]);
   const mode = document.querySelector('#drawTabs .tab.active')?.dataset.draw || 'qq';
   document.getElementById('drawQQPanel').style.display = mode === 'qq' ? 'block' : 'none';
@@ -2102,7 +2102,7 @@ function renderOffice() {
   const el = document.getElementById('officeVideoList'); if (el) el.innerHTML = videoList('office', officeVideos);
   const box = document.getElementById('officeAppBox');
   if (box) box.innerHTML = appLinkRow([
-    { name: 'WPS Office', pkg: 'cn.wps.moffice', url: 'https://www.wps.cn/', scheme: 'cn.wps.moffice', icon: '📄' }
+    { name: 'WPS Office', pkg: 'cn.wps.moffice', url: 'https://www.wps.cn/', schemes: ['wps', 'wpsoffice', 'cn.wps.moffice'], icon: '📄' }
   ]);
 }
 
@@ -2225,25 +2225,26 @@ function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<':
 function escB(s) { return esc(s).replace(/&lt;(\/?b)&gt;/gi, '<$1>'); }
 
 /* ================= App 直达助手（Android intent / scheme 深链，直接唤起已装 App） ================= */
-/* 直接按包名唤起手机上的 App（与 B站/抖音/小红书 配套视频“一点就进 App”的体验一致）；
-   若未安装，1.6s 内未离开页面则兜底打开官网/下载页。
-   策略：Chrome / Harmony 优先 intent://；Edge / 华为浏览器 / 其他浏览器优先 scheme://；
-   最终兜底 market:// 应用商店或官网，避免再跳到百度搜索。 */
-function openApp(name, pkg, url, scheme) {
-  scheme = scheme || pkg;                 // 默认用包名作为 scheme（很多 App 会注册自己包名）
+/* 直接按包名唤起手机上的 App（与 B站/抖音/小红书 配套视频“一点就进 App”的体验一致）。
+   策略：优先尝试多个常见 scheme://；Chrome / Harmony 再尝试 intent://；
+   若都唤不起，弹框让用户选择"打开应用商店"或"访问官网"，避免自动跳到商店造成困扰。
+   提示：用系统浏览器 / Chrome 打开 PWA，唤起成功率最高。 */
+function openApp(name, pkg, url, schemes) {
+  // schemes 可以是字符串或数组；默认先用常见短 scheme，再用包名
+  let list = [];
+  if (Array.isArray(schemes) && schemes.length) list = schemes.slice();
+  else if (typeof schemes === 'string' && schemes.trim()) list = [schemes.trim()];
+  if (list.indexOf(pkg) < 0) list.push(pkg);
+
   const market = `market://details?id=${pkg}`;
   const fbMarket = encodeURIComponent(market);
   const intent = `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${pkg};S.browser_fallback_url=${fbMarket};end`;
-  const schemeUrl = `${scheme}://`;
 
   const ua = navigator.userAgent;
   const isAndroid = /Android/i.test(ua);
   const isChrome = /Chrome/i.test(ua) && !/Edg/i.test(ua) && !/MicroMessenger/i.test(ua) && !/QQBrowser/i.test(ua) && !/Quark/i.test(ua);
   const isHarmony = /HarmonyOS/i.test(ua);
-
-  let left = false;
-  const onHide = () => { left = true; };
-  document.addEventListener('visibilitychange', onHide, { once: true });
+  let step = 0; // 0..list.length-1 尝试 scheme，list.length 尝试 intent
 
   const tryNav = (href) => {
     try {
@@ -2253,36 +2254,56 @@ function openApp(name, pkg, url, scheme) {
     } catch (e) {}
   };
 
-  // 第一步：按浏览器类型选择最佳唤起方式
-  if (isAndroid && (isChrome || isHarmony)) {
-    tryNav(intent);
-  } else {
-    window.location.href = schemeUrl;
-  }
+  const askFallback = () => {
+    // 全部唤起失败，让用户选择下一步，而不是自动跳转
+    setTimeout(() => {
+      const goMarket = confirm(`未检测到「${name}」已安装，或当前浏览器限制了 App 唤起。\n点【确定】打开应用商店下载/更新；\n点【取消】访问官方网站。`);
+      if (goMarket) window.location.href = market;
+      else window.open(url, '_blank');
+    }, 200);
+  };
 
-  setTimeout(() => {
-    document.removeEventListener('visibilitychange', onHide);
-    if (!left && !document.hidden) {
-      // 第一步未唤起，换备用方案
-      if (isAndroid && (isChrome || isHarmony)) {
-        window.location.href = schemeUrl;
-        setTimeout(() => { if (!document.hidden) window.location.href = url; }, 1200);
-      } else {
-        tryNav(intent);
-        setTimeout(() => { if (!document.hidden) window.location.href = market; }, 1200);
-      }
+  const nextTry = () => {
+    if (step < list.length) {
+      const schemeUrl = `${list[step]}://`;
+      step++;
+      let left = false;
+      const onHide = () => { left = true; };
+      document.addEventListener('visibilitychange', onHide, { once: true });
+      window.location.href = schemeUrl;
+      setTimeout(() => {
+        document.removeEventListener('visibilitychange', onHide);
+        if (!left && !document.hidden) nextTry();
+      }, 900);
+    } else if (isAndroid && (isChrome || isHarmony)) {
+      // scheme 全失败，再试 intent（Chrome/Harmony 有效）
+      let left = false;
+      const onHide = () => { left = true; };
+      document.addEventListener('visibilitychange', onHide, { once: true });
+      tryNav(intent);
+      setTimeout(() => {
+        document.removeEventListener('visibilitychange', onHide);
+        if (!left && !document.hidden) askFallback();
+      }, 1100);
+    } else {
+      askFallback();
     }
-  }, 1600);
+  };
+
+  nextTry();
   toast('正在唤起「' + name + '」…');
 }
-function appLinkBtn(name, pkg, url, icon, scheme) {
+function appLinkBtn(name, pkg, url, icon, schemes) {
   icon = icon || '📲';
-  const schemeArg = scheme ? `,'${esc(scheme)}'` : '';
+  const schemeArg = (Array.isArray(schemes) && schemes.length)
+    ? `,[${schemes.map(s => `'${esc(s)}'`).join(',')}]`
+    : '';
   return `<button class="btn btn-app" onclick="openApp('${esc(name)}','${esc(pkg)}','${esc(url)}'${schemeArg})">
     <span class="app-ico">${icon}</span><span>${esc(name)}</span><span class="app-go">直达 ›</span></button>`;
 }
 function appLinkRow(list) {
-  return `<div class="app-row">${list.map(a => appLinkBtn(a.name, a.pkg, a.url, a.icon, a.scheme)).join('')}</div>`;
+  return `<div class="app-row">${list.map(a => appLinkBtn(a.name, a.pkg, a.url, a.icon, a.schemes)).join('')}</div>
+    <div class="text-sm text-muted" style="margin-top:6px">💡 若无法直接唤起，请尝试用系统浏览器/Chrome打开本站，或点击按钮后选择"打开应用商店"</div>`;
 }
 
 /* ================= 数据备份 / 恢复（导出导入 localStorage 的 luo_ 键） ================= */
