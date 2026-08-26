@@ -129,15 +129,27 @@
             <div class="tab" data-eng="prep">🎯 四六级备考</div>
           </div>
           <div id="engWordsPanel">
-            <div class="word-card"><div class="word-en" id="wordEn">abundant</div><div class="word-pho" id="wordPho">/əˈbʌndənt/</div><div class="word-cn" id="wordCn">丰富的；充裕的</div></div>
-            <div class="flex-between mb-3"><button class="btn btn-outline" onclick="prevWord()">上一个</button><span class="text-muted text-sm" id="wordIdx">1 / 10</span><button class="btn btn-primary" onclick="nextWord()">下一个</button></div>
-            <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="wordProgress" style="width:10%"></div></div><div class="progress-text">今日单词进度</div></div>
-            <button class="btn btn-orange" style="width:100%" onclick="markWordLearned()">标记已掌握</button>
-            <div class="card mt-2"><div class="font-bold mb-2">📚 每日必备单词</div><div class="word-grid" id="wordGrid"></div></div>
+            <div class="word-banner">
+              <div class="wb-item">🆕 新词 <b id="wordNewCnt">30</b></div>
+              <div class="wb-item">🔁 复习 <b id="wordRevCnt">30</b></div>
+            </div>
+            <div class="tabs" id="wordTabBtns" style="margin:10px 0">
+              <div class="wtab active" data-tab="new" onclick="switchWordTab('new')">新词</div>
+              <div class="wtab" data-tab="review" onclick="switchWordTab('review')">复习</div>
+            </div>
+            <div class="word-card">
+              <div class="word-en" id="wordEn">—</div>
+              <div class="word-pho" id="wordPho"></div>
+              <div class="word-cn" id="wordCn"></div>
+              <div class="word-coll" id="wordColl"></div>
+              <div class="word-ex" id="wordEx"></div>
+            </div>
+            <div class="flex-between mb-3"><button class="btn btn-outline" onclick="prevWord()">上一个</button><span class="text-muted text-sm" id="wordIdx">1 / 30</span><button class="btn btn-primary" onclick="nextWord()">下一个</button></div>
+            <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="wordProgress" style="width:0%"></div></div><div class="progress-text">今日已掌握进度</div></div>
+            <button class="btn btn-orange" id="wordLearnedBtn" style="width:100%" onclick="markWordLearned()">标记已掌握</button>
+            <div class="card mt-2"><div class="font-bold mb-2">📚 每日单词（点击卡片跳转）</div><div class="word-grid" id="wordGrid"></div></div>
           </div>
-          <div id="engQuizPanel" style="display:none">
-            <div class="card"><div class="font-bold mb-3" id="quizQuestion">Question</div><div id="quizOptions"></div><div class="quiz-result" id="quizResult"></div><button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="nextQuiz()">下一题</button></div>
-          </div>
+          <div id="engQuizPanel" style="display:none"></div>
           <div id="engVideoPanel" style="display:none">
             <div id="englishVideoList"></div>
             <div class="card mt-2">
@@ -906,16 +918,17 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=11"></script>
-  <script src="cet4_full.js?v=11"></script>
-  <script src="cet4_enhance.js?v=11"></script>
-  
-  <script src="gaokao_core.js?v=11"></script>
-  <script src="expansion.js?v=11"></script>
-  <script src="jjwxc_analysis.js?v=11"></script>
+  <script src="app.js?v=12"></script>
+  <script src="cet4_core.js?v=12"></script>
+  <script src="cet4_full.js?v=12"></script>
+  <script src="cet4_enhance.js?v=12"></script>
+
+  <script src="gaokao_core.js?v=12"></script>
+  <script src="expansion.js?v=12"></script>
+  <script src="jjwxc_analysis.js?v=12"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=11').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=12').then(reg => {
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;

@@ -513,163 +513,246 @@ function deleteDailyReview(date) {
 }
 
 /* ================= English ================= */
-let words = [];
-let quizData = [];
-let wordsReady = false;
+/* 每日单词 + 每日选词填空（仅作用于「英语学习」板块的单词面板与随堂测试，
+   不影响第 6 个「单词背诵」板块） */
 
-/* 每日单词：四级真题高频词，过滤掉高考英语核心词 */
+/* ---- 每日单词：四级真题核心词库（cet4Core，已过滤高考核心词，高频优先）---- */
+const DAILY_NEW = 30;     // 每日新词
+const DAILY_REVIEW = 30;  // 每日复习词
+let wordsReady = false;
+let newWords = [], reviewWords = [], wordList = [];
+let wordTab = 'new';
+let wordIdx = 0;
+let learnedSet = new Set(store.get('luo_eng_learned', []));
+
+function pickDailyNew() {
+  const all = window.cet4Core || [];
+  if (!all.length) return [];
+  const n = all.length;
+  const day = Math.floor(Date.now() / 86400000) % n;
+  const arr = [];
+  for (let i = 0; i < DAILY_NEW; i++) arr.push(all[(day + i) % n]);
+  return arr;
+}
+function pickDailyReview(newSet) {
+  const all = window.cet4Core || [];
+  const n = all.length;
+  if (!n) return [];
+  const newEn = new Set(newSet.map(w => w.en));
+  // 复习窗口取「今天往前 31 天」的 30 个词（[day-31, day-1)），与今日新词窗口 [day, day+30) 完全错开，
+  // 保证每天都有 30 个互不重复的复习词；若仍与今日新词意外重叠则跳过。
+  const base = ((Math.floor(Date.now() / 86400000) - 31) % n + n * 2) % n;
+  const arr = [];
+  for (let i = 0; i < DAILY_REVIEW; i++) {
+    const w = all[(base + i) % n];
+    if (!newEn.has(w.en)) arr.push(w);
+  }
+  return arr;
+}
 function initDailyWords() {
   if (wordsReady) return;
   wordsReady = true;
-  const high = window.cet4FreqHigh || [];
-  const mid = window.cet4FreqMid || [];
-  const full = window.cet4FullWords || [];
-  const gaokao = window.GAO_KAO_CORE || new Set();
-  const map = {};
-  full.forEach(x => { if (x.w) map[x.w.toLowerCase()] = x; });
-  // 额外排除一些虽在四级高频、但对高考水平仍偏基础的词
-  const tooBasic = new Set(['phone','phrase','probably','third','till','worse','would','peak','photo','according','analyze','others']);
-  const seen = new Set();
-  const filtered = [];
-  for (const w of [...high, ...mid]) {
-    const key = w.toLowerCase();
-    if (seen.has(key) || gaokao.has(key) || tooBasic.has(key)) continue;
-    seen.add(key);
-    const x = map[key];
-    if (!x) continue;
-    filtered.push({ en: x.w, pho: x.ph || '', cn: x.cn });
-  }
-  let list = [];
-  if (filtered.length) {
-    // 按日期轮换取 10 个，保证每日新鲜且均为高考范围外四级高频词
-    const dayOffset = (new Date().getDate() - 1) % filtered.length;
-    for (let i = 0; i < 10; i++) {
-      list.push(filtered[(dayOffset + i) % filtered.length]);
-    }
-  } else {
-    // 兜底：若过滤后为空，使用精选四级高频词
-    list = [
-      { en: 'abundant', pho: '/əˈbʌndənt/', cn: '丰富的；充裕的' },
-      { en: 'contribute', pho: '/kənˈtrɪbjuːt/', cn: '贡献；促成' },
-      { en: 'efficient', pho: '/ɪˈfɪʃnt/', cn: '高效的' },
-      { en: 'opportunity', pho: '/ˌɒpəˈtjuːnəti/', cn: '机会' },
-      { en: 'phenomenon', pho: '/fəˈnɒmɪnən/', cn: '现象' },
-      { en: 'schedule', pho: '/ˈʃedjuːl/', cn: '日程表；安排' },
-      { en: 'strategy', pho: '/ˈstrætədʒi/', cn: '策略' },
-      { en: 'temporary', pho: '/ˈtemprəri/', cn: '暂时的' },
-      { en: 'vocabulary', pho: '/vəˈkæbjələri/', cn: '词汇' },
-      { en: 'widespread', pho: '/ˈwaɪdspred/', cn: '广泛的' }
-    ];
-  }
-  words = list;
-  buildQuizData();
+  newWords = pickDailyNew();
+  reviewWords = pickDailyReview(newWords);
+  wordList = wordTab === 'new' ? newWords : reviewWords;
+  wordIdx = 0;
 }
-
-/* 选词填空：四级真题高频词，从今日 10 词中选 10 题，每题一个句子挖一空，配 6 个选项 */
-function buildQuizData() {
-  const all = words.slice();
-  if (!all.length) {
-    quizData = [{ sentence: 'It is <span class="blank">_____</span> to finish your work on time.', options: ['important', 'necessary', 'useful', 'helpful', 'good', 'great'], answer: 0, word: 'important', cn: '重要的' }];
-    return;
-  }
-  const distractorsPool = (window.cet4FreqHigh || []).concat(window.cet4FreqMid || []).filter(w => !all.find(x => x.en.toLowerCase() === w.toLowerCase()));
-  const templates = [
-    { pos: 'v', tpl: 'Remember to {w} carefully when you take the exam.' },
-    { pos: 'v', tpl: 'You should {w} your answers before handing them in.' },
-    { pos: 'v', tpl: 'Students often {w} when they face new challenges.' },
-    { pos: 'n', tpl: 'The {w} is very important in CET-4 reading.' },
-    { pos: 'n', tpl: 'We need to understand the {w} of this article.' },
-    { pos: 'n', tpl: 'Pay attention to the {w} in the passage.' },
-    { pos: 'a', tpl: 'It is {w} to prepare well for the exam.' },
-    { pos: 'a', tpl: 'The result is {w} for most students.' },
-    { pos: 'a', tpl: 'She felt {w} after the test.' },
-    { pos: 'ad', tpl: 'He answered the question very {w}.' },
-    { pos: 'ad', tpl: 'Please read the passage {w}.' },
-    { pos: 'ad', tpl: 'The situation developed {w}.' },
-    { pos: 'default', tpl: 'The word {w} often appears in CET-4 tests.' }
-  ];
-  const posOf = (cn) => {
-    const m = (cn || '').match(/^(a|ad|vt|vi|v|n|aux|num|prep|conj|art|pron)\./i);
-    if (!m) return 'default';
-    const p = m[1].toLowerCase();
-    if (p === 'vt' || p === 'vi' || p === 'v') return 'v';
-    if (p === 'ad') return 'ad';
-    if (p === 'a') return 'a';
-    if (p === 'n') return 'n';
-    return 'default';
-  };
-  const cleanCn = (cn) => (cn || '').replace(/^(a|ad|vt|vi|v|n|aux|num|prep|conj|art|pron)\.(\s| )*/, '').replace(/[；;,.].*$/, '');
-  const pickTpl = (w) => {
-    const p = posOf(w.cn);
-    const cands = templates.filter(t => t.pos === p);
-    if (!cands.length) return templates.find(t => t.pos === 'default').tpl;
-    let h = 0; for (let k = 0; k < w.en.length; k++) h = (h * 31 + w.en.charCodeAt(k)) >>> 0;
-    return cands[h % cands.length].tpl;
-  };
-  quizData = all.map((w) => {
-    const sentence = pickTpl(w).replace('{w}', '<span class="blank">_____</span>');
-    const correct = w.en;
-    const wrong = [];
-    const pool = distractorsPool.slice();
-    for (let k = 0; k < 5 && pool.length; k++) {
-      let idx = Math.floor(Math.random() * pool.length);
-      const c = pool.splice(idx, 1)[0];
-      if (c.toLowerCase() !== correct.toLowerCase() && !wrong.includes(c)) wrong.push(c);
-    }
-    while (wrong.length < 5) wrong.push(['ability','balance','challenge','chance','change','company','culture','effect','effort','example','factor','future','habit','idea','issue','level','method','moment','nature','period','point','reason','result','school','sense','service','society','state','system','theory'][wrong.length]);
-    let opts = [correct, ...wrong];
-    for (let k = opts.length - 1; k > 0; k--) {
-      const r = Math.floor(Math.random() * (k + 1));
-      [opts[k], opts[r]] = [opts[r], opts[k]];
-    }
-    return { sentence, options: opts.slice(0, 6), answer: opts.indexOf(correct), word: correct, cn: cleanCn(w.cn) };
-  });
+function switchWordTab(tab) {
+  wordTab = tab;
+  wordList = tab === 'new' ? newWords : reviewWords;
+  wordIdx = 0;
+  document.querySelectorAll('#wordTabBtns .wtab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  showWord();
 }
-
-let wordIdx = store.get('luo_word_idx', 0);
-let learnedWords = store.get('luo_learned_words', []);
 function showWord() {
   initDailyWords();
-  if (!words.length) return;
-  const w = words[wordIdx % words.length];
-  document.getElementById('wordEn').textContent = w.en;
-  document.getElementById('wordPho').textContent = w.pho;
-  document.getElementById('wordCn').textContent = w.cn;
-  document.getElementById('wordIdx').textContent = `${wordIdx + 1} / ${words.length}`;
-  document.getElementById('wordProgress').style.width = `${Math.min(100, (learnedWords.length / words.length) * 100)}%`;
-  document.getElementById('wordGrid').innerHTML = words.map((x, i) => `
-    <div class="word-cell" style="${learnedWords.includes(x.en) ? 'background:#E8F5E9' : ''}">
-      <div class="en">${x.en}</div><div class="cn">${x.cn}</div>
-    </div>
-  `).join('');
+  if (!wordList || !wordList.length) {
+    const en = document.getElementById('wordEn'); if (en) en.textContent = '—';
+    return;
+  }
+  const w = wordList[wordIdx % wordList.length];
+  document.getElementById('wordEn').textContent = w.en || '';
+  document.getElementById('wordPho').textContent = w.pho || '';
+  document.getElementById('wordCn').textContent = w.cn || '';
+  document.getElementById('wordColl').textContent = w.coll ? ('搭配：' + w.coll) : '搭配：—';
+  document.getElementById('wordEx').textContent = w.ex ? ('例句：' + w.ex) : '例句：—';
+  document.getElementById('wordIdx').textContent = (wordIdx + 1) + ' / ' + wordList.length;
+  document.getElementById('wordNewCnt').textContent = newWords.length;
+  document.getElementById('wordRevCnt').textContent = reviewWords.length;
+  const learned = learnedSet.has(w.en);
+  const btn = document.getElementById('wordLearnedBtn');
+  if (btn) btn.classList.toggle('on', learned);
+  const total = newWords.length + reviewWords.length;
+  let done = 0;
+  learnedSet.forEach(en => { if (newWords.concat(reviewWords).some(x => x.en === en)) done++; });
+  const bar = document.getElementById('wordProgress');
+  if (bar) bar.style.width = (total ? Math.min(100, done / total * 100) : 0) + '%';
+  document.getElementById('wordGrid').innerHTML = wordList.map((x, i) => `
+    <div class="word-cell${learnedSet.has(x.en) ? ' learned' : ''}" onclick="gotoWord(${i})">
+      <div class="en">${esc(x.en)}</div><div class="cn">${esc(x.cn || '')}</div>
+      ${learnedSet.has(x.en) ? '<span class="learned-badge">✓</span>' : ''}
+    </div>`).join('');
 }
-function nextWord() { wordIdx = (wordIdx + 1) % words.length; showWord(); }
-function prevWord() { wordIdx = (wordIdx - 1 + words.length) % words.length; showWord(); }
+function gotoWord(i) { wordIdx = i; showWord(); }
+function nextWord() { wordIdx = (wordIdx + 1) % wordList.length; showWord(); }
+function prevWord() { wordIdx = (wordIdx - 1 + wordList.length) % wordList.length; showWord(); }
 function markWordLearned() {
-  const w = words[wordIdx % words.length].en;
-  if (!learnedWords.includes(w)) learnedWords.push(w);
-  store.set('luo_learned_words', learnedWords);
-  showWord(); toast('已标记掌握');
+  if (!wordList || !wordList.length) return;
+  const w = wordList[wordIdx % wordList.length].en;
+  if (learnedSet.has(w)) learnedSet.delete(w); else learnedSet.add(w);
+  store.set('luo_eng_learned', [...learnedSet]);
+  showWord();
+  toast(learnedSet.has(w) ? '已标记掌握 ✓' : '已取消掌握');
 }
 
-let quizIdx = 0, answered = false;
+/* ---- 每日一篇四级选词填空（取今日新词前 10 个作目标词）---- */
+const CLOZE_TEMPLATES = [
+  { pos: 'vt', tpl: 'Universities should {w} more resources to student mental health.' },
+  { pos: 'vt', tpl: 'The project aims to {w} local communities with better services.' },
+  { pos: 'vt', tpl: 'Researchers {w} that sleep quality affects memory strongly.' },
+  { pos: 'vt', tpl: 'We must {w} the problem before it gets worse.' },
+  { pos: 'vt', tpl: 'Good apps help users {w} new words every single day.' },
+  { pos: 'vi', tpl: 'The number of readers {w} rapidly after the update.' },
+  { pos: 'vi', tpl: 'Many students {w} in part-time jobs during the holidays.' },
+  { pos: 'vi', tpl: 'The two sides {w} to reach an agreement yesterday.' },
+  { pos: 'n', tpl: 'The {w} of this policy remains unclear to the public.' },
+  { pos: 'n', tpl: 'Education is a key {w} for social mobility.' },
+  { pos: 'n', tpl: 'A good {w} can change the direction of one’s life.' },
+  { pos: 'n', tpl: 'The report reveals a serious {w} in the current system.' },
+  { pos: 'n', tpl: 'We should pay attention to the {w} of cultural differences.' },
+  { pos: 'a', tpl: 'It is {w} for young people to learn a second language.' },
+  { pos: 'a', tpl: 'The result turned out to be {w} beyond our expectations.' },
+  { pos: 'a', tpl: 'She made a {w} decision to study abroad.' },
+  { pos: 'a', tpl: 'The data shows a {w} improvement in test scores.' },
+  { pos: 'ad', tpl: 'He explained the theory {w} so that everyone understood.' },
+  { pos: 'ad', tpl: 'The company grew {w} after the new marketing strategy.' },
+  { pos: 'ad', tpl: 'Please read the instructions {w} before you use it.' },
+  { pos: 'default', tpl: 'The word {w} often appears in CET-4 reading passages.' }
+];
+function clozePosOf(cn) {
+  const m = (cn || '').match(/^(a|ad|vt|vi|v|n|aux|num|prep|conj|art|pron)\./i);
+  if (!m) return 'default';
+  const p = m[1].toLowerCase();
+  if (p === 'vt' || p === 'vi' || p === 'v') return 'v';
+  if (p === 'ad') return 'ad';
+  if (p === 'a') return 'a';
+  if (p === 'n') return 'n';
+  return 'default';
+}
+function cleanCn(cn) {
+  return (cn || '').replace(/^(a|ad|vt|vi|v|n|aux|num|prep|conj|art|pron)\.(\s| )*/, '').replace(/[；;,.].*$/, '');
+}
+function clozePickTpl(w) {
+  const p = clozePosOf(w.cn);
+  let cands = CLOZE_TEMPLATES.filter(t => t.pos === p);
+  if (!cands.length) cands = CLOZE_TEMPLATES.filter(t => t.pos === 'default');
+  let h = 0; for (let k = 0; k < w.en.length; k++) h = (h * 31 + w.en.charCodeAt(k)) >>> 0;
+  return cands[h % cands.length].tpl;
+}
+function buildCloze(wordsArr) {
+  const targets = wordsArr.slice(0, 10);
+  if (!targets.length) return null;
+  const sentences = targets.map(w => clozePickTpl(w).replace('{w}', '__BLANK__'));
+  const gaokao = window.GAO_KAO_CORE || new Set();
+  let pool = (window.cet4FreqHigh || []).concat(window.cet4FreqMid || [])
+    .map(x => typeof x === 'string' ? x : (x.w || x))
+    .filter(x => x && !targets.find(t => t.en.toLowerCase() === x.toLowerCase()) && !gaokao.has(x.toLowerCase()));
+  pool = pool.slice();
+  const used = new Set(targets.map(t => t.en.toLowerCase()));
+  const distract = [];
+  while (distract.length < 5 && pool.length) {
+    const idx = Math.floor(Math.random() * pool.length);
+    const c = pool.splice(idx, 1)[0];
+    if (!used.has(c.toLowerCase())) { used.add(c.toLowerCase()); distract.push(c); }
+  }
+  const bank = targets.map(t => t.en).concat(distract);
+  for (let k = bank.length - 1; k > 0; k--) { const r = Math.floor(Math.random() * (k + 1)); [bank[k], bank[r]] = [bank[r], bank[k]]; }
+  return { sentences, targets, bank };
+}
+
+let clozeData = null, clozeSel = null, clozeFills = {}, clozeSubmitted = false;
+function buildClozeInto(box, wordsArr) {
+  clozeSubmitted = false; clozeSel = null; clozeFills = {};
+  clozeData = buildCloze(wordsArr);
+  if (!clozeData) { box.innerHTML = '<div class="card text-muted">今日单词数据加载中…</div>'; return; }
+  box.innerHTML = `
+    <div class="card">
+      <div class="cloze-head">
+        <div class="font-bold">📝 每日四级选词填空（一篇 · ${clozeData.targets.length} 空）</div>
+        <div class="cloze-sub">点击文中空格选中，再从下方词库选词填入；完成后点「提交」核对。</div>
+      </div>
+      <div class="cloze-passage"></div>
+      <div class="cloze-bank"></div>
+      <div class="cloze-actions">
+        <button class="btn btn-primary" onclick="submitCloze()">提交</button>
+        <button class="btn" onclick="resetCloze()">重置</button>
+      </div>
+      <div class="cloze-feedback" id="eFeedback"></div>
+    </div>`;
+  paintCloze();
+}
+function paintCloze() {
+  const d = clozeData; if (!d) return;
+  const box = document.getElementById('engQuizPanel'); if (!box) return;
+  const passage = d.sentences.map((s, i) => {
+    const filled = clozeFills[i];
+    let cls = 'blank'; let label;
+    if (clozeSubmitted) {
+      cls += (filled === d.targets[i].en) ? ' correct' : ' wrong';
+      label = (filled != null ? esc(filled) : '（' + (i + 1) + '）');
+    } else {
+      if (clozeSel === i) cls += ' sel';
+      label = (filled != null ? esc(filled) : '（' + (i + 1) + '）_____');
+    }
+    const text = s.replace('__BLANK__', '<span class="' + cls + '" onclick="selectBlank(' + i + ')">' + label + '</span>');
+    return '<div class="cloze-line"><span class="cloze-idx">' + (i + 1) + '</span><span class="cloze-text">' + text + '</span></div>';
+  }).join('');
+  const bank = d.bank.map(w => {
+    const used = Object.values(clozeFills).indexOf(w) >= 0;
+    return '<button class="cloze-word' + (used ? ' used' : '') + '" data-w="' + esc(w) + '" onclick="fillCloze(\'' + esc(w) + '\')">' + esc(w) + '</button>';
+  }).join('');
+  box.querySelector('.cloze-passage').innerHTML = passage;
+  box.querySelector('.cloze-bank').innerHTML = bank;
+}
+function selectBlank(i) {
+  if (clozeSubmitted) return;
+  if (clozeFills[i] != null) { clearCloze(i); return; }
+  clozeSel = (clozeSel === i) ? null : i;
+  paintCloze();
+}
+function fillCloze(w) {
+  if (clozeSubmitted) return;
+  if (clozeSel == null) { for (let k = 0; k < clozeData.targets.length; k++) { if (clozeFills[k] == null) { clozeSel = k; break; } } }
+  if (clozeSel == null) return;
+  clozeFills[clozeSel] = w; clozeSel = null; paintCloze();
+}
+function clearCloze(i) { delete clozeFills[i]; if (clozeSel === i) clozeSel = null; paintCloze(); }
+function resetCloze() { clozeFills = {}; clozeSel = null; clozeSubmitted = false; const fb = document.getElementById('eFeedback'); if (fb) fb.innerHTML = ''; paintCloze(); }
+function submitCloze() {
+  if (!clozeData) return;
+  clozeSubmitted = true;
+  let correct = 0;
+  clozeData.targets.forEach((t, i) => { if (clozeFills[i] === t.en) correct++; });
+  const fb = document.getElementById('eFeedback');
+  if (fb) {
+    fb.innerHTML = '<div class="cloze-score">本篇得分：' + correct + ' / ' + clozeData.targets.length + '</div>' +
+      clozeData.targets.map((t, i) => {
+        const ok = clozeFills[i] === t.en;
+        const your = clozeFills[i] != null ? esc(clozeFills[i]) : '（空）';
+        return '<div class="cloze-key">' + (i + 1) + '. ' + (ok ? '✅' : '❌') + ' 你的答案：<b>' + your + '</b>　正确答案：<b>' + esc(t.en) + '</b>　' + esc(cleanCn(t.cn)) + '</div>';
+      }).join('');
+  }
+  paintCloze();
+}
+
 function renderQuiz() {
   initDailyWords();
-  const q = quizData[quizIdx];
-  if (!q) return;
-  document.getElementById('quizQuestion').innerHTML = `<div class="cloze-title">第 ${quizIdx + 1}/${quizData.length} 题：四级选词填空</div><div class="cloze-sentence">${q.sentence}</div><div class="cloze-hint">词义提示：${esc(q.cn)}</div>`;
-  document.getElementById('quizOptions').innerHTML = '<div class="word-bank">' + q.options.map((opt, i) => `<button class="quiz-opt" onclick="answerQuiz(${i})">${esc(opt)}</button>`).join('') + '</div>';
-  document.getElementById('quizResult').textContent = ''; answered = false;
+  const box = document.getElementById('engQuizPanel');
+  const src = (newWords && newWords.length) ? newWords : wordList;
+  buildClozeInto(box, src);
 }
-function answerQuiz(i) {
-  if (answered) return; answered = true;
-  const q = quizData[quizIdx]; const opts = document.querySelectorAll('.quiz-opt');
-  opts[i].classList.add(i === q.answer ? 'correct' : 'wrong');
-  if (i !== q.answer) opts[q.answer].classList.add('correct');
-  document.getElementById('quizResult').textContent = i === q.answer ? '✅ 回答正确！' : '❌ 再巩固一下，正确答案是：' + q.word;
-  document.getElementById('quizResult').className = 'quiz-result ' + (i === q.answer ? 'text-blue' : 'text-orange');
-}
-function nextQuiz() { quizIdx = (quizIdx + 1) % quizData.length; renderQuiz(); }
+function nextQuiz() { if (document.getElementById('engQuizPanel')) renderQuiz(); }
+
 
 const englishVideos = makeSearchItems([
   { icon: '🦉', title: '多邻国 ABC 闯关 5 关', desc: '游戏化英语学习，适合每日碎片时间', tags: ['多邻国','入门'], iconBg: 'var(--green-light)' },
@@ -684,7 +767,7 @@ const englishVideos = makeSearchItems([
 
 function renderEnglish() {
   initDailyWords();
-  showWord();
+  switchWordTab(wordTab);
   document.getElementById('englishVideoList').innerHTML = videoList('english', englishVideos);
 }
 
@@ -2324,11 +2407,10 @@ function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<':
 function escB(s) { return esc(s).replace(/&lt;(\/?b)&gt;/gi, '<$1>'); }
 
 /* ================= App 直达助手（Android intent / scheme 深链，直接唤起已装 App） ================= */
-/* 直接按包名 / scheme 唤起手机上的 App。
-   关键修复：intent 深链不再带 browser_fallback_url，避免 Honor/Edge 上直接跳转官网。
-   策略：① Chromium 系优先用标准 intent:// 按包名唤起（MAIN/LAUNCHER，无 fallback_url）；
-        ② intent 失败时静默尝试 scheme://；
-        ③ 全部失败才打开官网。 */
+/* 直接按 scheme / 包名 唤起手机上的 App。
+   关键修复（恢复 v6 可用逻辑）：优先用 scheme 直接导航（window.location.href，Edge/Chrome 下最可靠，
+   不背单词 bbdc://、剪映 capcut://、亦申 yishen:// 等已知 scheme 直达）；intent 仅作兜底；
+   intent 的 fallback 指向应用商店(market://) 而非官网，避免失败直接跳官网网页。 */
 function openApp(name, pkg, url, schemes) {
   let list = [];
   if (Array.isArray(schemes) && schemes.length) list = schemes.slice();
@@ -2336,53 +2418,45 @@ function openApp(name, pkg, url, schemes) {
   if (list.indexOf(pkg) < 0) list.push(pkg);
 
   const ua = navigator.userAgent;
+  const isAndroid = /Android/i.test(ua);
   const isChromium = /Chrome|Edg|Brave|SamsungBrowser|MiuiBrowser|HuaweiBrowser|OPR/i.test(ua)
     && !/MicroMessenger/i.test(ua) && !/QQBrowser/i.test(ua) && !/Quark/i.test(ua) && !/UCBrowser/i.test(ua);
 
-  // 标准 Android intent：MAIN/LAUNCHER，无 browser_fallback_url（避免失败直接跳官网）
-  const intent = `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${pkg};end`;
+  // intent 兜底：失败跳应用商店，不跳官网
+  const intent = `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${pkg};S.browser_fallback_url=${encodeURIComponent('market://details?id=' + pkg)};end`;
 
   let launched = false;
   const onHide = () => { if (document.hidden) launched = true; };
   document.addEventListener('visibilitychange', onHide);
 
-  const openHref = (href) => {
-    try {
-      const a = document.createElement('a');
-      a.href = href; a.style.display = 'none';
-      document.body.appendChild(a); a.click(); a.remove();
-    } catch (e) { try { window.location.href = href; } catch (_) {} }
+  // 优先 scheme 顶层导航（Edge/Chrome 下能直接唤起已装 App；失败静默，不跳网页）
+  const navScheme = (s) => {
+    const href = s.indexOf('://') >= 0 ? s : (s + '://');
+    try { window.location.href = href; }
+    catch (e) { try { const a = document.createElement('a'); a.href = href; a.style.display = 'none'; document.body.appendChild(a); a.click(); a.remove(); } catch (_) {} }
   };
-  const cleanup = () => { document.removeEventListener('visibilitychange', onHide); };
+  const navIntent = () => {
+    try { const a = document.createElement('a'); a.href = intent; a.style.display = 'none'; document.body.appendChild(a); a.click(); a.remove(); }
+    catch (e) { try { window.location.href = intent; } catch (_) {} }
+  };
+  const cleanup = () => document.removeEventListener('visibilitychange', onHide);
   const finishOK = () => { cleanup(); toast('已唤起「' + name + '」'); };
-  const fail = () => {
-    cleanup();
-    toast('未检测到「' + name + '」App，已打开官网');
-    try { window.open(url, '_blank'); } catch (e) { window.location.href = url; }
-  };
+  const fail = () => { cleanup(); toast('未检测到「' + name + '」App，正在打开官网'); try { window.open(url, '_blank'); } catch (e) { window.location.href = url; } };
 
-  // ② scheme 兜底尝试
   let i = 0;
   const trySchemes = () => {
     if (i < list.length) {
       const s = list[i++];
-      const href = s.indexOf('://') >= 0 ? s : (s + '://');
-      openHref(href);
+      navScheme(s);
       setTimeout(() => { if (launched) finishOK(); else trySchemes(); }, 1000);
       return;
     }
-    fail();
+    if (isAndroid && isChromium) { navIntent(); setTimeout(() => { if (launched) finishOK(); else fail(); }, 1500); }
+    else fail();
   };
 
-  // ① intent 优先（按包名唤起，无需知道 scheme；失败不跳官网）
-  if (isChromium) {
-    openHref(intent);
-    setTimeout(() => { if (launched) finishOK(); else trySchemes(); }, 1500);
-  } else {
-    trySchemes();
-  }
-
   toast('正在唤起「' + name + '」…');
+  setTimeout(trySchemes, 60);
 }
 function appLinkBtn(name, pkg, url, icon, schemes) {
   icon = icon || '📲';

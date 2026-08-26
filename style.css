@@ -406,28 +406,56 @@ details[open] summary { margin-bottom:6px; }
 
 .word-card {
   text-align: center; padding: 24px 16px; background: linear-gradient(135deg, var(--blue-light), #FFFFFF);
-  border-radius: var(--radius); margin-bottom: 16px;
+  border-radius: var(--radius); margin-bottom: 14px;
 }
 .word-en { font-size: 28px; font-weight: 800; color: var(--blue-dark); margin-bottom: 8px; }
-.word-pho { font-size: 14px; color: var(--text-muted); margin-bottom: 12px; }
-.word-cn { font-size: 16px; color: var(--text-main); }
+.word-pho { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; }
+.word-cn { font-size: 16px; color: var(--text-main); margin-bottom: 10px; }
+.word-coll { font-size: 13px; color: var(--blue-main); background: var(--blue-light); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; text-align: left; }
+.word-ex { font-size: 13px; color: var(--text-main); background: var(--surface); border-left: 3px solid var(--orange-soft); border-radius: 8px; padding: 8px 12px; text-align: left; line-height: 1.6; }
+
+/* 单词 banner + 新词/复习切换 */
+.word-banner { display: flex; gap: 10px; margin-bottom: 4px; }
+.wb-item { flex: 1; background: var(--surface); border-radius: var(--radius-sm); padding: 10px; text-align: center; font-size: 13px; color: var(--text-muted); box-shadow: var(--shadow-soft); }
+.wb-item b { display: block; font-size: 20px; color: var(--blue-dark); margin-top: 2px; }
+#wordTabBtns .wtab { flex: 1; text-align: center; padding: 8px 0; font-size: 14px; border-radius: var(--radius-sm); background: var(--surface); color: var(--text-muted); cursor: pointer; }
+#wordTabBtns .wtab.active { background: var(--blue-main); color: #fff; font-weight: 700; }
+
+/* 每日单词网格 */
 .word-grid {
   display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px;
 }
 .word-cell {
-  background: var(--surface); border-radius: var(--radius-sm); padding: 10px 4px; text-align: center;
-  box-shadow: var(--shadow-soft);
+  position: relative; background: var(--surface); border-radius: var(--radius-sm); padding: 10px 4px; text-align: center;
+  box-shadow: var(--shadow-soft); cursor: pointer;
 }
 .word-cell .en { font-size: 13px; font-weight: 700; color: var(--blue-dark); }
 .word-cell .cn { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.word-cell.learned { background: #E8F5E9; border: 1px solid #A5D6A7; }
+.learned-badge { position: absolute; top: 2px; right: 4px; font-size: 11px; color: #2E7D32; font-weight: 800; }
 
-/* 四级选词填空 */
-.cloze-title { font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 10px; }
-.cloze-sentence { font-size: 17px; line-height: 1.8; padding: 16px 14px; background: var(--surface); border-radius: var(--radius); margin-bottom: 10px; color: var(--text-main); }
-.cloze-sentence .blank { color: var(--blue-main); font-weight: 800; border-bottom: 2px solid var(--blue-main); display: inline-block; min-width: 48px; text-align: center; }
-.cloze-hint { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
-.word-bank { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
-.word-bank .quiz-opt { flex: 1 1 calc(33.333% - 10px); min-width: 90px; padding: 10px 6px; font-size: 14px; text-align: center; }
+/* ===== 每日一篇：四级选词填空（篇章型）===== */
+.cloze-head { margin-bottom: 12px; }
+.cloze-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.cloze-passage { background: var(--surface); border-radius: var(--radius); padding: 16px 14px; line-height: 2.1; font-size: 16px; color: var(--text-main); margin-bottom: 14px; }
+.cloze-line { margin-bottom: 10px; }
+.cloze-idx { display: inline-block; width: 20px; color: var(--blue-main); font-weight: 800; margin-right: 6px; }
+.cloze-text { }
+.blank {
+  display: inline-block; min-width: 64px; text-align: center; cursor: pointer;
+  border-bottom: 2px dashed var(--blue-main); color: var(--blue-main); font-weight: 800; padding: 0 6px; border-radius: 4px;
+}
+.blank.sel { background: var(--blue-light); border-bottom-style: solid; }
+.blank.correct { border-bottom-color: #2E7D32; color: #2E7D32; background: #E8F5E9; }
+.blank.wrong { border-bottom-color: #C62828; color: #C62828; background: #FFEBEE; text-decoration: line-through; }
+.cloze-bank { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.cloze-word { padding: 8px 12px; font-size: 14px; border-radius: 10px; background: var(--blue-light); color: var(--blue-dark); border: 1px solid transparent; cursor: pointer; font-weight: 600; }
+.cloze-word.used { opacity: 0.35; text-decoration: line-through; pointer-events: none; }
+.cloze-actions { display: flex; gap: 10px; margin-bottom: 10px; }
+.cloze-actions .btn { flex: 1; }
+.cloze-feedback { margin-top: 6px; }
+.cloze-score { font-size: 16px; font-weight: 800; color: var(--blue-dark); margin-bottom: 8px; }
+.cloze-key { font-size: 13px; color: var(--text-main); padding: 6px 0; border-bottom: 1px dashed var(--blue-light); line-height: 1.6; }
 
 .progress-wrap { margin: 12px 0; }
 .progress-bar { height: 10px; background: var(--blue-light); border-radius: 5px; overflow: hidden; }

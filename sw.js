@@ -1,10 +1,15 @@
-const CACHE = 'luo-workbench-v3';
+const CACHE = 'luo-workbench-v4';
 // 相对路径：站点部署在 /luo-workbench/ 子路径下，必须用 ./ 才能正确缓存
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './app.js',
+  './cet4_core.js',
+  './cet4_full.js',
+  './cet4_enhance.js',
+  './gaokao_core.js',
+  './expansion.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
