@@ -514,101 +514,107 @@ function deleteDailyReview(date) {
 
 /* ================= English ================= */
 let words = [];
+let newWords = [];
+let reviewWords = [];
 let quizData = [];
 let wordsReady = false;
+let wordTab = 'new';
 
-/* 每日单词：四级真题高频词，过滤掉高考英语核心词 */
+/* 每日单词：基于 cet4Core 真题核心词库（约1500词，已过滤高考核心词，高频优先）
+   每天：30 个新词（按日期轮换） + 30 个复习（前一天批次），看搭配与真题例句记忆 */
 function initDailyWords() {
   if (wordsReady) return;
   wordsReady = true;
-  const high = window.cet4FreqHigh || [];
-  const mid = window.cet4FreqMid || [];
-  const full = window.cet4FullWords || [];
-  const gaokao = window.GAO_KAO_CORE || new Set();
-  const map = {};
-  full.forEach(x => { if (x.w) map[x.w.toLowerCase()] = x; });
-  // 额外排除一些虽在四级高频、但对高考水平仍偏基础的词
-  const tooBasic = new Set(['phone','phrase','probably','third','till','worse','would','peak','photo','according','analyze','others']);
-  const seen = new Set();
-  const filtered = [];
-  for (const w of [...high, ...mid]) {
-    const key = w.toLowerCase();
-    if (seen.has(key) || gaokao.has(key) || tooBasic.has(key)) continue;
-    seen.add(key);
-    const x = map[key];
-    if (!x) continue;
-    filtered.push({ en: x.w, pho: x.ph || '', cn: x.cn });
-  }
-  let list = [];
-  if (filtered.length) {
-    // 按日期轮换取 10 个，保证每日新鲜且均为高考范围外四级高频词
-    const dayOffset = (new Date().getDate() - 1) % filtered.length;
-    for (let i = 0; i < 10; i++) {
-      list.push(filtered[(dayOffset + i) % filtered.length]);
+  let pool = (window.cet4Core && window.cet4Core.length) ? window.cet4Core : null;
+  if (!pool) {
+    // 兜底：若无核心词库，退化为“高频-中频 过滤高考核心词”
+    const high = window.cet4FreqHigh || [];
+    const mid = window.cet4FreqMid || [];
+    const full = window.cet4FullWords || [];
+    const gaokao = window.GAO_KAO_CORE || new Set();
+    const map = {};
+    full.forEach(x => { if (x.w) map[x.w.toLowerCase()] = x; });
+    const seen = new Set();
+    const flt = [];
+    for (const w of [...high, ...mid]) {
+      const key = w.toLowerCase();
+      if (seen.has(key) || gaokao.has(key)) continue;
+      seen.add(key);
+      const x = map[key];
+      if (x) flt.push({ en: x.w, pho: x.ph || '', cn: x.cn, coll: '', ex: '' });
     }
-  } else {
-    // 兜底：若过滤后为空，使用精选四级高频词
-    list = [
-      { en: 'abundant', pho: '/əˈbʌndənt/', cn: '丰富的；充裕的' },
-      { en: 'contribute', pho: '/kənˈtrɪbjuːt/', cn: '贡献；促成' },
-      { en: 'efficient', pho: '/ɪˈfɪʃnt/', cn: '高效的' },
-      { en: 'opportunity', pho: '/ˌɒpəˈtjuːnəti/', cn: '机会' },
-      { en: 'phenomenon', pho: '/fəˈnɒmɪnən/', cn: '现象' },
-      { en: 'schedule', pho: '/ˈʃedjuːl/', cn: '日程表；安排' },
-      { en: 'strategy', pho: '/ˈstrætədʒi/', cn: '策略' },
-      { en: 'temporary', pho: '/ˈtemprəri/', cn: '暂时的' },
-      { en: 'vocabulary', pho: '/vəˈkæbjələri/', cn: '词汇' },
-      { en: 'widespread', pho: '/ˈwaɪdspred/', cn: '广泛的' }
-    ];
+    pool = flt.length ? flt : [{ en: 'abundant', pho: '/əˈbʌndənt/', cn: '丰富的；充裕的', coll: '', ex: '' }];
   }
-  words = list;
+  const n = pool.length;
+  const dayIndex = Math.floor((Date.now() - new Date(2026, 0, 1).getTime()) / 86400000); // 距 2026-01-01 的天数
+  const NEW = 30, REV = 30;
+  const startNew = (dayIndex * NEW) % n;
+  newWords = [];
+  for (let i = 0; i < NEW; i++) newWords.push(pool[(startNew + i) % n]);
+  const startRev = (((dayIndex - 1) * NEW) % n + n) % n;
+  reviewWords = [];
+  for (let i = 0; i < REV; i++) reviewWords.push(pool[(startRev + i) % n]);
+  words = newWords;
   buildQuizData();
 }
 
 function buildQuizData() {
-  const list = words.slice(0, 30);
-  quizData = list.slice(0, 5).map((w, i) => {
+  const list = newWords.slice();
+  if (!list.length) { quizData = [{ q: '“丰富的；充裕的”对应的英文是？', opts: ['abundant', 'absent', 'absolute'], a: 0 }]; return; }
+  const picked = seededShuffle(list, todayKey() + '_quiz').slice(0, 5);
+  quizData = picked.map((w) => {
+    const others = list.filter(x => x.en !== w.en);
     const wrong = [];
-    for (let j = 1; wrong.length < 2 && j < list.length; j++) {
-      const cand = list[(i + j) % list.length].en;
-      if (cand !== w.en) wrong.push(cand);
+    while (wrong.length < 3 && others.length) {
+      const c = others.splice(Math.floor(Math.random() * others.length), 1)[0];
+      wrong.push(c.en);
     }
-    const opts = [w.en, ...wrong];
-    for (let k = opts.length - 1; k > 0; k--) {
-      const r = Math.floor(Math.random() * (k + 1));
-      [opts[k], opts[r]] = [opts[r], opts[k]];
-    }
-    let cn = w.cn.replace(/^(a|ad|vt|vi|v|n|aux|num|prep|conj|art|pron)\.(\\s| )*/, '').replace(/[；;,.].*$/, '');
+    const opts = seededShuffle([w.en, ...wrong], w.en).slice(0, 4);
+    const cn = (w.cn || '').replace(/^(a|ad|vt|vi|v|n|aux|num|prep|conj|art|pron)\.(\s| )*/, '').replace(/[；;,.].*$/, '');
     return { q: `“${cn}”对应的英文是？`, opts, a: opts.indexOf(w.en) };
   });
-  if (!quizData.length) {
-    quizData = [{ q: '“丰富的；充裕的”对应的英文是？', opts: ['abundant', 'absent', 'absolute'], a: 0 }];
-  }
 }
 let wordIdx = store.get('luo_word_idx', 0);
 let learnedWords = store.get('luo_learned_words', []);
+function currentWordList() { return wordTab === 'review' ? reviewWords : newWords; }
+function cleanCn(cn) { return (cn || '').replace(/^(a|ad|vt|vi|v|n|aux|num|prep|conj|art|pron)\.(\s| )*/, '').replace(/[；;,.].*$/, ''); }
 function showWord() {
   initDailyWords();
-  if (!words.length) return;
-  const w = words[wordIdx % words.length];
+  const list = currentWordList();
+  if (!list.length) return;
+  const w = list[wordIdx % list.length];
   document.getElementById('wordEn').textContent = w.en;
-  document.getElementById('wordPho').textContent = w.pho;
-  document.getElementById('wordCn').textContent = w.cn;
-  document.getElementById('wordIdx').textContent = `${wordIdx + 1} / ${words.length}`;
-  document.getElementById('wordProgress').style.width = `${Math.min(100, (learnedWords.length / words.length) * 100)}%`;
-  document.getElementById('wordGrid').innerHTML = words.map((x, i) => `
-    <div class="word-cell" style="${learnedWords.includes(x.en) ? 'background:#E8F5E9' : ''}">
-      <div class="en">${x.en}</div><div class="cn">${x.cn}</div>
-    </div>
-  `).join('');
+  document.getElementById('wordPho').textContent = w.pho || '';
+  document.getElementById('wordCn').textContent = cleanCn(w.cn);
+  document.getElementById('wordColl').textContent = w.coll ? w.coll : '（暂无）';
+  document.getElementById('wordEx').textContent = w.ex ? w.ex : '（暂无）';
+  document.getElementById('newCnt').textContent = newWords.length;
+  document.getElementById('revCnt').textContent = reviewWords.length;
+  document.getElementById('wordIdx').textContent = `${wordIdx % list.length + 1} / ${list.length}`;
+  const learnedInList = list.filter(x => learnedWords.includes(x.en)).length;
+  document.getElementById('wordProgress').style.width = `${Math.min(100, (learnedInList / list.length) * 100)}%`;
+  document.getElementById('wordGrid').innerHTML = list.map((x, i) => `
+    <div class="word-cell ${learnedWords.includes(x.en) ? 'learned' : ''}" onclick="gotoWord(${i})">
+      <div class="en">${esc(x.en)}</div><div class="cn">${esc(cleanCn(x.cn))}</div>
+      ${learnedWords.includes(x.en) ? '<div class="learned-badge">✓</div>' : ''}
+    </div>`).join('');
 }
-function nextWord() { wordIdx = (wordIdx + 1) % words.length; showWord(); }
-function prevWord() { wordIdx = (wordIdx - 1 + words.length) % words.length; showWord(); }
+function gotoWord(i) { wordIdx = i; showWord(); }
+function nextWord() { const list = currentWordList(); wordIdx = (wordIdx + 1) % list.length; showWord(); }
+function prevWord() { const list = currentWordList(); wordIdx = (wordIdx - 1 + list.length) % list.length; showWord(); }
 function markWordLearned() {
-  const w = words[wordIdx % words.length].en;
-  if (!learnedWords.includes(w)) learnedWords.push(w);
+  const list = currentWordList();
+  const w = list[wordIdx % list.length].en;
+  const idx = learnedWords.indexOf(w);
+  if (idx >= 0) { learnedWords.splice(idx, 1); toast('已取消掌握'); }
+  else { learnedWords.push(w); toast('已标记掌握 ✓'); }
   store.set('luo_learned_words', learnedWords);
-  showWord(); toast('已标记掌握');
+  showWord();
+}
+function switchWordTab(tab) {
+  wordTab = tab; wordIdx = 0;
+  document.querySelectorAll('#wordTabBtns .tab').forEach(t => t.classList.toggle('active', t.dataset.wt === tab));
+  showWord();
 }
 
 let quizIdx = 0, answered = false;
@@ -2282,11 +2288,12 @@ function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<':
 function escB(s) { return esc(s).replace(/&lt;(\/?b)&gt;/gi, '<$1>'); }
 
 /* ================= App 直达助手（Android intent / scheme 深链，直接唤起已装 App） ================= */
-/* 直接按包名唤起手机上的 App。
-   策略：① Chromium 系浏览器（Chrome / Edge / 三星 / 小米等，均支持 intent://）优先用 intent；
-        ② 再用 a.click() 逐个尝试 scheme://（顶层唤起，比 iframe 可靠）；
-        ③ 全部失败：静默打开官网（不弹窗、不跳商店、不搜索）。
-   说明：intent 能唤起任何已装 App（无需知道 scheme）；scheme 仅作兜底。 */
+/* 直接按包名 / scheme 唤起手机上的 App。
+   策略（关键修复：scheme 优先，避免 intent 失败跳转官网）：
+        ① 先用已知 scheme:// 逐个尝试 a.click() 直接唤起（失败不跳走、静默重试，绝不会打开网页）；
+        ② 全部 scheme 失败时，再尝试 intent://（按包名兜底唤起）；
+        ③ 都失败：才打开官网（不再提前触发，修复“所有 App 都打开 Edge 网页”的回归）。
+   说明：intent 的 browser_fallback_url 仅作为最后兜底，正常情况下不会先执行。 */
 function openApp(name, pkg, url, schemes) {
   let list = [];
   if (Array.isArray(schemes) && schemes.length) list = schemes.slice();
@@ -2298,54 +2305,51 @@ function openApp(name, pkg, url, schemes) {
   const isChromium = /Chrome|Edg|Brave|SamsungBrowser|MiuiBrowser|HuaweiBrowser|OPR/i.test(ua)
     && !/MicroMessenger/i.test(ua) && !/QQBrowser/i.test(ua) && !/Quark/i.test(ua) && !/UCBrowser/i.test(ua);
 
-  const intent = `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${pkg};S.browser_fallback_url=${encodeURIComponent(url)};end`;
+  const intent = `intent://#Intent;action=android.intent.action.VIEW;package=${pkg};S.browser_fallback_url=${encodeURIComponent(url)};end`;
 
-  const tryNav = (href) => {
+  let launched = false;
+  const onHide = () => { if (document.hidden) launched = true; };
+  document.addEventListener('visibilitychange', onHide);
+
+  const openHref = (href) => {
     try {
       const a = document.createElement('a');
       a.href = href; a.style.display = 'none';
       document.body.appendChild(a); a.click(); a.remove();
-    } catch (e) {}
+    } catch (e) {
+      try { window.location.href = href; } catch (_) {}
+    }
+  };
+  const cleanup = () => { document.removeEventListener('visibilitychange', onHide); };
+  const finishOK = () => { cleanup(); toast('已唤起「' + name + '」'); };
+  const fail = () => {
+    cleanup();
+    toast('未检测到「' + name + '」App，已打开官网');
+    try { window.open(url, '_blank'); } catch (e) { window.location.href = url; }
   };
 
-  let step = 0;
-  const nextTry = () => {
-    // ① Chromium 系优先 intent（最可靠，能唤起任何已装 App）
-    if (isChromium && step === 0) {
-      step = 1;
-      let left = false;
-      const onHide = () => { left = true; };
-      document.addEventListener('visibilitychange', onHide, { once: true });
-      tryNav(intent);
-      setTimeout(() => {
-        document.removeEventListener('visibilitychange', onHide);
-        if (!left && !document.hidden) nextTry();
-        else if (left) toast('已唤起「' + name + '」');
-      }, 1300);
+  let i = 0;
+  const tryNext = () => {
+    // ① 逐个尝试 scheme（a.click 直接唤起；失败静默，不跳网页）
+    if (i < list.length) {
+      const s = list[i++];
+      const href = s.indexOf('://') >= 0 ? s : (s + '://');
+      openHref(href);
+      // 给 App 冷启动留足时间：1s 内若已唤起则停止，不再尝试下一个 scheme（避免重复唤起）
+      setTimeout(() => { if (launched) finishOK(); else tryNext(); }, 1000);
       return;
     }
-    // ② 逐个尝试 scheme（a.click 顶层唤起）
-    const idx = step - (isChromium ? 1 : 0);
-    if (idx < list.length) {
-      const schemeUrl = list[idx] + '://';
-      step++;
-      let left = false;
-      const onHide = () => { left = true; };
-      document.addEventListener('visibilitychange', onHide, { once: true });
-      tryNav(schemeUrl);
-      setTimeout(() => {
-        document.removeEventListener('visibilitychange', onHide);
-        if (!left && !document.hidden) nextTry();
-        else if (left) toast('已唤起「' + name + '」');
-      }, 1000);
+    // ② scheme 全失败：再试 intent（按包名兜底唤起）
+    if (isChromium) {
+      openHref(intent);
+      setTimeout(() => { if (launched) finishOK(); else fail(); }, 1200);
       return;
     }
-    // ③ 全部失败：静默打开官网（不弹窗）
-    window.open(url, '_blank');
+    fail();
   };
 
-  nextTry();
   toast('正在唤起「' + name + '」…');
+  setTimeout(tryNext, 60);
 }
 function appLinkBtn(name, pkg, url, icon, schemes) {
   icon = icon || '📲';

@@ -420,6 +420,26 @@ details[open] summary { margin-bottom:6px; }
 }
 .word-cell .en { font-size: 13px; font-weight: 700; color: var(--blue-dark); }
 .word-cell .cn { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.word-cell.learned { background: #E8F5E9; }
+.word-cell { position: relative; cursor: pointer; }
+.learned-badge { position: absolute; top: 2px; right: 4px; font-size: 11px; color: #2e7d32; font-weight: 800; }
+
+.word-banner {
+  background: linear-gradient(135deg, var(--orange-light, #fff3e0), #FFFFFF);
+  border: 1px solid #ffe0b2; color: #e65100; font-weight: 700;
+  padding: 10px 12px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 12px;
+}
+.word-coll, .word-ex {
+  margin-top: 10px; text-align: left; font-size: 13px; color: var(--text-main);
+  background: var(--surface); border-radius: var(--radius-sm); padding: 8px 10px; line-height: 1.5;
+}
+.word-coll { border-left: 3px solid var(--blue-main, #1565c0); }
+.word-ex { border-left: 3px solid var(--orange-soft, #fb8c00); }
+.wt-tag {
+  display: inline-block; font-size: 11px; font-weight: 800; color: #fff;
+  background: var(--blue-main, #1565c0); border-radius: 6px; padding: 1px 7px; margin-right: 8px;
+}
+.wt-tag.wt-ex { background: var(--orange-soft, #fb8c00); }
 
 .progress-wrap { margin: 12px 0; }
 .progress-bar { height: 10px; background: var(--blue-light); border-radius: 5px; overflow: hidden; }

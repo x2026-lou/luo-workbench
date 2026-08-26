@@ -129,11 +129,24 @@
             <div class="tab" data-eng="prep">🎯 四六级备考</div>
           </div>
           <div id="engWordsPanel">
-            <div class="word-card"><div class="word-en" id="wordEn">abundant</div><div class="word-pho" id="wordPho">/əˈbʌndənt/</div><div class="word-cn" id="wordCn">丰富的；充裕的</div></div>
-            <div class="flex-between mb-3"><button class="btn btn-outline" onclick="prevWord()">上一个</button><span class="text-muted text-sm" id="wordIdx">1 / 10</span><button class="btn btn-primary" onclick="nextWord()">下一个</button></div>
-            <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="wordProgress" style="width:10%"></div></div><div class="progress-text">今日单词进度</div></div>
+            <div class="word-banner">📚 今日任务：新词 <b id="newCnt">30</b> + 复习 <b id="revCnt">30</b>　·　看搭配与真题例句记忆</div>
+            <div class="word-card">
+              <div class="word-en" id="wordEn"></div>
+              <div class="word-pho" id="wordPho"></div>
+              <div class="word-cn" id="wordCn"></div>
+              <div class="word-coll"><span class="wt-tag">搭配</span><span id="wordColl"></span></div>
+              <div class="word-ex"><span class="wt-tag wt-ex">真题例句</span><span id="wordEx"></span></div>
+            </div>
+            <div class="flex-between mb-3"><button class="btn btn-outline" onclick="prevWord()">上一个</button><span class="text-muted text-sm" id="wordIdx">1 / 60</span><button class="btn btn-primary" onclick="nextWord()">下一个</button></div>
+            <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="wordProgress" style="width:0%"></div></div><div class="progress-text">今日掌握进度</div></div>
             <button class="btn btn-orange" style="width:100%" onclick="markWordLearned()">标记已掌握</button>
-            <div class="card mt-2"><div class="font-bold mb-2">📚 每日必备单词</div><div class="word-grid" id="wordGrid"></div></div>
+            <div class="card mt-2">
+              <div class="tabs" id="wordTabBtns" style="margin-bottom:10px">
+                <div class="tab active" data-wt="new" onclick="switchWordTab('new')">新词 30</div>
+                <div class="tab" data-wt="review" onclick="switchWordTab('review')">复习 30</div>
+              </div>
+              <div class="word-grid" id="wordGrid"></div>
+            </div>
           </div>
           <div id="engQuizPanel" style="display:none">
             <div class="card"><div class="font-bold mb-3" id="quizQuestion">Question</div><div id="quizOptions"></div><div class="quiz-result" id="quizResult"></div><button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="nextQuiz()">下一题</button></div>
@@ -906,12 +919,13 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=9"></script>
-  <script src="cet4_full.js?v=9"></script>
-  <script src="cet4_enhance.js?v=9"></script>
-  <script src="gaokao_core.js?v=9"></script>
-  <script src="expansion.js?v=9"></script>
-  <script src="jjwxc_analysis.js?v=9"></script>
+  <script src="app.js?v=10"></script>
+  <script src="cet4_full.js?v=10"></script>
+  <script src="cet4_enhance.js?v=10"></script>
+  <script src="cet4_core.js?v=10"></script>
+  <script src="gaokao_core.js?v=10"></script>
+  <script src="expansion.js?v=10"></script>
+  <script src="jjwxc_analysis.js?v=10"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then(reg => {
