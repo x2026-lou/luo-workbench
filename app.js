@@ -514,124 +514,160 @@ function deleteDailyReview(date) {
 
 /* ================= English ================= */
 let words = [];
-let newWords = [];
-let reviewWords = [];
 let quizData = [];
 let wordsReady = false;
-let wordTab = 'new';
 
-/* 每日单词：基于 cet4Core 真题核心词库（约1500词，已过滤高考核心词，高频优先）
-   每天：30 个新词（按日期轮换） + 30 个复习（前一天批次），看搭配与真题例句记忆 */
+/* 每日单词：四级真题高频词，过滤掉高考英语核心词 */
 function initDailyWords() {
   if (wordsReady) return;
   wordsReady = true;
-  let pool = (window.cet4Core && window.cet4Core.length) ? window.cet4Core : null;
-  if (!pool) {
-    // 兜底：若无核心词库，退化为“高频-中频 过滤高考核心词”
-    const high = window.cet4FreqHigh || [];
-    const mid = window.cet4FreqMid || [];
-    const full = window.cet4FullWords || [];
-    const gaokao = window.GAO_KAO_CORE || new Set();
-    const map = {};
-    full.forEach(x => { if (x.w) map[x.w.toLowerCase()] = x; });
-    const seen = new Set();
-    const flt = [];
-    for (const w of [...high, ...mid]) {
-      const key = w.toLowerCase();
-      if (seen.has(key) || gaokao.has(key)) continue;
-      seen.add(key);
-      const x = map[key];
-      if (x) flt.push({ en: x.w, pho: x.ph || '', cn: x.cn, coll: '', ex: '' });
-    }
-    pool = flt.length ? flt : [{ en: 'abundant', pho: '/əˈbʌndənt/', cn: '丰富的；充裕的', coll: '', ex: '' }];
+  const high = window.cet4FreqHigh || [];
+  const mid = window.cet4FreqMid || [];
+  const full = window.cet4FullWords || [];
+  const gaokao = window.GAO_KAO_CORE || new Set();
+  const map = {};
+  full.forEach(x => { if (x.w) map[x.w.toLowerCase()] = x; });
+  // 额外排除一些虽在四级高频、但对高考水平仍偏基础的词
+  const tooBasic = new Set(['phone','phrase','probably','third','till','worse','would','peak','photo','according','analyze','others']);
+  const seen = new Set();
+  const filtered = [];
+  for (const w of [...high, ...mid]) {
+    const key = w.toLowerCase();
+    if (seen.has(key) || gaokao.has(key) || tooBasic.has(key)) continue;
+    seen.add(key);
+    const x = map[key];
+    if (!x) continue;
+    filtered.push({ en: x.w, pho: x.ph || '', cn: x.cn });
   }
-  const n = pool.length;
-  const dayIndex = Math.floor((Date.now() - new Date(2026, 0, 1).getTime()) / 86400000); // 距 2026-01-01 的天数
-  const NEW = 30, REV = 30;
-  const startNew = (dayIndex * NEW) % n;
-  newWords = [];
-  for (let i = 0; i < NEW; i++) newWords.push(pool[(startNew + i) % n]);
-  const startRev = (((dayIndex - 1) * NEW) % n + n) % n;
-  reviewWords = [];
-  for (let i = 0; i < REV; i++) reviewWords.push(pool[(startRev + i) % n]);
-  words = newWords;
+  let list = [];
+  if (filtered.length) {
+    // 按日期轮换取 10 个，保证每日新鲜且均为高考范围外四级高频词
+    const dayOffset = (new Date().getDate() - 1) % filtered.length;
+    for (let i = 0; i < 10; i++) {
+      list.push(filtered[(dayOffset + i) % filtered.length]);
+    }
+  } else {
+    // 兜底：若过滤后为空，使用精选四级高频词
+    list = [
+      { en: 'abundant', pho: '/əˈbʌndənt/', cn: '丰富的；充裕的' },
+      { en: 'contribute', pho: '/kənˈtrɪbjuːt/', cn: '贡献；促成' },
+      { en: 'efficient', pho: '/ɪˈfɪʃnt/', cn: '高效的' },
+      { en: 'opportunity', pho: '/ˌɒpəˈtjuːnəti/', cn: '机会' },
+      { en: 'phenomenon', pho: '/fəˈnɒmɪnən/', cn: '现象' },
+      { en: 'schedule', pho: '/ˈʃedjuːl/', cn: '日程表；安排' },
+      { en: 'strategy', pho: '/ˈstrætədʒi/', cn: '策略' },
+      { en: 'temporary', pho: '/ˈtemprəri/', cn: '暂时的' },
+      { en: 'vocabulary', pho: '/vəˈkæbjələri/', cn: '词汇' },
+      { en: 'widespread', pho: '/ˈwaɪdspred/', cn: '广泛的' }
+    ];
+  }
+  words = list;
   buildQuizData();
 }
 
+/* 选词填空：四级真题高频词，从今日 10 词中选 10 题，每题一个句子挖一空，配 6 个选项 */
 function buildQuizData() {
-  const list = newWords.slice();
-  if (!list.length) { quizData = [{ q: '“丰富的；充裕的”对应的英文是？', opts: ['abundant', 'absent', 'absolute'], a: 0 }]; return; }
-  const picked = seededShuffle(list, todayKey() + '_quiz').slice(0, 5);
-  quizData = picked.map((w) => {
-    const others = list.filter(x => x.en !== w.en);
+  const all = words.slice();
+  if (!all.length) {
+    quizData = [{ sentence: 'It is <span class="blank">_____</span> to finish your work on time.', options: ['important', 'necessary', 'useful', 'helpful', 'good', 'great'], answer: 0, word: 'important', cn: '重要的' }];
+    return;
+  }
+  const distractorsPool = (window.cet4FreqHigh || []).concat(window.cet4FreqMid || []).filter(w => !all.find(x => x.en.toLowerCase() === w.toLowerCase()));
+  const templates = [
+    { pos: 'v', tpl: 'Remember to {w} carefully when you take the exam.' },
+    { pos: 'v', tpl: 'You should {w} your answers before handing them in.' },
+    { pos: 'v', tpl: 'Students often {w} when they face new challenges.' },
+    { pos: 'n', tpl: 'The {w} is very important in CET-4 reading.' },
+    { pos: 'n', tpl: 'We need to understand the {w} of this article.' },
+    { pos: 'n', tpl: 'Pay attention to the {w} in the passage.' },
+    { pos: 'a', tpl: 'It is {w} to prepare well for the exam.' },
+    { pos: 'a', tpl: 'The result is {w} for most students.' },
+    { pos: 'a', tpl: 'She felt {w} after the test.' },
+    { pos: 'ad', tpl: 'He answered the question very {w}.' },
+    { pos: 'ad', tpl: 'Please read the passage {w}.' },
+    { pos: 'ad', tpl: 'The situation developed {w}.' },
+    { pos: 'default', tpl: 'The word {w} often appears in CET-4 tests.' }
+  ];
+  const posOf = (cn) => {
+    const m = (cn || '').match(/^(a|ad|vt|vi|v|n|aux|num|prep|conj|art|pron)\./i);
+    if (!m) return 'default';
+    const p = m[1].toLowerCase();
+    if (p === 'vt' || p === 'vi' || p === 'v') return 'v';
+    if (p === 'ad') return 'ad';
+    if (p === 'a') return 'a';
+    if (p === 'n') return 'n';
+    return 'default';
+  };
+  const cleanCn = (cn) => (cn || '').replace(/^(a|ad|vt|vi|v|n|aux|num|prep|conj|art|pron)\.(\s| )*/, '').replace(/[；;,.].*$/, '');
+  const pickTpl = (w) => {
+    const p = posOf(w.cn);
+    const cands = templates.filter(t => t.pos === p);
+    if (!cands.length) return templates.find(t => t.pos === 'default').tpl;
+    let h = 0; for (let k = 0; k < w.en.length; k++) h = (h * 31 + w.en.charCodeAt(k)) >>> 0;
+    return cands[h % cands.length].tpl;
+  };
+  quizData = all.map((w) => {
+    const sentence = pickTpl(w).replace('{w}', '<span class="blank">_____</span>');
+    const correct = w.en;
     const wrong = [];
-    while (wrong.length < 3 && others.length) {
-      const c = others.splice(Math.floor(Math.random() * others.length), 1)[0];
-      wrong.push(c.en);
+    const pool = distractorsPool.slice();
+    for (let k = 0; k < 5 && pool.length; k++) {
+      let idx = Math.floor(Math.random() * pool.length);
+      const c = pool.splice(idx, 1)[0];
+      if (c.toLowerCase() !== correct.toLowerCase() && !wrong.includes(c)) wrong.push(c);
     }
-    const opts = seededShuffle([w.en, ...wrong], w.en).slice(0, 4);
-    const cn = (w.cn || '').replace(/^(a|ad|vt|vi|v|n|aux|num|prep|conj|art|pron)\.(\s| )*/, '').replace(/[；;,.].*$/, '');
-    return { q: `“${cn}”对应的英文是？`, opts, a: opts.indexOf(w.en) };
+    while (wrong.length < 5) wrong.push(['ability','balance','challenge','chance','change','company','culture','effect','effort','example','factor','future','habit','idea','issue','level','method','moment','nature','period','point','reason','result','school','sense','service','society','state','system','theory'][wrong.length]);
+    let opts = [correct, ...wrong];
+    for (let k = opts.length - 1; k > 0; k--) {
+      const r = Math.floor(Math.random() * (k + 1));
+      [opts[k], opts[r]] = [opts[r], opts[k]];
+    }
+    return { sentence, options: opts.slice(0, 6), answer: opts.indexOf(correct), word: correct, cn: cleanCn(w.cn) };
   });
 }
+
 let wordIdx = store.get('luo_word_idx', 0);
 let learnedWords = store.get('luo_learned_words', []);
-function currentWordList() { return wordTab === 'review' ? reviewWords : newWords; }
-function cleanCn(cn) { return (cn || '').replace(/^(a|ad|vt|vi|v|n|aux|num|prep|conj|art|pron)\.(\s| )*/, '').replace(/[；;,.].*$/, ''); }
 function showWord() {
   initDailyWords();
-  const list = currentWordList();
-  if (!list.length) return;
-  const w = list[wordIdx % list.length];
+  if (!words.length) return;
+  const w = words[wordIdx % words.length];
   document.getElementById('wordEn').textContent = w.en;
-  document.getElementById('wordPho').textContent = w.pho || '';
-  document.getElementById('wordCn').textContent = cleanCn(w.cn);
-  document.getElementById('wordColl').textContent = w.coll ? w.coll : '（暂无）';
-  document.getElementById('wordEx').textContent = w.ex ? w.ex : '（暂无）';
-  document.getElementById('newCnt').textContent = newWords.length;
-  document.getElementById('revCnt').textContent = reviewWords.length;
-  document.getElementById('wordIdx').textContent = `${wordIdx % list.length + 1} / ${list.length}`;
-  const learnedInList = list.filter(x => learnedWords.includes(x.en)).length;
-  document.getElementById('wordProgress').style.width = `${Math.min(100, (learnedInList / list.length) * 100)}%`;
-  document.getElementById('wordGrid').innerHTML = list.map((x, i) => `
-    <div class="word-cell ${learnedWords.includes(x.en) ? 'learned' : ''}" onclick="gotoWord(${i})">
-      <div class="en">${esc(x.en)}</div><div class="cn">${esc(cleanCn(x.cn))}</div>
-      ${learnedWords.includes(x.en) ? '<div class="learned-badge">✓</div>' : ''}
-    </div>`).join('');
+  document.getElementById('wordPho').textContent = w.pho;
+  document.getElementById('wordCn').textContent = w.cn;
+  document.getElementById('wordIdx').textContent = `${wordIdx + 1} / ${words.length}`;
+  document.getElementById('wordProgress').style.width = `${Math.min(100, (learnedWords.length / words.length) * 100)}%`;
+  document.getElementById('wordGrid').innerHTML = words.map((x, i) => `
+    <div class="word-cell" style="${learnedWords.includes(x.en) ? 'background:#E8F5E9' : ''}">
+      <div class="en">${x.en}</div><div class="cn">${x.cn}</div>
+    </div>
+  `).join('');
 }
-function gotoWord(i) { wordIdx = i; showWord(); }
-function nextWord() { const list = currentWordList(); wordIdx = (wordIdx + 1) % list.length; showWord(); }
-function prevWord() { const list = currentWordList(); wordIdx = (wordIdx - 1 + list.length) % list.length; showWord(); }
+function nextWord() { wordIdx = (wordIdx + 1) % words.length; showWord(); }
+function prevWord() { wordIdx = (wordIdx - 1 + words.length) % words.length; showWord(); }
 function markWordLearned() {
-  const list = currentWordList();
-  const w = list[wordIdx % list.length].en;
-  const idx = learnedWords.indexOf(w);
-  if (idx >= 0) { learnedWords.splice(idx, 1); toast('已取消掌握'); }
-  else { learnedWords.push(w); toast('已标记掌握 ✓'); }
+  const w = words[wordIdx % words.length].en;
+  if (!learnedWords.includes(w)) learnedWords.push(w);
   store.set('luo_learned_words', learnedWords);
-  showWord();
-}
-function switchWordTab(tab) {
-  wordTab = tab; wordIdx = 0;
-  document.querySelectorAll('#wordTabBtns .tab').forEach(t => t.classList.toggle('active', t.dataset.wt === tab));
-  showWord();
+  showWord(); toast('已标记掌握');
 }
 
 let quizIdx = 0, answered = false;
 function renderQuiz() {
   initDailyWords();
   const q = quizData[quizIdx];
-  document.getElementById('quizQuestion').textContent = `第 ${quizIdx + 1}/${quizData.length} 题：${q.q}`;
-  document.getElementById('quizOptions').innerHTML = q.opts.map((opt, i) => `<button class="quiz-opt" onclick="answerQuiz(${i})">${opt}</button>`).join('');
+  if (!q) return;
+  document.getElementById('quizQuestion').innerHTML = `<div class="cloze-title">第 ${quizIdx + 1}/${quizData.length} 题：四级选词填空</div><div class="cloze-sentence">${q.sentence}</div><div class="cloze-hint">词义提示：${esc(q.cn)}</div>`;
+  document.getElementById('quizOptions').innerHTML = '<div class="word-bank">' + q.options.map((opt, i) => `<button class="quiz-opt" onclick="answerQuiz(${i})">${esc(opt)}</button>`).join('') + '</div>';
   document.getElementById('quizResult').textContent = ''; answered = false;
 }
 function answerQuiz(i) {
   if (answered) return; answered = true;
   const q = quizData[quizIdx]; const opts = document.querySelectorAll('.quiz-opt');
-  opts[i].classList.add(i === q.a ? 'correct' : 'wrong');
-  if (i !== q.a) opts[q.a].classList.add('correct');
-  document.getElementById('quizResult').textContent = i === q.a ? '✅ 回答正确！' : '❌ 再巩固一下';
-  document.getElementById('quizResult').className = 'quiz-result ' + (i === q.a ? 'text-blue' : 'text-orange');
+  opts[i].classList.add(i === q.answer ? 'correct' : 'wrong');
+  if (i !== q.answer) opts[q.answer].classList.add('correct');
+  document.getElementById('quizResult').textContent = i === q.answer ? '✅ 回答正确！' : '❌ 再巩固一下，正确答案是：' + q.word;
+  document.getElementById('quizResult').className = 'quiz-result ' + (i === q.answer ? 'text-blue' : 'text-orange');
 }
 function nextQuiz() { quizIdx = (quizIdx + 1) % quizData.length; renderQuiz(); }
 
@@ -2289,11 +2325,10 @@ function escB(s) { return esc(s).replace(/&lt;(\/?b)&gt;/gi, '<$1>'); }
 
 /* ================= App 直达助手（Android intent / scheme 深链，直接唤起已装 App） ================= */
 /* 直接按包名 / scheme 唤起手机上的 App。
-   策略（关键修复：scheme 优先，避免 intent 失败跳转官网）：
-        ① 先用已知 scheme:// 逐个尝试 a.click() 直接唤起（失败不跳走、静默重试，绝不会打开网页）；
-        ② 全部 scheme 失败时，再尝试 intent://（按包名兜底唤起）；
-        ③ 都失败：才打开官网（不再提前触发，修复“所有 App 都打开 Edge 网页”的回归）。
-   说明：intent 的 browser_fallback_url 仅作为最后兜底，正常情况下不会先执行。 */
+   关键修复：intent 深链不再带 browser_fallback_url，避免 Honor/Edge 上直接跳转官网。
+   策略：① Chromium 系优先用标准 intent:// 按包名唤起（MAIN/LAUNCHER，无 fallback_url）；
+        ② intent 失败时静默尝试 scheme://；
+        ③ 全部失败才打开官网。 */
 function openApp(name, pkg, url, schemes) {
   let list = [];
   if (Array.isArray(schemes) && schemes.length) list = schemes.slice();
@@ -2301,11 +2336,11 @@ function openApp(name, pkg, url, schemes) {
   if (list.indexOf(pkg) < 0) list.push(pkg);
 
   const ua = navigator.userAgent;
-  // Edge 也是 Chromium 内核，支持 intent://，必须包含；排除微信/QQ/夸克/UC 等有限制的内置浏览器
   const isChromium = /Chrome|Edg|Brave|SamsungBrowser|MiuiBrowser|HuaweiBrowser|OPR/i.test(ua)
     && !/MicroMessenger/i.test(ua) && !/QQBrowser/i.test(ua) && !/Quark/i.test(ua) && !/UCBrowser/i.test(ua);
 
-  const intent = `intent://#Intent;action=android.intent.action.VIEW;package=${pkg};S.browser_fallback_url=${encodeURIComponent(url)};end`;
+  // 标准 Android intent：MAIN/LAUNCHER，无 browser_fallback_url（避免失败直接跳官网）
+  const intent = `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${pkg};end`;
 
   let launched = false;
   const onHide = () => { if (document.hidden) launched = true; };
@@ -2316,9 +2351,7 @@ function openApp(name, pkg, url, schemes) {
       const a = document.createElement('a');
       a.href = href; a.style.display = 'none';
       document.body.appendChild(a); a.click(); a.remove();
-    } catch (e) {
-      try { window.location.href = href; } catch (_) {}
-    }
+    } catch (e) { try { window.location.href = href; } catch (_) {} }
   };
   const cleanup = () => { document.removeEventListener('visibilitychange', onHide); };
   const finishOK = () => { cleanup(); toast('已唤起「' + name + '」'); };
@@ -2328,28 +2361,28 @@ function openApp(name, pkg, url, schemes) {
     try { window.open(url, '_blank'); } catch (e) { window.location.href = url; }
   };
 
+  // ② scheme 兜底尝试
   let i = 0;
-  const tryNext = () => {
-    // ① 逐个尝试 scheme（a.click 直接唤起；失败静默，不跳网页）
+  const trySchemes = () => {
     if (i < list.length) {
       const s = list[i++];
       const href = s.indexOf('://') >= 0 ? s : (s + '://');
       openHref(href);
-      // 给 App 冷启动留足时间：1s 内若已唤起则停止，不再尝试下一个 scheme（避免重复唤起）
-      setTimeout(() => { if (launched) finishOK(); else tryNext(); }, 1000);
-      return;
-    }
-    // ② scheme 全失败：再试 intent（按包名兜底唤起）
-    if (isChromium) {
-      openHref(intent);
-      setTimeout(() => { if (launched) finishOK(); else fail(); }, 1200);
+      setTimeout(() => { if (launched) finishOK(); else trySchemes(); }, 1000);
       return;
     }
     fail();
   };
 
+  // ① intent 优先（按包名唤起，无需知道 scheme；失败不跳官网）
+  if (isChromium) {
+    openHref(intent);
+    setTimeout(() => { if (launched) finishOK(); else trySchemes(); }, 1500);
+  } else {
+    trySchemes();
+  }
+
   toast('正在唤起「' + name + '」…');
-  setTimeout(tryNext, 60);
 }
 function appLinkBtn(name, pkg, url, icon, schemes) {
   icon = icon || '📲';
