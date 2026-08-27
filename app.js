@@ -5,6 +5,7 @@ const navItems = [
   { id: 'daily', icon: '📅', label: '每日计划', group: '每日规划与复盘' },
   { id: 'dailyreview', icon: '🔁', label: '每日复盘', group: '每日规划与复盘' },
   { id: 'review', icon: '📊', label: '内容复盘', group: '每日规划与复盘' },
+  { id: 'collect', icon: '🗂️', label: '收藏·笔记·复盘·书摘', group: '每日规划与复盘' },
   { id: 'rewards', icon: '🏆', label: '奖励·每日评价', group: '每日规划与复盘' },
   // 2. 学习备考
   { id: 'english', icon: '🌍', label: '英语学习', group: '学习备考' },
@@ -25,7 +26,6 @@ const navItems = [
   { id: 'booknotes', icon: '📑', label: '书摘收藏', group: '阅读与影视' },
   { id: 'booklearn', icon: '📚', label: '好书拆分', group: '阅读与影视' },
   { id: 'film', icon: '🎞️', label: '拉片笔记', group: '阅读与影视' },
-  { id: 'collect', icon: '🗂️', label: '收藏·笔记·复盘·书摘', group: '阅读与影视' },
   // 5. 生活与健康
   { id: 'travel', icon: '✈️', label: '旅行攻略分享', group: '生活与健康' },
   { id: 'image', icon: '🪞', label: '形象管理', group: '生活与健康' },
@@ -105,6 +105,13 @@ function goPage(id) {
 }
 
 /* ================= Section Notes (custom per section) ================= */
+/* 富文本渲染：转义后仅放行 [[IMG:dataURL]] 图片标记，安全显示插图 */
+function renderRich(text) {
+  let s = esc(text || '');
+  s = s.replace(/\[\[IMG:([^\]]+)\]\]/g, (m, src) => `<img src="${src}" style="max-width:100%;border-radius:8px;margin:6px 0;display:block" loading="lazy">`);
+  return s.replace(/\n/g, '<br>');
+}
+let editingNote = { id: null };
 function renderMyNotes(id) {
   const page = document.getElementById('page-' + id);
   if (!page) return;
@@ -113,42 +120,59 @@ function renderMyNotes(id) {
     box = document.createElement('div');
     box.className = 'card section-notes mt-3';
     box.innerHTML = `
-      <div class="font-bold mb-2">📝 我的笔记</div>
+      <div class="font-bold mb-2">📝 我的笔记 <span class="text-sm text-muted">（可插图 / 可编辑）</span></div>
       <div id="notesList-${id}"></div>
       <div class="mt-2" style="display:flex;flex-direction:column;gap:8px">
         <input type="text" id="noteTitle-${id}" class="form-input" placeholder="笔记标题（可选）">
-        <textarea id="noteContent-${id}" class="form-textarea" placeholder="记录这一板块的想法、重点、灵感…"></textarea>
-        <button class="btn btn-primary" onclick="addMyNote('${id}')">保存笔记</button>
+        <textarea id="noteContent-${id}" class="form-textarea" placeholder="记录这一板块的想法、重点、灵感…可点「插图片」加入照片"></textarea>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" id="noteSaveBtn-${id}" onclick="saveMyNote('${id}')">保存笔记</button>
+          <label class="btn btn-outline btn-small">🖼️ 插图片<input type="file" accept="image/*" style="display:none" onchange="insertNoteImage('${id}',this)"></label>
+          <button class="btn btn-small" id="noteCancel-${id}" style="display:none" onclick="cancelNoteEdit('${id}')">取消</button>
+        </div>
       </div>`;
     page.appendChild(box);
   }
   const notes = store.get('luo_notes_' + id, []);
+  let needSave = false;
+  notes.forEach((n, i) => { if (n.id == null) { n.id = 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + i; needSave = true; } });
+  if (needSave) store.set('luo_notes_' + id, notes);
   const list = document.getElementById('notesList-' + id);
   if (!list) return;
   list.innerHTML = notes.length ? notes.map((n, i) => `
     <div class="note-item">
       <div class="note-body">
-        ${n.title ? `<div class="note-title">${n.title}</div>` : ''}
-        <div class="note-text">${n.content}</div>
+        ${n.title ? `<div class="note-title">${esc(n.title)}</div>` : ''}
+        <div class="note-text">${renderRich(n.content)}</div>
         <div class="note-date">${n.date || ''}</div>
       </div>
       <div class="note-actions">
+        ${gstar('note-' + n.id, '笔记', n.title || '笔记', n.content)}
         <button class="note-btn" onclick="editMyNote('${id}',${i})">编辑</button>
         <button class="note-btn del" onclick="deleteMyNote('${id}',${i})">删除</button>
       </div>
     </div>`).join('') : '<div class="list-empty">还没有笔记，记一条吧 ✍️</div>';
 }
-function addMyNote(id) {
+function saveMyNote(id) {
   const t = document.getElementById('noteTitle-' + id);
   const c = document.getElementById('noteContent-' + id);
   const title = t.value.trim(); const content = c.value.trim();
   if (!title && !content) return toast('请输入笔记内容');
   const notes = store.get('luo_notes_' + id, []);
-  notes.unshift({ title, content, date: fmtDate() });
-  store.set('luo_notes_' + id, notes);
+  if (editingNote.id != null) {
+    const idx = notes.findIndex(n => n.id === editingNote.id);
+    if (idx >= 0) notes[idx] = { ...notes[idx], title, content, date: notes[idx].date };
+    toast('笔记已更新');
+  } else {
+    notes.unshift({ id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title, content, date: fmtDate() });
+    toast('笔记已保存');
+  }
+  editingNote = { id: null };
   t.value = ''; c.value = '';
+  const cancel = document.getElementById('noteCancel-' + id); if (cancel) cancel.style.display = 'none';
+  const btn = document.getElementById('noteSaveBtn-' + id); if (btn) btn.textContent = '保存笔记';
+  store.set('luo_notes_' + id, notes);
   renderMyNotes(id);
-  toast('笔记已保存');
 }
 function deleteMyNote(id, i) {
   const notes = store.get('luo_notes_' + id, []);
@@ -158,14 +182,44 @@ function deleteMyNote(id, i) {
 }
 function editMyNote(id, i) {
   const notes = store.get('luo_notes_' + id, []);
-  const n = notes[i];
-  const content = prompt('编辑笔记内容', n.content);
-  if (content === null) return;
-  const title = prompt('编辑笔记标题', n.title || '');
-  if (title === null) return;
-  notes[i] = { title: title.trim(), content: content.trim(), date: n.date };
-  store.set('luo_notes_' + id, notes);
-  renderMyNotes(id);
+  const n = notes[i]; if (!n) return;
+  editingNote = { id: n.id };
+  document.getElementById('noteTitle-' + id).value = n.title || '';
+  document.getElementById('noteContent-' + id).value = n.content || '';
+  const cancel = document.getElementById('noteCancel-' + id); if (cancel) cancel.style.display = 'inline-block';
+  const btn = document.getElementById('noteSaveBtn-' + id); if (btn) btn.textContent = '更新笔记';
+  document.getElementById('noteContent-' + id).focus();
+  toast('已载入编辑，修改后点「更新笔记」');
+}
+function cancelNoteEdit(id) {
+  editingNote = { id: null };
+  document.getElementById('noteTitle-' + id).value = '';
+  document.getElementById('noteContent-' + id).value = '';
+  const cancel = document.getElementById('noteCancel-' + id); if (cancel) cancel.style.display = 'none';
+  const btn = document.getElementById('noteSaveBtn-' + id); if (btn) btn.textContent = '保存笔记';
+}
+function insertNoteImage(id, input) {
+  const file = input.files && input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const url = e.target.result;
+    const ta = document.getElementById('noteContent-' + id);
+    const img = new Image();
+    const finish = (durl) => { ta.value += (ta.value ? '\n' : '') + '[[IMG:' + durl + ']]'; };
+    img.onload = () => {
+      const MAX = 1000; let w = img.width, h = img.height;
+      if (w > h && w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      else if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      try { finish(cv.toDataURL('image/jpeg', 0.7)); }
+      catch (err) { finish(url); }
+    };
+    img.onerror = () => finish(url);
+    img.src = url;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
 }
 
 function toggleSidebar(force) {
@@ -480,7 +534,10 @@ function renderReviews() {
       <div class="text-sm text-muted mb-2">数据：${r.data || '未填写'}</div>
       <div class="mb-2"><span class="text-blue">优点：</span>${r.pros || '—'}</div>
       <div class="mb-2"><span class="text-orange">优化：</span>${r.cons || '—'}</div>
-      <button class="btn btn-outline btn-small" onclick="deleteReview(${r.id})">删除</button>
+      <div class="flex-between mt-2">
+        ${gstar('rev-' + r.id, '复盘', r.title, [r.data, r.pros ? '优点：' + r.pros : '', r.cons ? '优化：' + r.cons : ''].filter(Boolean).join('\n'))}
+        <button class="btn btn-outline btn-small" onclick="deleteReview(${r.id})">删除</button>
+      </div>
     </div>
   `).join('') : '<div class="list-empty">暂无复盘记录</div>';
   renderDailyReview();
@@ -500,7 +557,10 @@ function renderDailyReview() {
     <div class="card-flat">
       <div class="font-bold mb-1">${r.date}</div>
       <div class="text-sm text-muted" style="white-space:pre-wrap">${r.text}</div>
-      <button class="btn btn-outline btn-small mt-2" onclick="deleteDailyReview('${r.date}')">删除</button>
+      <div class="flex-between mt-2">
+        ${gstar('drev-' + r.date, '每日复盘', '每日复盘 ' + r.date, r.text)}
+        <button class="btn btn-outline btn-small" onclick="deleteDailyReview('${r.date}')">删除</button>
+      </div>
     </div>`).join('') : '<div class="list-empty">还没有复盘记录</div>';
 }
 function saveDailyReview() {
@@ -690,6 +750,13 @@ function buildCloze(wordsArr, chunkIdx) {
 
 let clozeData = null, clozeSel = null, clozeFills = {}, clozeSubmitted = false;
 let clozeSession = 0;
+let CLOZE_BANK = [];
+function getClozeBank() {
+  if (CLOZE_BANK.length) return CLOZE_BANK;
+  // 取四级核心词前 280 个 → 28 篇（每篇 10 词）；cet4Core 在 app.js 之后加载，故惰性读取
+  CLOZE_BANK = (window.cet4Core || []).slice(0, 280);
+  return CLOZE_BANK;
+}
 function buildClozeInto(box, wordsArr, chunkIdx) {
   clozeSubmitted = false; clozeSel = null; clozeFills = {};
   const totalChunks = Math.max(1, Math.ceil(wordsArr.length / 10));
@@ -770,7 +837,7 @@ function submitCloze() {
 function renderQuiz() {
   initDailyWords();
   const box = document.getElementById('engQuizPanel');
-  const src = (newWords && newWords.length) ? newWords : wordList;
+  const src = getClozeBank();
   const totalChunks = Math.max(1, Math.ceil(src.length / 10));
   buildClozeInto(box, src, clozeSession % totalChunks);
 }
@@ -1820,9 +1887,13 @@ function renderOutfit() {
 function renderWardrobe() {
   const grid = document.getElementById('wardrobeGrid');
   let html = wardrobe.map((item, i) => `
-    <div class="wardrobe-item" style="position:relative" onclick="deleteWardrobe(${i})">
+    <div class="wardrobe-item" style="position:relative">
       <img src="${item.img}" alt="${item.name}">
       <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,0.85);font-size:10px;padding:2px;text-align:center">${item.name}</div>
+      <div class="wardrobe-actions">
+        ${gstar('wd-' + item.id, '电子衣橱', item.name, '')}
+        <button class="wardrobe-del" onclick="deleteWardrobe(${i})">×</button>
+      </div>
     </div>
   `).join('');
   if (wardrobe.length < 9) {
@@ -2129,7 +2200,10 @@ function renderRecipes() {
       <div class="font-bold mb-1">${r.name}</div>
       ${r.price ? `<div class="text-sm mb-1"><span class="text-orange">物价：</span>${r.price}</div>` : ''}
       ${r.prep ? `<div class="text-sm text-muted" style="white-space:pre-wrap">${r.prep}</div>` : ''}
-      <button class="btn btn-outline btn-small mt-2" onclick="deleteRecipe(${r.id})">删除</button>
+      <div class="flex-between mt-2">
+        ${gstar('rcp-' + r.id, '电子菜谱', r.name, [r.price ? '物价：' + r.price : '', r.prep].filter(Boolean).join('\n'))}
+        <button class="btn btn-outline btn-small" onclick="deleteRecipe(${r.id})">删除</button>
+      </div>
     </div>`).join('') : '<div class="list-empty">还没有菜谱，添加第一道吧 🍳</div>';
 }
 function deleteRecipe(id) { recipes = recipes.filter(r => r.id !== id); store.set('luo_recipes', recipes); renderRecipes(); }
@@ -2327,6 +2401,7 @@ function renderTravelPlans() {
       </div>
       <div class="flex-between">
         <div style="display:flex;gap:8px">
+          ${gstar('trip-' + p.id, '旅行攻略', (p.departure || '') + '→' + (p.dest || ''), (p.theme || '') + ' ' + (p.schedule || []).map(s => s.text).join(' '))}
           <button class="btn btn-outline btn-small" onclick="editTravelPlan(${p.id})">编辑</button>
           <button class="btn btn-outline btn-small" onclick="deleteTravelPlan(${p.id})">删除</button>
         </div>
@@ -2612,6 +2687,57 @@ function importData(input) {
     input.value = '';
   };
   reader.readAsText(f);
+}
+
+/* ================= 自动备份（防丢失：定时 + 离开前快照，可一键恢复） ================= */
+function snapshotAll() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.indexOf('luo_') === 0) data[k] = localStorage.getItem(k);
+  }
+  return data;
+}
+function autoBackupNow() {
+  if (!store.get('luo_auto_backup_on', false)) return;
+  const data = snapshotAll();
+  const rec = { time: fmtDate() + ' ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }), data };
+  store.set('luo_auto_backup', rec);
+  let hist = store.get('luo_auto_backups', []);
+  hist.unshift(rec); hist = hist.slice(0, 3);
+  store.set('luo_auto_backups', hist);
+  updateBackupUI();
+}
+function restoreAutoBackup() {
+  const rec = store.get('luo_auto_backup', null);
+  if (!rec) return toast('暂无自动备份');
+  if (!confirm('将从自动备份（' + rec.time + '）恢复数据，当前未备份的改动会被覆盖，确定继续？')) return;
+  for (const k in rec.data) localStorage.setItem(k, rec.data[k]);
+  toast('已从自动备份恢复，即将刷新');
+  setTimeout(() => location.reload(), 800);
+}
+let _autoBackupTimer = null, _unloadBound = false;
+function toggleAutoBackup() {
+  const on = !store.get('luo_auto_backup_on', false);
+  store.set('luo_auto_backup_on', on);
+  if (on) {
+    autoBackupNow();
+    if (!_autoBackupTimer) _autoBackupTimer = setInterval(autoBackupNow, 5 * 60 * 1000);
+    if (!_unloadBound) { window.addEventListener('beforeunload', autoBackupNow); _unloadBound = true; }
+    toast('自动备份已开启（每 5 分钟 + 离开前）');
+  } else {
+    if (_autoBackupTimer) { clearInterval(_autoBackupTimer); _autoBackupTimer = null; }
+    toast('自动备份已关闭');
+  }
+  updateBackupUI();
+}
+function updateBackupUI() {
+  const on = store.get('luo_auto_backup_on', false);
+  const tgl = document.getElementById('autoBackupToggle');
+  if (tgl) { tgl.textContent = on ? '🔁 自动备份：开' : '🔁 自动备份：关'; tgl.classList.toggle('on', on); }
+  const last = store.get('luo_auto_backup', null);
+  const el = document.getElementById('autoBackupLast');
+  if (el) el.textContent = last ? ('最近备份：' + last.time) : '尚未自动备份';
 }
 
 /* ---- 收藏（核心金句 / 好评 / 雷点） ---- */
@@ -3217,8 +3343,10 @@ function init() {
   renderNav();
   renderTodos();
   renderMyNotes('daily');
+  updateBackupUI();
 }
-init();
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
 
 /* ================= 收藏·笔记·复盘·书摘 聚合（可搜索、点击展开） ================= */
 const COLLECT_COLORS = { '收藏': '#8e44ad', '笔记': '#1565c0', '书摘': '#2e7d32', '复盘': '#e65100' };
@@ -3258,14 +3386,15 @@ function paintCollect() {
     if (q && !((it.title + ' ' + it.body + ' ' + it.type).toLowerCase().indexOf(q) >= 0)) return;
     count++;
     const body = it.body || '(无内容)';
-    const expanded = it._expanded;
-    const shown = (expanded || body.length <= 80) ? body : body.slice(0, 80) + '…';
+    // 片段：去掉图片标记与换行，避免 dataURL 露出
+    const plain = body.replace(/\[\[IMG:[^\]]+\]\]/g, '').replace(/\s+/g, ' ').trim();
+    const shown = plain.length <= 80 ? plain : plain.slice(0, 80) + '…';
     const color = COLLECT_COLORS[it.type] || '#666';
-    html += `<div class="collect-card" onclick="toggleCollectItem(${gi})">
+    html += `<div class="collect-card" onclick="openCollectDetail(${gi})">
       <div class="collect-top"><span class="collect-tag" style="background:${color}">${it.type}</span><span class="collect-title">${esc(it.title)}</span></div>
-      <div class="collect-body">${esc(shown)}</div>
+      <div class="collect-body">${esc(shown || (body.indexOf('[[IMG:') >= 0 ? '🖼️ 含图片' : ''))}</div>
       ${it.date ? `<div class="collect-date">${esc(it.date)}</div>` : ''}
-      ${body.length > 80 ? `<div class="collect-more">${expanded ? '收起 ▲' : '点击查看全文 ›'}</div>` : ''}
+      <div class="collect-more">点击查看详情 ›</div>
     </div>`;
   });
   box.innerHTML = count ? html : '<div class="list-empty">暂无内容，去各板块收藏、记笔记、写复盘吧</div>';
@@ -3278,4 +3407,19 @@ function setCollectType(t) {
   document.querySelectorAll('#collectTypes .ctab').forEach(b => b.classList.toggle('active', b.dataset.t === t));
   paintCollect();
 }
-function toggleCollectItem(gi) { const it = collectItems[gi]; if (!it) return; it._expanded = !it._expanded; paintCollect(); }
+function openCollectDetail(gi) {
+  const it = collectItems[gi]; if (!it) return;
+  const color = COLLECT_COLORS[it.type] || '#666';
+  const modal = document.getElementById('collectModal');
+  if (!modal) return;
+  modal.querySelector('#collectModalTag').textContent = it.type;
+  modal.querySelector('#collectModalTag').style.background = color;
+  modal.querySelector('#collectModalTitle').textContent = it.title || '';
+  modal.querySelector('#collectModalDate').textContent = it.date || '';
+  modal.querySelector('#collectModalBody').innerHTML = renderRich(it.body || '(无内容)');
+  modal.classList.add('open');
+}
+function closeCollectDetail() {
+  const modal = document.getElementById('collectModal');
+  if (modal) modal.classList.remove('open');
+}

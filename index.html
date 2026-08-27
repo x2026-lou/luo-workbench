@@ -92,6 +92,15 @@
                 <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">⬆️ 导入恢复</button>
                 <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(this)">
               </div>
+              <div class="mt-3 p-2" style="background:var(--bg-soft);border-radius:10px">
+                <div class="font-bold mb-1">🔁 自动备份（防丢失）</div>
+                <p class="text-sm text-muted mb-2">开启后每 5 分钟及离开页面前自动快照本地数据，误清缓存可一键恢复最近 3 份。</p>
+                <div class="flex-between">
+                  <button class="btn btn-small" id="autoBackupToggle" onclick="toggleAutoBackup()">🔁 自动备份：关</button>
+                  <button class="btn btn-small btn-outline" onclick="restoreAutoBackup()">恢复自动备份</button>
+                </div>
+                <div class="text-sm text-muted mt-1" id="autoBackupLast">尚未自动备份</div>
+              </div>
               <div id="backupMsg" class="text-sm mt-2"></div>
             </div>
           </div>
@@ -880,7 +889,7 @@
         <!-- 收藏·笔记·复盘·书摘 聚合 -->
         <div class="page" id="page-collect">
           <div class="section-title"><div class="icon">🗂️</div>收藏 · 笔记 · 复盘 · 书摘</div>
-          <div class="section-sub">所有收藏与记录汇总在此，可搜索、点击展开查看</div>
+          <div class="section-sub">所有收藏与记录汇总在此，可搜索、点击卡片查看详情（支持图片）</div>
           <div class="card">
             <input class="form-input" id="collectSearchInput" placeholder="🔍 搜索标题 / 内容 / 类型" oninput="collectSearch(this.value)">
             <div class="tabs mt-2" id="collectTypes">
@@ -893,6 +902,19 @@
             <div class="text-sm text-muted mt-2" id="collectCount"></div>
           </div>
           <div id="collectList" class="mt-2"></div>
+        </div>
+
+        <!-- 聚合详情弹窗 -->
+        <div class="modal-mask" id="collectModal" onclick="if(event.target===this)closeCollectDetail()">
+          <div class="modal-box">
+            <div class="modal-head">
+              <span class="collect-tag" id="collectModalTag"></span>
+              <button class="modal-close" onclick="closeCollectDetail()">×</button>
+            </div>
+            <div class="font-bold mb-1" id="collectModalTitle" style="font-size:16px"></div>
+            <div class="text-sm text-muted mb-2" id="collectModalDate"></div>
+            <div class="collect-modal-body" id="collectModalBody"></div>
+          </div>
         </div>
 
         <!-- 每日记账 -->
@@ -939,17 +961,17 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=13"></script>
-  <script src="cet4_core.js?v=13"></script>
-  <script src="cet4_full.js?v=13"></script>
-  <script src="cet4_enhance.js?v=13"></script>
+  <script src="app.js?v=14"></script>
+  <script src="cet4_core.js?v=14"></script>
+  <script src="cet4_full.js?v=14"></script>
+  <script src="cet4_enhance.js?v=14"></script>
 
-  <script src="gaokao_core.js?v=13"></script>
-  <script src="expansion.js?v=13"></script>
-  <script src="jjwxc_analysis.js?v=13"></script>
+  <script src="gaokao_core.js?v=14"></script>
+  <script src="expansion.js?v=14"></script>
+  <script src="jjwxc_analysis.js?v=14"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=13').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=14').then(reg => {
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
