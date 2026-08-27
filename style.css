@@ -169,6 +169,11 @@ body {
   flex-shrink: 0; cursor: pointer;
 }
 .todo-item.done .todo-check { background: var(--blue-main); border-color: var(--blue-main); color: #fff; }
+.todo-check.done { background: var(--blue-main); border-color: var(--blue-main); }
+/* 打卡完成：手绘风格小勾（描边动画） */
+.draw-check { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 26; stroke-dashoffset: 26; animation: drawCheck .35s ease forwards; }
+@keyframes drawCheck { to { stroke-dashoffset: 0; } }
+.todo-check.done .draw-check, .cet-task-check.done .draw-check { stroke: #fff; }
 .todo-text { flex: 1; font-size: 15px; }
 .todo-points { font-size: 11px; color: var(--orange-dark); font-weight: 700; background: var(--orange-light); padding: 3px 8px; border-radius: 10px; }
 .tag {
@@ -469,8 +474,12 @@ details[open] summary { margin-bottom:6px; }
 }
 .word-cell .en { font-size: 13px; font-weight: 700; color: var(--blue-dark); }
 .word-cell .cn { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-.word-cell.learned { background: #E8F5E9; border: 1px solid #A5D6A7; }
-.learned-badge { position: absolute; top: 2px; right: 4px; font-size: 11px; color: #2E7D32; font-weight: 800; }
+.word-cell.learned { background: #F2F7F3; border: 1px solid #DBE9E0; }
+.word-cell.learned .en { color: #9AA7A0; }
+.word-cell.learned .cn { color: #B6C2BC; }
+.learned-badge { position: absolute; top: 2px; right: 4px; font-size: 11px; color: #9CCC9E; font-weight: 800; }
+/* 已掌握：整体更浅、更灰，一眼区分「已背」 */
+.word-cell.learned { filter: saturate(0.6); }
 
 /* ===== 每日一篇：四级选词填空（篇章型）===== */
 .cloze-head { margin-bottom: 12px; }

@@ -407,12 +407,14 @@ function saveTodos() {
   renderTodos();
 }
 
+/* 手绘风格小勾（打卡完成后绘制） */
+const DRAW_CHECK = '<svg class="draw-check" viewBox="0 0 24 24"><path d="M4 13l5 5L20 6"/></svg>';
 function renderTodos() {
   const list = document.getElementById('todoList');
   const filtered = todos.filter(t => filter === 'all' || t.priority === filter);
   list.innerHTML = filtered.length ? filtered.map(t => `
     <div class="todo-item ${t.done ? 'done' : ''}">
-      <div class="todo-check" onclick="toggleTodo(${t.id})">${t.done ? '✓' : ''}</div>
+      <div class="todo-check ${t.done ? 'done' : ''}" onclick="toggleTodo(${t.id})">${t.done ? DRAW_CHECK : ''}</div>
       <div class="todo-text">${t.text}</div>
       <div class="todo-points">+${t.points || 10}</div>
       <div class="tag tag-${t.priority}">${t.priority === 'high' ? '高优先' : t.priority === 'mid' ? '中优先' : '低优先'}</div>
@@ -431,7 +433,7 @@ function renderTodos() {
             <div class="mustdo-time">目标 ${m.minutes} 分钟 · +${m.points} 积分</div>
           </div>
         </div>
-        <div class="todo-check" style="width:28px;height:28px" onclick="toggleMustDo(${idx})">${isMustDone(m.id) ? '✓' : ''}</div>
+        <div class="todo-check ${isMustDone(m.id) ? 'done' : ''}" style="width:28px;height:28px" onclick="toggleMustDo(${idx})">${isMustDone(m.id) ? DRAW_CHECK : ''}</div>
       </div>
     </div>
   `).join('') + `
@@ -940,7 +942,7 @@ function renderCetPrep() {
         ${tasks.map(t => `<div class="cet-task ${done[t.id] ? 'done' : ''}" onclick="toggleCetTask('${t.id}')">
           <span class="cet-task-ico">${t.icon}</span>
           <span class="cet-task-body"><b>${esc(t.name)}</b><span class="text-sm text-muted">${esc(t.detail)}</span></span>
-          <span class="cet-task-check">${done[t.id] ? '✓' : ''}</span>
+          <span class="cet-task-check ${done[t.id] ? 'done' : ''}">${done[t.id] ? DRAW_CHECK : ''}</span>
         </div>`).join('')}
       </div>
     </div>
@@ -2093,7 +2095,7 @@ function renderGuitarCheck() {
         <div class="cet-task ${done[t.id] ? 'done' : ''}" onclick="toggleGuitarTask('${t.id}')">
           <span class="cet-task-ico">🎸</span>
           <span class="cet-task-body"><b>${esc(t.name)}</b><span class="text-sm text-muted">${esc(t.detail)}</span></span>
-          <span class="cet-task-check">${done[t.id] ? '✓' : ''}</span>
+          <span class="cet-task-check ${done[t.id] ? 'done' : ''}">${done[t.id] ? DRAW_CHECK : ''}</span>
         </div>`).join('')}
     </div>`;
 }
