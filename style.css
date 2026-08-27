@@ -119,6 +119,30 @@ body {
   background: linear-gradient(135deg, var(--blue-soft), var(--blue-main)); color: #fff;
   box-shadow: 0 4px 12px rgba(108, 157, 255, 0.25);
 }
+.ctab {
+  padding: 8px 16px; border-radius: 20px; background: var(--surface); border: 1px solid transparent;
+  color: var(--text-muted); font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+.ctab.active {
+  background: linear-gradient(135deg, var(--blue-soft), var(--blue-main)); color: #fff;
+  box-shadow: 0 4px 12px rgba(108, 157, 255, 0.25);
+}
+
+/* 收藏·笔记·复盘·书摘 聚合 */
+.collect-card {
+  background: var(--surface); border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  box-shadow: var(--shadow-soft); cursor: pointer; transition: transform .08s ease;
+}
+.collect-card:active { transform: scale(.99); }
+.collect-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.collect-tag {
+  font-size: 11px; font-weight: 700; color: #fff; padding: 2px 9px; border-radius: 10px; flex-shrink: 0;
+}
+.collect-title { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.35; }
+.collect-body { font-size: 13px; color: var(--text-muted); line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.collect-date { font-size: 11px; color: #aaa; margin-top: 8px; }
+.collect-more { font-size: 12px; color: var(--blue-main); margin-top: 6px; font-weight: 600; }
 
 .todo-item {
   display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--surface);

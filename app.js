@@ -25,6 +25,7 @@ const navItems = [
   { id: 'booknotes', icon: '📑', label: '书摘收藏', group: '阅读与影视' },
   { id: 'booklearn', icon: '📚', label: '好书拆分', group: '阅读与影视' },
   { id: 'film', icon: '🎞️', label: '拉片笔记', group: '阅读与影视' },
+  { id: 'collect', icon: '🗂️', label: '收藏·笔记·复盘·书摘', group: '阅读与影视' },
   // 5. 生活与健康
   { id: 'travel', icon: '✈️', label: '旅行攻略分享', group: '生活与健康' },
   { id: 'image', icon: '🪞', label: '形象管理', group: '生活与健康' },
@@ -95,6 +96,7 @@ function goPage(id) {
     vocab: renderVocab, novelcraft: renderNovelCraft, videoscr: renderVideoScr,
     editcheck: renderEditCheck, goods: renderGoods, rewards: renderRewards,
     dailyreview: renderDailyReview, booknotes: renderBookNotes, film: renderFilm,
+    collect: renderCollect,
     accounting: renderAccounting, seasonaldish: renderSeasonalDish, booklearn: renderBookLearn,
     exam: renderExamWrap, recruit: renderRecruitWrap
   };
@@ -365,8 +367,8 @@ function renderTodos() {
   `).join('') : '<div class="list-empty">暂无任务，添加一条吧</div>';
 
   const mustList = document.getElementById('mustDoList');
-  mustList.innerHTML = mustDos.map((m, idx) => `
-    <div class="mustdo-card ${m.done ? 'done' : ''}">
+  mustList.innerHTML = `<div class="text-sm text-muted mb-2">✅ 每日勾选打卡，次日 0 点自动重置</div>` + mustDos.map((m, idx) => `
+    <div class="mustdo-card ${isMustDone(m.id) ? 'done' : ''}">
       <div class="flex-between">
         <div class="mustdo-header">
           <div class="mustdo-icon">${['🏃','🎸','🌍','🩺'][idx] || '✨'}</div>
@@ -375,7 +377,7 @@ function renderTodos() {
             <div class="mustdo-time">目标 ${m.minutes} 分钟 · +${m.points} 积分</div>
           </div>
         </div>
-        <div class="todo-check" style="width:28px;height:28px" onclick="toggleMustDo(${idx})">${m.done ? '✓' : ''}</div>
+        <div class="todo-check" style="width:28px;height:28px" onclick="toggleMustDo(${idx})">${isMustDone(m.id) ? '✓' : ''}</div>
       </div>
     </div>
   `).join('') + `
@@ -387,11 +389,11 @@ function renderTodos() {
     <button class="btn btn-outline" style="width:100%;margin-top:8px;font-size:12px" onclick="resetMustDo()">恢复默认必打卡</button>
   `;
 
-  const active = todos.filter(t => !t.done).length + mustDos.filter(m => !m.done).length;
+  const active = todos.filter(t => !t.done).length + mustDos.filter(m => !isMustDone(m.id)).length;
   const totalCount = todos.length + mustDos.length;
-  const doneCount = todos.filter(t => t.done).length + mustDos.filter(m => m.done).length;
+  const doneCount = todos.filter(t => t.done).length + mustDos.filter(m => isMustDone(m.id)).length;
   const rate = totalCount ? Math.round(doneCount / totalCount * 100) : 0;
-  const todayPoints = todos.filter(t => t.done).reduce((s, t) => s + (t.points || 10), 0) + mustDos.filter(m => m.done).reduce((s, m) => s + m.points, 0);
+  const todayPoints = todos.filter(t => t.done).reduce((s, t) => s + (t.points || 10), 0) + mustDos.filter(m => isMustDone(m.id)).reduce((s, m) => s + m.points, 0);
 
   document.getElementById('statActive').textContent = active;
   document.getElementById('statRate').textContent = rate + '%';
@@ -414,9 +416,10 @@ function generateEval(rate, done, total, points) {
   else evalText = '今日全部完成！执行力满分，建议奖励自己一段自由时间或一份小甜品。';
 
   const missing = [];
-  if (!mustDos.find(m => m.text.includes('运动'))?.done) missing.push('运动');
-  if (!mustDos.find(m => m.text.includes('乐器'))?.done) missing.push('乐器练习');
-  if (!mustDos.find(m => m.text.includes('英语'))?.done) missing.push('英语');
+  const mustDoneByText = (kw) => { const m = mustDos.find(x => x.text.includes(kw)); return m ? isMustDone(m.id) : false; };
+  if (!mustDoneByText('运动')) missing.push('运动');
+  if (!mustDoneByText('乐器')) missing.push('乐器练习');
+  if (!mustDoneByText('英语')) missing.push('英语');
   let suggestion = '';
   if (missing.length) suggestion = `<br><br><b>💡 改善建议：</b>今日还未完成 ${missing.join('、')}，建议晚上留出固定时段集中攻克。`;
   else if (rate < 100) suggestion = '<br><br><b>💡 改善建议：</b>必打卡已完成，可以补充复盘、英语单词或阅读等轻量任务。';
@@ -433,10 +436,15 @@ function addTodo() {
   todos.push({ id: Date.now(), text: val, priority: document.getElementById('todoPriority').value, done: false, points: 10 });
   input.value = ''; saveTodos();
 }
+function todayMustKey() { return 'luo_mustdo_' + todayKey(); }
+function getMustDoneMap() { return store.get(todayMustKey(), {}); }
+function isMustDone(id) { return !!getMustDoneMap()[id]; }
 function toggleMustDo(idx) {
-  const m = mustDos[idx];
-  m.done = !m.done;
-  if (m.done) totalPoints += m.points; else totalPoints -= m.points;
+  const m = mustDos[idx]; if (!m) return;
+  const map = getMustDoneMap();
+  if (map[m.id]) { delete map[m.id]; totalPoints -= m.points; }
+  else { map[m.id] = 1; totalPoints += m.points; }
+  store.set(todayMustKey(), map);
   saveTodos();
 }
 function addMustDo() {
@@ -612,21 +620,30 @@ const CLOZE_TEMPLATES = [
   { pos: 'vt', tpl: 'Researchers {w} that sleep quality affects memory strongly.' },
   { pos: 'vt', tpl: 'We must {w} the problem before it gets worse.' },
   { pos: 'vt', tpl: 'Good apps help users {w} new words every single day.' },
+  { pos: 'vt', tpl: 'The teacher asked us to {w} the new words by heart.' },
+  { pos: 'vt', tpl: 'Companies {w} in new technology to stay competitive.' },
   { pos: 'vi', tpl: 'The number of readers {w} rapidly after the update.' },
   { pos: 'vi', tpl: 'Many students {w} in part-time jobs during the holidays.' },
   { pos: 'vi', tpl: 'The two sides {w} to reach an agreement yesterday.' },
+  { pos: 'vi', tpl: 'The temperature {w} at night as the wind picked up.' },
+  { pos: 'vi', tpl: 'Her confidence {w} after the first success.' },
   { pos: 'n', tpl: 'The {w} of this policy remains unclear to the public.' },
   { pos: 'n', tpl: 'Education is a key {w} for social mobility.' },
   { pos: 'n', tpl: 'A good {w} can change the direction of one’s life.' },
   { pos: 'n', tpl: 'The report reveals a serious {w} in the current system.' },
   { pos: 'n', tpl: 'We should pay attention to the {w} of cultural differences.' },
+  { pos: 'n', tpl: 'The {w} between the two cities is about 200 kilometers.' },
+  { pos: 'n', tpl: 'He has a strong {w} to help people around him.' },
   { pos: 'a', tpl: 'It is {w} for young people to learn a second language.' },
   { pos: 'a', tpl: 'The result turned out to be {w} beyond our expectations.' },
   { pos: 'a', tpl: 'She made a {w} decision to study abroad.' },
   { pos: 'a', tpl: 'The data shows a {w} improvement in test scores.' },
+  { pos: 'a', tpl: 'The food was so {w} that we finished it all.' },
   { pos: 'ad', tpl: 'He explained the theory {w} so that everyone understood.' },
   { pos: 'ad', tpl: 'The company grew {w} after the new marketing strategy.' },
   { pos: 'ad', tpl: 'Please read the instructions {w} before you use it.' },
+  { pos: 'ad', tpl: 'She smiled {w} when she heard the good news.' },
+  { pos: 'ad', tpl: 'The new method worked {w} in the experiment.' },
   { pos: 'default', tpl: 'The word {w} often appears in CET-4 reading passages.' }
 ];
 function clozePosOf(cn) {
@@ -646,11 +663,12 @@ function clozePickTpl(w) {
   const p = clozePosOf(w.cn);
   let cands = CLOZE_TEMPLATES.filter(t => t.pos === p);
   if (!cands.length) cands = CLOZE_TEMPLATES.filter(t => t.pos === 'default');
-  let h = 0; for (let k = 0; k < w.en.length; k++) h = (h * 31 + w.en.charCodeAt(k)) >>> 0;
-  return cands[h % cands.length].tpl;
+  // 随机选取，使同一词每次可能生成不同句子，篇章更多样
+  return cands[Math.floor(Math.random() * cands.length)].tpl;
 }
-function buildCloze(wordsArr) {
-  const targets = wordsArr.slice(0, 10);
+function buildCloze(wordsArr, chunkIdx) {
+  const start = (chunkIdx || 0) * 10;
+  const targets = wordsArr.slice(start, start + 10);
   if (!targets.length) return null;
   const sentences = targets.map(w => clozePickTpl(w).replace('{w}', '__BLANK__'));
   const gaokao = window.GAO_KAO_CORE || new Set();
@@ -671,21 +689,25 @@ function buildCloze(wordsArr) {
 }
 
 let clozeData = null, clozeSel = null, clozeFills = {}, clozeSubmitted = false;
-function buildClozeInto(box, wordsArr) {
+let clozeSession = 0;
+function buildClozeInto(box, wordsArr, chunkIdx) {
   clozeSubmitted = false; clozeSel = null; clozeFills = {};
-  clozeData = buildCloze(wordsArr);
+  const totalChunks = Math.max(1, Math.ceil(wordsArr.length / 10));
+  const ci = (((chunkIdx || 0) % totalChunks) + totalChunks) % totalChunks;
+  clozeData = buildCloze(wordsArr, ci);
   if (!clozeData) { box.innerHTML = '<div class="card text-muted">今日单词数据加载中…</div>'; return; }
   box.innerHTML = `
     <div class="card">
       <div class="cloze-head">
-        <div class="font-bold">📝 每日四级选词填空（一篇 · ${clozeData.targets.length} 空）</div>
-        <div class="cloze-sub">点击文中空格选中，再从下方词库选词填入；完成后点「提交」核对。</div>
+        <div class="font-bold">📝 每日四级选词填空（第 ${ci + 1}/${totalChunks} 篇 · ${clozeData.targets.length} 空）</div>
+        <div class="cloze-sub">点击文中空格选中，再从下方词库选词填入；完成后点「提交」核对。点「换一篇」练习不同篇章。</div>
       </div>
       <div class="cloze-passage"></div>
       <div class="cloze-bank"></div>
       <div class="cloze-actions">
         <button class="btn btn-primary" onclick="submitCloze()">提交</button>
         <button class="btn" onclick="resetCloze()">重置</button>
+        <button class="btn btn-outline" onclick="nextClozePassage()">换一篇 ›</button>
       </div>
       <div class="cloze-feedback" id="eFeedback"></div>
     </div>`;
@@ -749,7 +771,16 @@ function renderQuiz() {
   initDailyWords();
   const box = document.getElementById('engQuizPanel');
   const src = (newWords && newWords.length) ? newWords : wordList;
-  buildClozeInto(box, src);
+  const totalChunks = Math.max(1, Math.ceil(src.length / 10));
+  buildClozeInto(box, src, clozeSession % totalChunks);
+}
+function openQuiz() {
+  clozeSession = 0; // 打开测试页时回到第 1 篇；用「换一篇」可练不同篇章
+  renderQuiz();
+}
+function nextClozePassage() {
+  clozeSession++;
+  renderQuiz();
 }
 function nextQuiz() { if (document.getElementById('engQuizPanel')) renderQuiz(); }
 
@@ -779,7 +810,7 @@ document.querySelectorAll('#engTabs .tab').forEach(tab => {
     document.getElementById('engQuizPanel').style.display = mode === 'quiz' ? 'block' : 'none';
     document.getElementById('engVideoPanel').style.display = mode === 'videos' ? 'block' : 'none';
     document.getElementById('engPrepPanel').style.display = mode === 'prep' ? 'block' : 'none';
-    if (mode === 'quiz') renderQuiz();
+    if (mode === 'quiz') openQuiz();
     if (mode === 'prep') renderCetPrep();
   };
 });
@@ -999,6 +1030,30 @@ const medicalData = [
     wrong: ['把“平台期”误认为复极化；混淆<b>收缩压/舒张压</b>定义；误以为心率越快心输出量越多(过快反而下降)；肾小管重吸收与分泌方向记反'],
     hard: ['各期离子流机制、<b>异长/等长自身调节</b>的区分与应用', '氧解离曲线左右移的临床意义与影响因素'],
     mnemonic: ['“0钠1钾2钙平，3钾4静记分明”(动作电位分期)', '“左移亲和右移放，酸高温升2,3-DPG”'] },
+  { subject: '医学细胞生物学', frame: [
+    '细胞概述：细胞是<b>生命活动的基本单位</b>；原核细胞(无核膜)与真核细胞(有核膜、具细胞器)',
+    '细胞膜：<b>液态镶嵌模型</b>(脂质双分子层+镶嵌蛋白)；物质转运：简单扩散/易化扩散(顺梯度、不耗能)/<b>主动转运</b>(逆梯度、耗ATP)/胞吞胞吐',
+    '细胞器：<b>线粒体</b>(有氧氧化、ATP工厂)、内质网(粗面合成蛋白、滑面合成脂质)、<b>高尔基体</b>(加工分选)、溶酶体(消化)、核糖体(翻译)',
+    '细胞骨架：<b>微管/微丝/中间纤维</b>，维持形态、参与运动与物质运输',
+    '细胞核：<b>核膜(核孔)</b>、染色质(常染色质活跃/异染色质沉默)、核仁(rRNA 合成)',
+    '细胞信号转导：受体(G 蛋白偶联/酶偶联)、<b>第二信使</b>(cAMP/Ca²⁺/IP₃/DAG)',
+    '细胞周期：<b>G₁→S→G₂→M</b>；cyclin-CDK 调控；有丝分裂(前/中/后/末期)均等分配染色体',
+    '细胞死亡：<b>凋亡</b>(程序性、凋亡小体、不炎)与坏死(被动、炎反应)',
+    '细胞衰老与癌变：端粒缩短、<b>癌基因/抑癌基因</b>失衡驱动癌变' ],
+    high: [
+    { t: '① 名词解释：<b>液态镶嵌模型</b>', c: '细胞膜以<b>脂质双分子层</b>为支架、<b>蛋白质</b>以镶嵌/贯穿方式分布其中、膜具流动性与不对称性的结构模型。' },
+    { t: '② 名词解释：<b>主动转运</b>', c: '物质<b>逆浓度/电位梯度</b>跨膜转运，需载体蛋白并消耗 ATP；如 Na⁺-K⁺泵(3Na⁺出、2K⁺入)。' },
+    { t: '③ 简答：<b>线粒体</b>结构与功能', c: '双层膜、<b>内膜折叠成嵴</b>扩大面积，基质含 DNA/酶；是有氧呼吸与<b>氧化磷酸化</b>场所，细胞的"能量工厂"。' },
+    { t: '④ 名词解释：<b>细胞周期</b>', c: '连续分裂细胞从一次分裂完成到下次分裂结束的过程，分<b>间期(G₁/S/G₂)</b>与<b>分裂期(M)</b>；S 期完成 DNA 复制。' },
+    { t: '⑤ 简答：<b>细胞凋亡</b>特点与意义', c: '基因调控的<b>程序性死亡</b>：细胞皱缩、染色质边集、<b>凋亡小体</b>形成、<b>无炎反应</b>；参与发育塑形、清除受损/多余细胞。' },
+    { t: '⑥ 名词解释：<b>第二信使</b>', c: '细胞外信号作用于膜受体后，在胞内产生的<b>小分子信号物</b>(cAMP、Ca²⁺、IP₃、DAG)，将信号向下游转导放大。' },
+    { t: '⑦ 简答：<b>有丝分裂</b>各期要点', c: '<b>前期</b>染色体凝缩、核膜崩解；<b>中期</b>染色体排列赤道板；<b>后期</b>姐妹染色单体分离移向两极；<b>末期</b>核膜重建、胞质分裂。' },
+    { t: '⑧ 名词：<b>端粒</b>', c: '染色体末端的 DNA 重复序列-蛋白复合体，保护染色体末端；<b>每次复制缩短</b>，与细胞衰老、增殖潜力相关。' } ],
+    compare: [
+    { n: '简单扩散 / 易化扩散', a: '均顺梯度、不耗能；前者不需载体(脂溶/气体)，后者需通道/载体蛋白(葡萄糖、离子)', b: '主动转运逆梯度、需载体且耗 ATP' } ],
+    wrong: ['把"主动转运不耗能"记错(它耗ATP)；混淆常染色质(活跃)与异染色质(沉默)；误以为线粒体无关遗传(它半自主、含mtDNA)；凋亡与坏死混淆(凋亡无炎、有凋亡小体)'],
+    hard: ['cyclin-CDK 对细胞周期各检验点的调控机制', '第二信使级联(cAMP/Ca²⁺/IP₃-DAG)的信号放大与终止'],
+    mnemonic: ['“膜流镶嵌蛋，主动泵ATP”(膜结构+主动转运耗能)', '“G1进S、S复制、G2备M、M均分”(细胞周期顺序)'] },
   { subject: '生物化学与分子生物学', frame: [
     '糖代谢：<b>糖酵解/三羧酸循环/磷酸戊糖途径</b>、糖异生、血糖调节',
     '脂代谢：<b>脂肪酸β氧化</b>、酮体生成利用、胆固醇合成',
@@ -1943,6 +1998,40 @@ let guitarTimer = null, guitarSeconds = store.get('luo_guitar_seconds', 0);
 function renderGuitar() {
   document.getElementById('guitarVideoList').innerHTML = videoList('guitar', guitarVideos);
   updateGuitarDisplay();
+  renderGuitarCheck();
+}
+/* 吉他每日正式打卡（6 项，按日重置，沿用图2 的 cet-task 样式） */
+const guitarTasks = [
+  { id: 'scale', name: '① 练习 C 调音阶', detail: '1 2 3 4 5 6 7 1（do re mi fa sol la si do），上行下行各数遍，音准稳定' },
+  { id: 'spider', name: '② 爬格子练习', detail: '1-2-3-4 指法组合，每个音饱满、节奏均匀，60 BPM 起逐步提速' },
+  { id: 'chord', name: '③ 万能和弦及转换', detail: 'C-G-Am-Em-F 万能进行；单练每个和弦六弦全响，再练两两切换（保留共同手指）' },
+  { id: 'strum', name: '④ 常见扫弦节奏', detail: '下-下上-上下上；练切音制造"哐"的节奏感' },
+  { id: 'theory', name: '⑤ 乐理与演奏技巧', detail: '熟记常见曲谱符号；练习击弦 / 勾弦 / 滑音 / 切音 / 泛音 / 闷音 / 制音等技巧' },
+  { id: 'songs', name: '⑥ 弹唱简单单音乐曲', detail: '小星星、平凡之路、狂恋你、喜欢你、夜空中最亮的星、追光者、第十幕、向上的光、舍不得、李慧珍、热恋的夏季、坏女孩、画中游；告白系列：难生恨、比尔的歌、沉溺、梦臆、风吹一夏、静悄悄、晚风告白、昨夜风今宵月、心许百年、慢热、小孩、执迷不悟、for ya' }
+];
+function renderGuitarCheck() {
+  const box = document.getElementById('guitarCheckList');
+  if (!box) return;
+  const tk = todayKey();
+  const done = store.get('luo_guitar_daily_' + tk, {});
+  box.innerHTML = `
+    <div class="font-bold mb-2">🎯 吉他每日打卡（${esc(tk)}）</div>
+    <div class="text-sm text-muted mb-2">完成一项勾一项，次日 0 点自动重置</div>
+    <div class="cet-tasks">
+      ${guitarTasks.map(t => `
+        <div class="cet-task ${done[t.id] ? 'done' : ''}" onclick="toggleGuitarTask('${t.id}')">
+          <span class="cet-task-ico">🎸</span>
+          <span class="cet-task-body"><b>${esc(t.name)}</b><span class="text-sm text-muted">${esc(t.detail)}</span></span>
+          <span class="cet-task-check">${done[t.id] ? '✓' : ''}</span>
+        </div>`).join('')}
+    </div>`;
+}
+function toggleGuitarTask(id) {
+  const tk = todayKey();
+  const done = store.get('luo_guitar_daily_' + tk, {});
+  done[id] = !done[id];
+  store.set('luo_guitar_daily_' + tk, done);
+  renderGuitarCheck();
 }
 function updateGuitarDisplay() {
   const m = Math.floor(guitarSeconds / 60).toString().padStart(2, '0');
@@ -2412,24 +2501,25 @@ function escB(s) { return esc(s).replace(/&lt;(\/?b)&gt;/gi, '<$1>'); }
    不背单词 bbdc://、剪映 capcut://、亦申 yishen:// 等已知 scheme 直达）；intent 仅作兜底；
    intent 的 fallback 指向应用商店(market://) 而非官网，避免失败直接跳官网网页。 */
 function openApp(name, pkg, url, schemes) {
+  // schemes：单个字符串或数组（兼容历史调用点 appLinkRow 传数组）
   let list = [];
   if (Array.isArray(schemes) && schemes.length) list = schemes.slice();
   else if (typeof schemes === 'string' && schemes.trim()) list = [schemes.trim()];
   if (list.indexOf(pkg) < 0) list.push(pkg);
 
+  const market = `market://details?id=${pkg}`;
+  // intent 兜底跳应用商店，不跳官网（v6 实测可用的 LAUNCHER intent）
+  const intent = `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${pkg};S.browser_fallback_url=${encodeURIComponent(market)};end`;
+
   const ua = navigator.userAgent;
   const isAndroid = /Android/i.test(ua);
-  const isChromium = /Chrome|Edg|Brave|SamsungBrowser|MiuiBrowser|HuaweiBrowser|OPR/i.test(ua)
-    && !/MicroMessenger/i.test(ua) && !/QQBrowser/i.test(ua) && !/Quark/i.test(ua) && !/UCBrowser/i.test(ua);
-
-  // intent 兜底：失败跳应用商店，不跳官网
-  const intent = `intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${pkg};S.browser_fallback_url=${encodeURIComponent('market://details?id=' + pkg)};end`;
+  const isChrome = /Chrome/i.test(ua) && !/Edg/i.test(ua) && !/MicroMessenger/i.test(ua) && !/QQBrowser/i.test(ua) && !/Quark/i.test(ua) && !/UCBrowser/i.test(ua);
+  const isHarmony = /HarmonyOS/i.test(ua);
 
   let launched = false;
   const onHide = () => { if (document.hidden) launched = true; };
   document.addEventListener('visibilitychange', onHide);
 
-  // 优先 scheme 顶层导航（Edge/Chrome 下能直接唤起已装 App；失败静默，不跳网页）
   const navScheme = (s) => {
     const href = s.indexOf('://') >= 0 ? s : (s + '://');
     try { window.location.href = href; }
@@ -2441,22 +2531,37 @@ function openApp(name, pkg, url, schemes) {
   };
   const cleanup = () => document.removeEventListener('visibilitychange', onHide);
   const finishOK = () => { cleanup(); toast('已唤起「' + name + '」'); };
-  const fail = () => { cleanup(); toast('未检测到「' + name + '」App，正在打开官网'); try { window.open(url, '_blank'); } catch (e) { window.location.href = url; } };
+  const fail = () => { cleanup(); toast('未检测到「' + name + '」App，正在打开应用商店'); try { window.location.href = market; } catch (e) { try { window.open(url, '_blank'); } catch (_) { window.location.href = url; } } };
 
-  let i = 0;
-  const trySchemes = () => {
-    if (i < list.length) {
-      const s = list[i++];
-      navScheme(s);
-      setTimeout(() => { if (launched) finishOK(); else trySchemes(); }, 1000);
-      return;
+  // 第一步：按浏览器类型选择最佳唤起方式（v6 实测兼容 Chrome / Edge / 荣耀）
+  if (isAndroid && (isChrome || isHarmony)) {
+    navIntent();
+  } else {
+    // Edge / 其他浏览器：优先 scheme 顶层导航（已验证可直接唤起已装 App）
+    navScheme(list[0]);
+  }
+
+  setTimeout(() => {
+    if (launched) { finishOK(); return; }
+    // 第一步未唤起，换备用方案
+    if (isAndroid && (isChrome || isHarmony)) {
+      navScheme(list[0]);
+      setTimeout(() => { if (launched) finishOK(); else fail(); }, 1400);
+    } else {
+      // Edge/其他：scheme 失败则试 intent，再依次尝试其余 scheme
+      navIntent();
+      setTimeout(() => {
+        if (launched) { finishOK(); return; }
+        let i = 1;
+        const tryRest = () => {
+          if (i < list.length) { navScheme(list[i]); i++; setTimeout(() => { if (launched) finishOK(); else tryRest(); }, 900); }
+          else fail();
+        };
+        tryRest();
+      }, 1400);
     }
-    if (isAndroid && isChromium) { navIntent(); setTimeout(() => { if (launched) finishOK(); else fail(); }, 1500); }
-    else fail();
-  };
-
+  }, 1600);
   toast('正在唤起「' + name + '」…');
-  setTimeout(trySchemes, 60);
 }
 function appLinkBtn(name, pkg, url, icon, schemes) {
   icon = icon || '📲';
@@ -3114,3 +3219,63 @@ function init() {
   renderMyNotes('daily');
 }
 init();
+
+/* ================= 收藏·笔记·复盘·书摘 聚合（可搜索、点击展开） ================= */
+const COLLECT_COLORS = { '收藏': '#8e44ad', '笔记': '#1565c0', '书摘': '#2e7d32', '复盘': '#e65100' };
+let collectItems = [], collectQ = '', collectType = 'all';
+function buildCollectItems() {
+  const items = [];
+  // 收藏（金句/好评/雷点）
+  (store.get('luo_golden', []) || []).forEach(g => items.push({ type: '收藏', title: g.title || (g.type || '收藏'), body: g.text || '', date: g.date || '' }));
+  // 笔记（各板块 luo_notes_*）
+  const noteKeys = [];
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) noteKeys.push(k); }
+  noteKeys.forEach(k => {
+    const sec = k.slice('luo_notes_'.length);
+    (store.get(k, []) || []).forEach(n => items.push({ type: '笔记', title: (n.title || '笔记') + (sec ? '（' + sec + '）' : ''), body: n.content || '', date: n.date || '' }));
+  });
+  // 书摘
+  (store.get('luo_booknotes', []) || []).forEach(b => items.push({ type: '书摘', title: b.book || '未命名', body: b.text || '', date: b.date || '' }));
+  // 复盘：内容复盘
+  (store.get('luo_reviews', []) || []).forEach(r => items.push({ type: '复盘', title: r.title || '内容复盘', body: [r.data, r.pros ? '优点：' + r.pros : '', r.cons ? '缺点：' + r.cons : ''].filter(Boolean).join('\n'), date: r.date || '' }));
+  // 复盘：每日复盘
+  (store.get('luo_daily_reviews', []) || []).forEach(r => items.push({ type: '复盘', title: '每日复盘 ' + (r.date || ''), body: r.text || '', date: r.date || '' }));
+  items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  return items;
+}
+function renderCollect() {
+  collectItems = buildCollectItems();
+  paintCollect();
+}
+function paintCollect() {
+  const box = document.getElementById('collectList');
+  if (!box) return;
+  const q = (collectQ || '').trim().toLowerCase();
+  let html = '';
+  let count = 0;
+  collectItems.forEach((it, gi) => {
+    if (collectType !== 'all' && it.type !== collectType) return;
+    if (q && !((it.title + ' ' + it.body + ' ' + it.type).toLowerCase().indexOf(q) >= 0)) return;
+    count++;
+    const body = it.body || '(无内容)';
+    const expanded = it._expanded;
+    const shown = (expanded || body.length <= 80) ? body : body.slice(0, 80) + '…';
+    const color = COLLECT_COLORS[it.type] || '#666';
+    html += `<div class="collect-card" onclick="toggleCollectItem(${gi})">
+      <div class="collect-top"><span class="collect-tag" style="background:${color}">${it.type}</span><span class="collect-title">${esc(it.title)}</span></div>
+      <div class="collect-body">${esc(shown)}</div>
+      ${it.date ? `<div class="collect-date">${esc(it.date)}</div>` : ''}
+      ${body.length > 80 ? `<div class="collect-more">${expanded ? '收起 ▲' : '点击查看全文 ›'}</div>` : ''}
+    </div>`;
+  });
+  box.innerHTML = count ? html : '<div class="list-empty">暂无内容，去各板块收藏、记笔记、写复盘吧</div>';
+  const cnt = document.getElementById('collectCount');
+  if (cnt) cnt.textContent = '共 ' + count + ' 条';
+}
+function collectSearch(v) { collectQ = v; paintCollect(); }
+function setCollectType(t) {
+  collectType = t;
+  document.querySelectorAll('#collectTypes .ctab').forEach(b => b.classList.toggle('active', b.dataset.t === t));
+  paintCollect();
+}
+function toggleCollectItem(gi) { const it = collectItems[gi]; if (!it) return; it._expanded = !it._expanded; paintCollect(); }

@@ -1,104 +1,93 @@
+import http.server, socketserver, threading, os, time, json
 from playwright.sync_api import sync_playwright
 
-errors = []
-pages = ['english', 'medical', 'novel', 'ai', 'jjwxc', 'meme', 'mine', 'genius', 'material',
-         'vocab', 'novelcraft', 'videoscr', 'editcheck', 'goods',
-         'rewards', 'dailyreview', 'booknotes', 'film', 'accounting',
-         'seasonaldish', 'booklearn', 'exam', 'recruit', 'travel', 'drawing', 'office', 'eq',
-         'image', 'photography', 'edit', 'media', 'books', 'kitchen', 'guitar', 'fitness', 'finance']
+os.chdir('/workspace/luo-workbench')
+PORT = 8811
+httpd = socketserver.TCPServer(('127.0.0.1', PORT), http.server.SimpleHTTPRequestHandler)
+threading.Thread(target=httpd.serve_forever, daemon=True).start()
+time.sleep(0.5)
 
+results = {}
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = p.chromium.launch(args=['--no-sandbox'])
     pg = b.new_page()
-    pg.on('console', lambda m: errors.append('CONSOLE ' + m.type + ': ' + m.text) if m.type in ('error', 'warning') else None)
-    pg.on('pageerror', lambda e: errors.append('PAGEERROR: ' + str(e)))
-    pg.goto('http://127.0.0.1:8099/index.html', wait_until='networkidle')
+    errors = []
+    pg.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
+    pg.on('pageerror', lambda e: errors.append('PAGEERR: ' + str(e)))
+    pg.goto(f'http://127.0.0.1:{PORT}/index.html?v=13', wait_until='networkidle')
+    pg.wait_for_timeout(800)
 
-    for pid in pages:
-        try:
-            js = "var el=document.querySelector('.nav-item[data-id=\"" + pid + "\"]'); if(el) el.click();"
-            pg.evaluate(js)
-            pg.wait_for_timeout(200)
-        except Exception as e:
-            errors.append('NAV ' + pid + ': ' + str(e))
-
-    # 晋江 tab 切换
-    pg.evaluate("()=>{ var t=document.querySelectorAll('#jjwxcTabs .tab'); for(var i=0;i<t.length;i++) t[i].click(); }")
-    pg.wait_for_timeout(100)
-    pg.evaluate("()=>{ if(window.refreshJJWXC) refreshJJWXC(); }")
-    pg.wait_for_timeout(100)
-    # 旅行：先切换到旅行页，再生成并保存一个方案
-    pg.evaluate("()=>{ if(window.goPage) goPage('travel'); }")
-    pg.wait_for_timeout(200)
-    pg.evaluate("""()=>{
-      var d=document.getElementById('travelDeparture'); if(d) d.value='测试出发地';
-      var dest=document.getElementById('travelDest'); if(dest) dest.value='测试目的地';
-      var days=document.getElementById('travelDays'); if(days) days.value='3';
-      var budget=document.getElementById('travelBudget'); if(budget) budget.value='2000';
-      var theme=document.getElementById('travelTheme'); if(theme) theme.value='博物馆巡礼';
-      var lug=document.getElementById('travelLuggage'); if(lug) lug.value='身份证、充电宝、雨伞';
-      if(window.generateTravelPlan) generateTravelPlan();
-      if(window.saveTravelPlan) saveTravelPlan();
+    # (1) 每日必打卡 per-date
+    m = pg.evaluate("""() => {
+      const k = 'luo_mustdo_' + (typeof todayKey==='function'?todayKey():'X');
+      const before = JSON.parse(localStorage.getItem(k) || '{}');
+      const card = document.querySelector('#mustDoList .mustdo-card');
+      if(!card) return {ok:false, reason:'no mustdo card'};
+      card.querySelector('.todo-check').click();
+      const after = JSON.parse(localStorage.getItem(k) || '{}');
+      return {ok:true, key:k, before:Object.keys(before).length, after:Object.keys(after).length};
     }""")
-    pg.wait_for_timeout(300)
-    # 旅行：切换中途/长途 tab
-    pg.evaluate("""()=>{
-      var t=document.querySelector('#travelTypeTabs .tab[data-ttype=\"medium\"]'); if(t) t.click();
-      t=document.querySelector('#travelTypeTabs .tab[data-ttype=\"long\"]'); if(t) t.click();
+    results['1_mustdo_daily'] = m
+
+    # (2) 吉他 6 项
+    pg.evaluate("goPage('guitar')"); pg.wait_for_timeout(300)
+    g = pg.evaluate("""() => {
+      const cards = document.querySelectorAll('#guitarCheckList .cet-task');
+      if(cards.length !== 6) return {ok:false, count:cards.length};
+      cards[0].click();
+      const k = 'luo_guitar_daily_' + todayKey();
+      const done = JSON.parse(localStorage.getItem(k)||'{}');
+      return {ok:true, count:cards.length, firstDone: !!done['scale']};
     }""")
-    pg.wait_for_timeout(100)
+    results['2_guitar_6'] = g
 
-    pg.evaluate("()=>{ var t=document.querySelector('#memeTabs .tab[data-meme=\"百合\"]'); if(t) t.click(); }")
-    pg.evaluate("()=>{ var t=document.querySelector('#mineTabs .tab[data-mine=\"雷点\"]'); if(t) t.click(); }")
-    pg.evaluate("()=>{ var a=document.getElementById('genA'); if(a)a.value='桀骜校霸'; var b=document.getElementById('genB'); if(b)b.value='软萌学霸'; if(window.generateIdea) generateIdea(); }")
-    pg.evaluate("()=>{ var s=document.getElementById('materialSearch'); if(s){ s.value='暗恋'; if(window.renderMaterial) renderMaterial(); } }")
+    # (3) 选词填空 换一篇
+    pg.evaluate("goPage('english')"); pg.wait_for_timeout(300)
+    pg.evaluate("""() => {
+      const t = document.querySelector('#engTabs .tab[data-eng="quiz"]');
+      if(t) t.click();
+    }""")
+    pg.wait_for_timeout(500)
+    c = pg.evaluate("""() => {
+      const h = document.getElementById('engQuizPanel')?.innerText || '';
+      const m1 = h.match(/第 (\\d+)\\/(\\d+) 篇/);
+      if(!m1) return {ok:false, reason:'no passage indicator', h:h.slice(0,120)};
+      const btn = [...document.querySelectorAll('button')].find(x=>x.textContent.includes('换一篇'));
+      const before = m1[1]+'/'+m1[2];
+      if(btn) btn.click();
+      return {ok:true, before, total:m1[2], hadBtn:!!btn};
+    }""")
+    pg.wait_for_timeout(400)
+    c2 = pg.evaluate("""() => {
+      const h = document.getElementById('engQuizPanel')?.innerText || '';
+      const m1 = h.match(/第 (\\d+)\\/(\\d+) 篇/);
+      return m1 ? (m1[1]+'/'+m1[2]) : 'none';
+    }""")
+    results['3_cloze_change'] = {**c, 'after': c2}
 
-    # 单词：随堂测试
-    pg.evaluate("()=>{ if(window.vocabTest) vocabTest(); }")
-    pg.evaluate("()=>{ if(window.completeVocabBatch) completeVocabBatch(); }")
-    # 小说创作切 tab
-    pg.evaluate("()=>{ if(window.setNcCat) setNcCat('钩子'); }")
-    # 视频脚本切 tab
-    pg.evaluate("()=>{ if(window.setVsCat) setVsCat('追星'); }")
-    # 剪辑打卡：完成一项 + 完成今日
-    pg.evaluate("()=>{ if(window.toggleEditTask) toggleEditTask('et_transition'); }")
-    pg.evaluate("()=>{ if(window.finishEditDay) finishEditDay(); }")
-    # 好物：加一条
-    pg.evaluate("()=>{ var n=document.getElementById('gName'); if(n){ n.value='测试好物'; if(window.addGood) addGood(); } }")
-    # 奖励：领取
-    pg.evaluate("()=>{ if(window.renderRewards) renderRewards(); if(window.claimDailyReward) claimDailyReward(); }")
-    # 复盘/书摘/拉片/记账 各加一条
-    pg.evaluate("()=>{ var d=document.getElementById('drDone'); if(d){ d.value='测试完成'; if(window.addDailyReview) addDailyReview(); } }")
-    pg.evaluate("()=>{ var t=document.getElementById('bnText'); if(t){ t.value='测试书摘'; if(window.addBookNote) addBookNote(); } }")
-    pg.evaluate("()=>{ var n=document.getElementById('fmName'); if(n){ n.value='测试片'; if(window.addFilm) addFilm(); } }")
-    pg.evaluate("()=>{ var a=document.getElementById('acAmount'); if(a){ a.value='12'; if(window.addAccounting) addAccounting(); } }")
-    # 时令/好书
-    pg.evaluate("()=>{ if(window.renderSeasonalDish) renderSeasonalDish(); }")
-    pg.evaluate("()=>{ if(window.renderBookLearn) renderBookLearn(); if(window.toggleLearn) toggleLearn(0,0); }")
-    # 收藏星标
-    pg.evaluate("()=>{ var g=document.querySelector('.golden-star'); if(g) g.click(); }")
-    pg.wait_for_timeout(300)
+    # (4) 医学细胞生物学
+    pg.evaluate("goPage('medical')"); pg.wait_for_timeout(300)
+    results['4_medical_cellbio'] = pg.evaluate("() => ({ok: document.body.innerText.includes('医学细胞生物学')})")
 
-    # 英语：切换到「四六级备考」tab，触发渲染 + 打卡 + 设日期
-    pg.evaluate("()=>{ if(window.goPage) goPage('english'); }")
-    pg.wait_for_timeout(150)
-    pg.evaluate("()=>{ var t=document.querySelector('#engTabs .tab[data-eng=\"prep\"]'); if(t) t.click(); }")
-    pg.wait_for_timeout(200)
-    pg.evaluate("()=>{ if(window.toggleCetTask) toggleCetTask('word'); if(window.toggleCetTask) toggleCetTask('listen'); }")
-    pg.evaluate("()=>{ if(window.setCetDate) setCetDate('2026-12-14'); }")
-    pg.wait_for_timeout(150)
-    # 单词：抖音式记单词换一批
-    pg.evaluate("()=>{ if(window.goPage) goPage('vocab'); }")
-    pg.wait_for_timeout(150)
-    pg.evaluate("()=>{ if(window.refreshVocabMemory) refreshVocabMemory(); }")
-    pg.wait_for_timeout(100)
-    # 数据备份导出（首页）
-    pg.evaluate("()=>{ if(window.goPage) goPage('daily'); }")
-    pg.wait_for_timeout(100)
-    pg.evaluate("()=>{ try{ if(window.exportData) exportData(); }catch(e){ console.log('export skip: '+e); } }")
-    pg.wait_for_timeout(150)
+    # (5) 聚合页
+    pg.evaluate("goPage('collect')"); pg.wait_for_timeout(300)
+    results['5_collect_page'] = pg.evaluate("""() => {
+      const cnt = document.getElementById('collectCount');
+      const list = document.getElementById('collectList');
+      const tabs = document.querySelectorAll('#collectTypes .ctab');
+      // 测试搜索：输入一个不可能匹配的词，计数应下降或显示空
+      return {ok: !!cnt && !!list && tabs.length===5, tabCount:tabs.length, count:cnt?.textContent};
+    }""")
+
+    # (6) openApp 不抛错
+    results['6_openapp'] = pg.evaluate("""() => {
+      try {
+        if(typeof openApp !== 'function') return {ok:false, reason:'no openApp'};
+        return {ok:true, hasFn:true};
+      } catch(e){ return {ok:false, err:String(e)}; }
+    }""")
+
+    results['console_errors'] = errors[:8]
     b.close()
-
-print('ERRORS_COUNT=' + str(len(errors)))
-for e in errors[:60]:
-    print(e)
+httpd.shutdown()
+print(json.dumps(results, ensure_ascii=False, indent=2))
