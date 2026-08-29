@@ -100,6 +100,7 @@
                   <button class="btn btn-small btn-outline" onclick="restoreAutoBackup()">恢复自动备份</button>
                 </div>
                 <div class="text-sm text-muted mt-1" id="autoBackupLast">尚未自动备份</div>
+                <div class="text-sm mt-1" style="color:#1565c0">💾 数据已使用 IndexedDB 持久化，容量远超普通本地存储（约 50~250MB），笔记/复盘/书摘/拉片/旅行/好物/电子衣橱/电子菜谱可放心积累。</div>
               </div>
               <div id="backupMsg" class="text-sm mt-2"></div>
             </div>
@@ -900,6 +901,10 @@
               <div class="ctab" data-t="复盘" onclick="setCollectType('复盘')">复盘</div>
               <div class="ctab" data-t="书摘" onclick="setCollectType('书摘')">书摘</div>
             </div>
+            <div class="flex-between mt-2">
+              <button id="collectGroupBtn" class="btn btn-outline btn-sm" onclick="toggleCollectGroup()">🗂 按版块分组</button>
+              <span class="text-sm text-muted">收藏/笔记按版块归类查看</span>
+            </div>
             <div class="text-sm text-muted mt-2" id="collectCount"></div>
           </div>
           <div id="collectList" class="mt-2"></div>
@@ -963,17 +968,17 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=17"></script>
-  <script src="cet4_core.js?v=17"></script>
-  <script src="cet4_full.js?v=17"></script>
-  <script src="cet4_enhance.js?v=17"></script>
+  <script src="app.js?v=18"></script>
+  <script src="cet4_core.js?v=18"></script>
+  <script src="cet4_full.js?v=18"></script>
+  <script src="cet4_enhance.js?v=18"></script>
 
-  <script src="gaokao_core.js?v=17"></script>
-  <script src="expansion.js?v=17"></script>
-  <script src="jjwxc_analysis.js?v=17"></script>
+  <script src="gaokao_core.js?v=18"></script>
+  <script src="expansion.js?v=18"></script>
+  <script src="jjwxc_analysis.js?v=18"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=17').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=18').then(reg => {
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;

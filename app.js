@@ -235,18 +235,66 @@ function toggleSidebar(force) {
   ov.classList.toggle('open', open);
 }
 
-/* ================= Storage ================= */
-const store = {
-  get: (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
-  set: (k, v) => {
+/* ================= Storage（IndexedDB 持久化，突破 localStorage 5MB 上限） ================= */
+const _DB_NAME = 'luoWorkbench', _DB_STORE = 'kv', _DB_VER = 1;
+let _idb = null, _mem = Object.create(null), _hydrated = false, _hydrating = false;
+function _openDB() {
+  return new Promise((resolve, reject) => {
+    if (typeof indexedDB === 'undefined') { reject(new Error('no-idb')); return; }
+    const req = indexedDB.open(_DB_NAME, _DB_VER);
+    req.onupgradeneeded = e => { const db = e.target.result; if (!db.objectStoreNames.contains(_DB_STORE)) db.createObjectStore(_DB_STORE); };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+function _idbPut(k, v) { if (!_idb) return; try { const tx = _idb.transaction(_DB_STORE, 'readwrite'); tx.objectStore(_DB_STORE).put(v, k); } catch (e) {} }
+function _idbGetAll() {
+  return new Promise(resolve => {
+    if (!_idb) { resolve({}); return; }
+    const out = {};
     try {
-      localStorage.setItem(k, JSON.stringify(v));
-      return true;
-    } catch (e) {
-      console.error('store.set 失败（可能本地存储已满）:', k, e);
-      if (typeof toast === 'function') toast('⚠️ 本地存储空间不足，本次内容未能保存，请删除一些带照片的菜谱/笔记后再试');
-      return false;
+      const tx = _idb.transaction(_DB_STORE, 'readonly');
+      const cur = tx.objectStore(_DB_STORE).openCursor();
+      cur.onsuccess = e => { const c = e.target.result; if (c) { out[c.key] = c.value; c.continue(); } else resolve(out); };
+      cur.onerror = () => resolve(out);
+    } catch (e) { resolve(out); }
+  });
+}
+async function _hydrate() {
+  if (_hydrated || _hydrating) return;
+  _hydrating = true;
+  try {
+    _idb = await _openDB();
+    const fromIdb = await _idbGetAll();
+    // IDB 为空时，从旧 localStorage 迁移（兼容历史数据）
+    let migrated = 0;
+    if (Object.keys(fromIdb).length === 0) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.indexOf('luo_') === 0) { fromIdb[k] = localStorage.getItem(k); migrated++; }
+      }
     }
+    for (const k in fromIdb) _mem[k] = fromIdb[k];
+    if (migrated) { for (const k in _mem) _idbPut(k, _mem[k]); if (typeof toast === 'function') toast('📦 已将数据迁移到更大容量的存储空间'); }
+  } catch (e) {
+    // 无 IDB 时回退 localStorage
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_') === 0) _mem[k] = localStorage.getItem(k); }
+  }
+  _hydrated = true; _hydrating = false;
+}
+function _allLuoKeys() { const ks = []; for (const k in _mem) if (k.indexOf('luo_') === 0) ks.push(k); return ks; }
+const store = {
+  get(k, def) {
+    if (k in _mem) { try { return JSON.parse(_mem[k]); } catch { return _mem[k]; } }
+    try { const raw = localStorage.getItem(k); if (raw != null) return JSON.parse(raw); } catch {}
+    return def;
+  },
+  set(k, v) {
+    const raw = (typeof v === 'string') ? v : JSON.stringify(v);
+    _mem[k] = raw;
+    if (_idb) _idbPut(k, raw);
+    else { try { localStorage.setItem(k, raw); } catch (e) { if (typeof toast === 'function') toast('⚠️ 本地存储空间不足，请删除一些带照片的笔记/菜谱后再试'); } }
+    return true;
   }
 };
 
@@ -2678,13 +2726,10 @@ function appLinkRow(list) {
     <div class="text-sm text-muted" style="margin-top:6px">💡 若无法直接唤起，请尝试用系统浏览器/Chrome打开本站，或点击后自动访问官网</div>`;
 }
 
-/* ================= 数据备份 / 恢复（导出导入 localStorage 的 luo_ 键） ================= */
+/* ================= 数据备份 / 恢复（导出导入 luo_ 键，来源 IndexedDB/_mem） ================= */
 function exportData() {
   const data = {};
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k && k.indexOf('luo_') === 0) data[k] = localStorage.getItem(k);
-  }
+  _allLuoKeys().forEach(k => { if (k in _mem) data[k] = _mem[k]; });
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -2703,7 +2748,7 @@ function importData(input) {
     try {
       const data = JSON.parse(reader.result);
       let n = 0;
-      for (const k in data) { if (k.indexOf('luo_') === 0) { localStorage.setItem(k, data[k]); n++; } }
+      for (const k in data) { if (k.indexOf('luo_') === 0) { store.set(k, JSON.parse(data[k])); n++; } }
       const msg = document.getElementById('backupMsg');
       if (msg) msg.innerHTML = '<span style="color:#1565c0">✅ 已恢复 ' + n + ' 项数据，刷新页面后生效。</span>';
       toast('备份已恢复，请刷新页面');
@@ -2719,10 +2764,7 @@ function importData(input) {
 /* ================= 自动备份（防丢失：定时 + 离开前快照，可一键恢复） ================= */
 function snapshotAll() {
   const data = {};
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k && k.indexOf('luo_') === 0) data[k] = localStorage.getItem(k);
-  }
+  _allLuoKeys().forEach(k => { if (k in _mem) data[k] = _mem[k]; });
   return data;
 }
 function autoBackupNow() {
@@ -2739,7 +2781,7 @@ function restoreAutoBackup() {
   const rec = store.get('luo_auto_backup', null);
   if (!rec) return toast('暂无自动备份');
   if (!confirm('将从自动备份（' + rec.time + '）恢复数据，当前未备份的改动会被覆盖，确定继续？')) return;
-  for (const k in rec.data) localStorage.setItem(k, rec.data[k]);
+  for (const k in rec.data) { try { store.set(k, JSON.parse(rec.data[k])); } catch (e) { store.set(k, rec.data[k]); } }
   toast('已从自动备份恢复，即将刷新');
   setTimeout(() => location.reload(), 800);
 }
@@ -3368,7 +3410,8 @@ document.querySelectorAll('#mineTabs .tab').forEach(tab => {
 });
 
 /* ================= Init ================= */
-function init() {
+async function init() {
+  await _hydrate();
   const d = new Date();
   const weeks = ['周日','周一','周二','周三','周四','周五','周六'];
   document.getElementById('topDate').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
@@ -3447,7 +3490,7 @@ function buildCollectItems() {
   });
   // 笔记（各板块 luo_notes_*，section 即来源页 id）
   const noteKeys = [];
-  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) noteKeys.push(k); }
+  for (const k in _mem) { if (k.indexOf('luo_notes_') === 0) noteKeys.push(k); }
   noteKeys.forEach(k => {
     const sec = k.slice('luo_notes_'.length);
     (store.get(k, []) || []).forEach(n => items.push({ type: '笔记', title: (n.title || '笔记') + (sec ? '（' + sec + '）' : ''), body: n.content || '', date: n.date || '', source: sec, id: 'note-' + sec + '-' + n.id }));
@@ -3465,36 +3508,62 @@ function renderCollect() {
   collectItems = buildCollectItems();
   paintCollect();
 }
+let collectGroup = 'flat'; // flat | section
+function _secLabel(id) {
+  const n = navItems.find(x => x.id === id);
+  return n ? n.label : (id || '其他');
+}
 function paintCollect() {
   const box = document.getElementById('collectList');
   if (!box) return;
   const q = (collectQ || '').trim().toLowerCase();
+  const list = collectItems.filter(it => {
+    if (collectType !== 'all' && it.type !== collectType) return false;
+    if (q && !((it.title + ' ' + it.body + ' ' + it.type).toLowerCase().indexOf(q) >= 0)) return false;
+    return true;
+  });
   let html = '';
   let count = 0;
-  collectItems.forEach((it, gi) => {
-    if (collectType !== 'all' && it.type !== collectType) return;
-    if (q && !((it.title + ' ' + it.body + ' ' + it.type).toLowerCase().indexOf(q) >= 0)) return;
-    count++;
-    const body = it.body || '(无内容)';
-    // 片段：去掉图片标记与换行，避免 dataURL 露出
-    const plain = body.replace(/\[\[IMG:[^\]]+\]\]/g, '').replace(/\s+/g, ' ').trim();
-    const shown = plain.length <= 80 ? plain : plain.slice(0, 80) + '…';
-    const color = COLLECT_COLORS[it.type] || '#666';
-    html += `<div class="collect-card" onclick="openCollectDetail(${gi})">
-      <div class="collect-top"><span class="collect-tag" style="background:${color}">${it.type}</span><span class="collect-title">${esc(it.title)}</span></div>
-      <div class="collect-body">${esc(shown || (body.indexOf('[[IMG:') >= 0 ? '🖼️ 含图片' : ''))}</div>
-      ${it.date ? `<div class="collect-date">${esc(it.date)}</div>` : ''}
-      <div class="collect-more">点击查看详情 ›</div>
-    </div>`;
-  });
+  // 按版块分组展示
+  if (collectGroup === 'section') {
+    const groups = {};
+    list.forEach((it, gi) => { const s = it.source || '其他'; (groups[s] = groups[s] || []).push(gi); });
+    Object.keys(groups).forEach(s => {
+      const label = _secLabel(s);
+      html += `<div class="collect-group-title">📂 ${esc(label)} <span class="collect-group-n">${groups[s].length}</span></div>`;
+      groups[s].forEach(gi => { html += collectCardHtml(collectItems[gi], gi); count++; });
+    });
+  } else {
+    list.forEach((it, gi) => { html += collectCardHtml(it, gi); count++; });
+  }
   box.innerHTML = count ? html : '<div class="list-empty">暂无内容，去各板块收藏、记笔记、写复盘吧</div>';
   const cnt = document.getElementById('collectCount');
-  if (cnt) cnt.textContent = '共 ' + count + ' 条';
+  if (cnt) cnt.textContent = '共 ' + count + ' 条' + (collectGroup === 'section' ? '（已按版块分组）' : '');
+}
+function collectCardHtml(it, gi) {
+  const body = it.body || '(无内容)';
+  const plain = body.replace(/\[\[IMG:[^\]]+\]\]/g, '').replace(/\s+/g, ' ').trim();
+  const shown = plain.length <= 80 ? plain : plain.slice(0, 80) + '…';
+  const color = COLLECT_COLORS[it.type] || '#666';
+  const sub = collectGroup === 'section' ? '' : (it.source ? `<div class="collect-source">📍 ${esc(_secLabel(it.source))}</div>` : '');
+  return `<div class="collect-card" onclick="openCollectDetail(${gi})">
+    <div class="collect-top"><span class="collect-tag" style="background:${color}">${it.type}</span><span class="collect-title">${esc(it.title)}</span></div>
+    <div class="collect-body">${esc(shown || (body.indexOf('[[IMG:') >= 0 ? '🖼️ 含图片' : ''))}</div>
+    ${it.date ? `<div class="collect-date">${esc(it.date)}</div>` : ''}
+    ${sub}
+    <div class="collect-more">点击查看详情 ›</div>
+  </div>`;
 }
 function collectSearch(v) { collectQ = v; paintCollect(); }
 function setCollectType(t) {
   collectType = t;
   document.querySelectorAll('#collectTypes .ctab').forEach(b => b.classList.toggle('active', b.dataset.t === t));
+  paintCollect();
+}
+function toggleCollectGroup() {
+  collectGroup = collectGroup === 'flat' ? 'section' : 'flat';
+  const btn = document.getElementById('collectGroupBtn');
+  if (btn) btn.textContent = collectGroup === 'section' ? '🗂 平铺显示' : '🗂 按版块分组';
   paintCollect();
 }
 function openCollectDetail(gi) {
