@@ -14,7 +14,7 @@ with sync_playwright() as p:
     errs = []
     pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
     pg.on('pageerror', lambda e: errs.append('PAGEERR: ' + str(e)))
-    pg.goto(f'http://127.0.0.1:{PORT}/index.html?v=16', wait_until='networkidle')
+    pg.goto(f'http://127.0.0.1:{PORT}/index.html?v=17', wait_until='networkidle')
     pg.wait_for_timeout(900)
 
     # ① 收藏：点击星标 → luo_golden 更新 + 星标变黄
@@ -30,6 +30,25 @@ with sync_playwright() as p:
       return { ok:true, goldenCount: golden.length, hasOn: !!after, lastHasSource: golden[0] && !!golden[0].source, source: golden[0] && golden[0].source };
     }""")
     res['1_favorite'] = fav
+
+    # ① 旧记录无 source 也能反推出来源并跳转
+    legacy = pg.evaluate("""() => {
+      localStorage.setItem('luo_golden', JSON.stringify([{id:'genre-2', type:'题材库', title:'双向暗恋', text:'', date:'2026.8.22'}]));
+      goPage('collect');
+      const card = document.querySelector('#collectList .collect-card');
+      if (!card) return { ok:false, reason:'no card' };
+      card.click();
+      const jb = document.getElementById('collectModalJump');
+      const visible = jb && jb.style.display !== 'none';
+      const label = visible ? jb.textContent : '';
+      if (visible) jb.click();
+      // 跳转后应到 jjwxc，且 genre tab 激活
+      const genreTab = document.querySelector('#jjwxcTabs .tab.active');
+      const genreActive = genreTab && genreTab.dataset.jj === 'genre';
+      const genrePanelShown = document.getElementById('jjwxcGenrePanel').style.display !== 'none';
+      return { ok:true, visible, label, currentPage, genreActive, genrePanelShown };
+    }""")
+    res['1_legacy_source'] = legacy
 
     # 聚合页：收藏出现 + 详情弹窗含「前往来源」按钮可跳转
     jump = pg.evaluate("""() => {
@@ -52,7 +71,6 @@ with sync_playwright() as p:
       goPage('english'); switchWordTab('new');
       const cells = document.querySelectorAll('#wordGrid .word-cell');
       const unlearnedColor = cells[0] ? getComputedStyle(cells[0]).borderTopColor : '';
-      // 标记第一词为掌握
       cells[0].click();
       document.getElementById('wordLearnedBtn').click();
       const learnedCell = document.querySelector('#wordGrid .word-cell.learned');

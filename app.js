@@ -2777,9 +2777,9 @@ function toggleGolden(id, type, title, text) {
   // 重新渲染当前页，让星标立即变黄 / 取消
   try { const rm = getRenderMap(); if (rm[currentPage]) rm[currentPage](); } catch (e) {}
 }
-function goldenStar(id) {
+function goldenStar(id, type, title, text) {
   const on = isGolden(id);
-  const payload = encodeURIComponent(JSON.stringify({ id: String(id), type: '', title: '', text: '' })).replace(/"/g, '&quot;');
+  const payload = encodeURIComponent(JSON.stringify({ id: String(id), type: String(type || ''), title: String(title || ''), text: String(text || '') })).replace(/"/g, '&quot;');
   return `<button class="golden-star ${on ? 'on' : ''}" data-gold="${payload}" onclick="toggleGoldenData(this)">${on ? '★' : '☆'}</button>`;
 }
 
@@ -3182,7 +3182,7 @@ function renderJJWXCRank() {
           <div class="text-sm mb-2"><span class="text-green">可学写法：</span>${esc(w.learn)}</div>
           <button class="btn btn-ghost btn-sm mb-2" onclick="toggleJJWXC('${aid}')">📖 深度扒文（简介/人设/逻辑/大纲/章纲…）</button>
           <div id="${aid}" class="jjwxc-analysis" style="display:none">${renderJJWXCAnalysis(a)}</div>
-          <div class="resource-actions"><a class="link-jjwxc" href="${searchLinks(w.title).jjwxc}" target="_blank">📚 晋江搜此书</a>${goldenStar('rank-' + g + '-' + i)}</div>
+          <div class="resource-actions"><a class="link-jjwxc" href="${searchLinks(w.title).jjwxc}" target="_blank">📚 晋江搜此书</a>${goldenStar('rank-' + g + '-' + i, '晋江写作素材库', w.title, [w.hook, w.why, w.learn].filter(Boolean).join('\n'))}</div>
         </div>`;
         }).join('')}
       </div>`;
@@ -3227,7 +3227,7 @@ function renderJJWXCGenre() {
       <div class="mb-1 text-sm"><span class="text-green">读者好评点：</span>${g.praise.map(esc).join('、')}</div>
       <div class="mb-1 text-sm"><span class="mine-zone">雷点：</span>${g.mines.map(esc).join('、')}</div>
       <div class="mb-1 text-sm"><span class="hl-rule">创作建议：</span>${g.advice.map(esc).join('；')}</div>
-      <div class="resource-actions">${goldenStar(id)}</div>
+      <div class="resource-actions">${goldenStar(id, '题材库', g.name, [g.desc, '高分核心梗：' + g.coreTropes.join('、'), '创作建议：' + g.advice.join('；')].filter(Boolean).join('\n'))}</div>
     </div>`;
   }).join('');
 }
@@ -3270,7 +3270,7 @@ function renderMeme() {
       <div class="mb-1 text-sm">${esc(m.desc)}</div>
       <div class="mb-1 text-sm"><span class="text-blue">用法：</span>${esc(m.usage)}</div>
       <div class="mb-1 text-sm"><span class="text-orange">示例：</span>${esc(m.example)}</div>
-      <div class="resource-actions"><a class="link-jjwxc" href="${searchLinks(m.trope).jjwxc}" target="_blank">📚 晋江搜梗</a>${goldenStar(id)}</div>
+      <div class="resource-actions"><a class="link-jjwxc" href="${searchLinks(m.trope).jjwxc}" target="_blank">📚 晋江搜梗</a>${goldenStar(id, '梗库', m.trope, [m.desc, '用法：' + m.usage, '示例：' + m.example].filter(Boolean).join('\n'))}</div>
     </div>`;
   }).join('') || '<div class="list-empty">暂无该题材梗</div>';
 }
@@ -3287,7 +3287,7 @@ function renderMine() {
       <div class="flex-between mb-1"><span class="font-bold">${m.type === '雷点' ? '🛡️' : '👍'} ${esc(m.point)}</span><span class="tag tag-low">${esc(m.genre)}</span></div>
       <div class="mb-1 text-sm">${esc(m.detail)}</div>
       <div class="mb-1 text-sm"><span class="${cls}">建议：</span>${esc(m.tip)}</div>
-      <div class="resource-actions">${goldenStar(id)}</div>
+      <div class="resource-actions">${goldenStar(id, '避雷指南', m.point, [m.detail, '建议：' + m.tip].filter(Boolean).join('\n'))}</div>
     </div>`;
   }).join('') || '<div class="list-empty">暂无内容</div>';
 }
@@ -3303,6 +3303,10 @@ function generateIdea() {
   const genreInfo = jjwxcGenres.find(g => g.name === genre) || { coreTropes: ['双向暗恋'], advice: ['用细节堆心动'] };
   const trope = genreInfo.coreTropes[Math.floor(Math.random() * genreInfo.coreTropes.length)];
   const angle = seededShuffle(jjwxcDailyPool, a + b + genre).slice(0, 1)[0];
+  const ideaId = 'idea-' + Date.now();
+  const ideaTitle = genre + '选题';
+  const ideaText = a + '×' + b + ' ' + trope;
+  const ideaPayload = encodeURIComponent(JSON.stringify({ id: ideaId, type: '灵感', title: ideaTitle, text: ideaText })).replace(/"/g, '&quot;');
   const html = `
     <div class="card card-gradient-blue">
       <div class="font-bold mb-2">🎯 你的专属选题</div>
@@ -3313,7 +3317,7 @@ function generateIdea() {
       <div class="mb-1 text-sm"><span class="text-green">章纲思路：</span>第1章 相遇钩子 → 第3章 关系转折 → 中点 误会/危机 → 高潮 双向确认 → 结局 余韵留白</div>
       <div class="mb-1 text-sm"><span class="text-orange">可借鉴写法：</span>${genreInfo.advice.map(esc).join('；')}</div>
       <div class="mb-1 text-sm"><span class="mine-zone">避雷：</span>避免工业糖精与单箭头拖太长；用${esc(pov)}写真实心理。</div>
-      <button class="btn btn-orange" style="width:100%;margin-top:6px" onclick="toggleGolden('idea-${Date.now()}','灵感','${esc(genre)}选题','${esc(a)}×${esc(b)} ${esc(trope)}')">⭐ 收藏此选题</button>
+      <button class="btn btn-orange" style="width:100%;margin-top:6px" data-gold="${ideaPayload}" onclick="toggleGoldenData(this)">⭐ 收藏此选题</button>
     </div>`;
   document.getElementById('geniusResult').innerHTML = html;
   toast('已生成专属选题');
@@ -3327,7 +3331,10 @@ function renderMaterial() {
   // 收藏区
   const gold = getGolden();
   const goldEl = document.getElementById('materialGolden');
-  if (goldEl) goldEl.innerHTML = gold.length ? `<div class="card"><div class="font-bold mb-2">⭐ 我的收藏（${gold.length}）</div>${gold.map(g => `<div class="note-item"><div class="note-body"><div class="note-title">${esc(g.title)}</div><div class="note-text">${esc(g.text || '')}</div></div><button class="note-btn del" onclick="toggleGolden('${esc(g.id)}','${esc(g.type)}','${esc(g.title)}','')">删</button></div>`).join('')}</div>` : '';
+  if (goldEl) goldEl.innerHTML = gold.length ? `<div class="card"><div class="font-bold mb-2">⭐ 我的收藏（${gold.length}）</div>${gold.map(g => {
+    const gp = encodeURIComponent(JSON.stringify({ id: String(g.id), type: String(g.type || ''), title: String(g.title || ''), text: String(g.text || '') })).replace(/"/g, '&quot;');
+    return `<div class="note-item"><div class="note-body"><div class="note-title">${esc(g.title)}</div><div class="note-text">${esc(g.text || '')}</div></div><button class="note-btn del" data-gold="${gp}" onclick="toggleGoldenData(this)">删</button></div>`;
+  }).join('')}</div>` : '';
   el.innerHTML = list.map((m, i) => {
     const id = 'mat-' + i;
     const L = searchLinks(m.keyword);
@@ -3338,7 +3345,7 @@ function renderMaterial() {
       <div class="mb-1 text-sm"><span class="text-orange">爆火原因：</span>${esc(m.reason)}</div>
       <div class="mb-1 text-sm"><span class="text-blue">开头钩子：</span>${esc(m.hook)}</div>
       <div class="mb-2 text-sm" style="background:var(--orange-light);padding:8px;border-radius:8px;font-size:12px"><span class="font-bold">迁移写法：</span>${esc(m.idea)}</div>
-      <div class="resource-actions">${links}${goldenStar(id)}</div>
+      <div class="resource-actions">${links}${goldenStar(id, '全网素材库', m.title, [m.reason, m.hook, m.idea].filter(Boolean).join('\n'))}</div>
     </div>`;
   }).join('') || '<div class="list-empty">没有匹配的素材</div>';
 }
@@ -3388,23 +3395,69 @@ else init();
 /* ================= 收藏·笔记·复盘·书摘 聚合（可搜索、点击展开） ================= */
 const COLLECT_COLORS = { '收藏': '#8e44ad', '笔记': '#1565c0', '书摘': '#2e7d32', '复盘': '#e65100' };
 let collectItems = [], collectQ = '', collectType = 'all';
+
+/* 从收藏 id / type 反推来源版块（兼容旧记录未存 source） */
+function inferGoldenSource(id, type) {
+  const s = String(id || ''), t = String(type || '');
+  if (s.indexOf('rank-') === 0 || s.indexOf('genre-') === 0 || s.indexOf('jjwxc-') === 0) return 'jjwxc';
+  if (s.indexOf('meme-') === 0) return 'meme';
+  if (s.indexOf('mat-') === 0 || s.indexOf('material-') === 0) return 'material';
+  if (s.indexOf('mine-') === 0) return 'mine';
+  if (s.indexOf('note-') === 0) return s.slice(5).split('-')[0] || 'daily';
+  if (s.indexOf('rev-') === 0) return 'review';
+  if (s.indexOf('drev-') === 0) return 'dailyreview';
+  if (s.indexOf('trip-') === 0) return 'travel';
+  if (s.indexOf('wd-') === 0) return 'image';
+  if (s.indexOf('rcp-') === 0) return 'kitchen';
+  if (s.indexOf('good-') === 0) return 'goods';
+  if (s.indexOf('recruit-') === 0) return 'recruit';
+  if (s.indexOf('craft-') === 0) return 'novelcraft';
+  if (s.indexOf('vscr-') === 0) return 'videoscr';
+  if (s.indexOf('bn-') === 0) return 'booknotes';
+  if (s.indexOf('fm-') === 0) return 'film';
+  if (s.indexOf('dish-') === 0) return 'seasonaldish';
+  if (s.indexOf('bl-') === 0) return 'booklearn';
+  if (s.indexOf('idea-') === 0) return 'genius';
+  if (/晋江|榜单|题材库/.test(t)) return 'jjwxc';
+  if (/梗/.test(t)) return 'meme';
+  if (/素材/.test(t)) return 'material';
+  if (/避雷|雷点|好评/.test(t)) return 'mine';
+  if (t === '招聘') return 'recruit';
+  if (t === '好物') return 'goods';
+  if (t === '书摘') return 'booknotes';
+  if (t === '拉片') return 'film';
+  if (t === '菜品') return 'seasonaldish';
+  if (t === '好书') return 'booklearn';
+  if (t === '创作') return 'novelcraft';
+  if (t === '脚本') return 'videoscr';
+  if (t === '电子衣橱') return 'image';
+  if (t === '电子菜谱') return 'kitchen';
+  if (t === '旅行攻略') return 'travel';
+  if (t === '复盘') return 'review';
+  if (t === '每日复盘') return 'dailyreview';
+  return '';
+}
+
 function buildCollectItems() {
   const items = [];
   // 收藏（金句/好评/雷点/各板块单条收藏）—— 记录来源版块，便于跳转
-  (store.get('luo_golden', []) || []).forEach(g => items.push({ type: '收藏', title: g.title || (g.type || '收藏'), body: g.text || '', date: g.date || '', source: g.source || '' }));
+  (store.get('luo_golden', []) || []).forEach(g => {
+    const source = g.source || inferGoldenSource(g.id, g.type);
+    items.push({ type: '收藏', title: g.title || (g.type || '收藏'), body: g.text || '', date: g.date || '', source, id: g.id, rawType: g.type });
+  });
   // 笔记（各板块 luo_notes_*，section 即来源页 id）
   const noteKeys = [];
   for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) noteKeys.push(k); }
   noteKeys.forEach(k => {
     const sec = k.slice('luo_notes_'.length);
-    (store.get(k, []) || []).forEach(n => items.push({ type: '笔记', title: (n.title || '笔记') + (sec ? '（' + sec + '）' : ''), body: n.content || '', date: n.date || '', source: sec }));
+    (store.get(k, []) || []).forEach(n => items.push({ type: '笔记', title: (n.title || '笔记') + (sec ? '（' + sec + '）' : ''), body: n.content || '', date: n.date || '', source: sec, id: 'note-' + sec + '-' + n.id }));
   });
   // 书摘
-  (store.get('luo_booknotes', []) || []).forEach(b => items.push({ type: '书摘', title: b.book || '未命名', body: b.text || '', date: b.date || '', source: 'booknotes' }));
+  (store.get('luo_booknotes', []) || []).forEach((b, i) => items.push({ type: '书摘', title: b.book || '未命名', body: b.text || '', date: b.date || '', source: 'booknotes', id: 'bn-' + i }));
   // 复盘：内容复盘
-  (store.get('luo_reviews', []) || []).forEach(r => items.push({ type: '复盘', title: r.title || '内容复盘', body: [r.data, r.pros ? '优点：' + r.pros : '', r.cons ? '缺点：' + r.cons : ''].filter(Boolean).join('\n'), date: r.date || '', source: 'review' }));
+  (store.get('luo_reviews', []) || []).forEach(r => items.push({ type: '复盘', title: r.title || '内容复盘', body: [r.data, r.pros ? '优点：' + r.pros : '', r.cons ? '缺点：' + r.cons : ''].filter(Boolean).join('\n'), date: r.date || '', source: 'review', id: 'rev-' + r.id }));
   // 复盘：每日复盘
-  (store.get('luo_daily_reviews', []) || []).forEach(r => items.push({ type: '复盘', title: '每日复盘 ' + (r.date || ''), body: r.text || '', date: r.date || '', source: 'review' }));
+  (store.get('luo_daily_reviews', []) || []).forEach(r => items.push({ type: '复盘', title: '每日复盘 ' + (r.date || ''), body: r.text || '', date: r.date || '', source: 'dailyreview', id: 'drev-' + r.date }));
   items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   return items;
 }
@@ -3453,15 +3506,80 @@ function openCollectDetail(gi) {
   modal.querySelector('#collectModalTag').style.background = color;
   modal.querySelector('#collectModalTitle').textContent = it.title || '';
   modal.querySelector('#collectModalDate').textContent = it.date || '';
-  modal.querySelector('#collectModalBody').innerHTML = renderRich(it.body || '(无内容)');
+  const hasBody = (it.body || '').trim().replace(/\[\[IMG:[^\]]+\]\]/g, '').length > 0;
+  modal.querySelector('#collectModalBody').innerHTML = renderRich(hasBody ? it.body : '（暂无摘要，点击下方按钮可跳回来源版块查看完整内容）');
   const jump = modal.querySelector('#collectModalJump');
   if (jump) {
-    if (it.source) { jump.style.display = ''; jump.textContent = '前往来源版块 ›'; jump.onclick = () => { goPage(it.source); closeCollectDetail(); }; }
-    else jump.style.display = 'none';
+    if (it.source) {
+      const label = navItems.find(n => n.id === it.source)?.label || it.source;
+      jump.style.display = '';
+      jump.textContent = '前往来源：' + label + ' ›';
+      jump.onclick = () => { jumpToSource(it.source, it.id); closeCollectDetail(); };
+    } else jump.style.display = 'none';
   }
   modal.classList.add('open');
 }
 function closeCollectDetail() {
   const modal = document.getElementById('collectModal');
   if (modal) modal.classList.remove('open');
+}
+
+/* 聚合收藏跳转：先切到来源版块，再尝试定位到具体卡片 */
+function jumpToSource(source, id) {
+  if (!source) return;
+  goPage(source);
+  // jjwxc 子 tab 切换
+  if (source === 'jjwxc' && id) {
+    const s = String(id);
+    if (s.indexOf('genre-') === 0) switchJJTab('genre');
+    else if (s.indexOf('rank-') === 0 || s.indexOf('jjwxc-') === 0) switchJJTab('rank');
+    else if (s.indexOf('rule') === 0) switchJJTab('rule');
+  }
+  if (id) setTimeout(() => focusCollectItem(id), 80);
+}
+function switchJJTab(which) {
+  document.querySelectorAll('#jjwxcTabs .tab').forEach(t => t.classList.toggle('active', t.dataset.jj === which));
+  const rank = document.getElementById('jjwxcRankPanel');
+  const genre = document.getElementById('jjwxcGenrePanel');
+  const rule = document.getElementById('jjwxcRulePanel');
+  if (rank) rank.style.display = which === 'rank' ? '' : 'none';
+  if (genre) genre.style.display = which === 'genre' ? '' : 'none';
+  if (rule) rule.style.display = which === 'rule' ? '' : 'none';
+  if (which === 'rank' && typeof renderJJWXCRank === 'function') renderJJWXCRank();
+  if (which === 'genre' && typeof renderJJWXCGenre === 'function') renderJJWXCGenre();
+  if (which === 'rule' && typeof renderJJWXCRule === 'function') renderJJWXCRule();
+}
+function focusCollectItem(id) {
+  if (!id) return toast('已跳转到来源版块');
+  let found = null;
+  // 新实现：通过 data-gold 属性查找
+  document.querySelectorAll('[data-gold]').forEach(btn => {
+    if (found) return;
+    try {
+      const payload = decodeURIComponent(btn.getAttribute('data-gold') || '');
+      if (payload.indexOf('"id":"' + id + '"') >= 0) found = btn;
+    } catch (e) {}
+  });
+  // 兼容旧记录的内联 onclick
+  if (!found) {
+    document.querySelectorAll('button[onclick*="toggleGolden"]').forEach(btn => {
+      if (found) return;
+      if ((btn.getAttribute('onclick') || '').indexOf(id) >= 0) found = btn;
+    });
+  }
+  if (!found) return toast('已跳转到来源版块（榜单每日轮换，原条目可能已更新）');
+  let card = found.closest('.card, .card-flat, .collect-card');
+  if (!card) card = found.parentElement;
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.style.transition = 'background .3s';
+    const orig = card.style.background;
+    card.style.background = '#fff8e1';
+    setTimeout(() => card.style.background = orig, 1800);
+    // 晋江榜单：自动展开深度扒文
+    const deepBtn = card.querySelector('button[onclick^="toggleJJWXC"]');
+    const ana = card.querySelector('.jjwxc-analysis');
+    if (deepBtn && ana && ana.style.display === 'none') deepBtn.click();
+  }
+  toast('已定位到收藏内容');
 }
