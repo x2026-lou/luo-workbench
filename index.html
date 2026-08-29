@@ -156,6 +156,7 @@
             <div class="flex-between mb-3"><button class="btn btn-outline" onclick="prevWord()">上一个</button><span class="text-muted text-sm" id="wordIdx">1 / 30</span><button class="btn btn-primary" onclick="nextWord()">下一个</button></div>
             <div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="wordProgress" style="width:0%"></div></div><div class="progress-text">今日已掌握进度</div></div>
             <button class="btn btn-orange" id="wordLearnedBtn" style="width:100%" onclick="markWordLearned()">标记已掌握</button>
+            <button class="btn btn-outline mt-2" id="wordBatchBtn" style="width:100%" onclick="nextWordBatch()">🔁 换下一批（第 1 批）</button>
             <div class="card mt-2"><div class="font-bold mb-2">📚 每日单词（点击卡片跳转）</div><div class="word-grid" id="wordGrid"></div></div>
           </div>
           <div id="engQuizPanel" style="display:none"></div>
@@ -914,6 +915,7 @@
             <div class="font-bold mb-1" id="collectModalTitle" style="font-size:16px"></div>
             <div class="text-sm text-muted mb-2" id="collectModalDate"></div>
             <div class="collect-modal-body" id="collectModalBody"></div>
+            <button id="collectModalJump" class="btn btn-primary mt-3" style="width:100%">前往来源版块 ›</button>
           </div>
         </div>
 
@@ -961,17 +963,17 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=15"></script>
-  <script src="cet4_core.js?v=15"></script>
-  <script src="cet4_full.js?v=15"></script>
-  <script src="cet4_enhance.js?v=15"></script>
+  <script src="app.js?v=16"></script>
+  <script src="cet4_core.js?v=16"></script>
+  <script src="cet4_full.js?v=16"></script>
+  <script src="cet4_enhance.js?v=16"></script>
 
-  <script src="gaokao_core.js?v=15"></script>
-  <script src="expansion.js?v=15"></script>
-  <script src="jjwxc_analysis.js?v=15"></script>
+  <script src="gaokao_core.js?v=16"></script>
+  <script src="expansion.js?v=16"></script>
+  <script src="jjwxc_analysis.js?v=16"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=15').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=16').then(reg => {
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;

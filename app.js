@@ -76,15 +76,9 @@ function renderNav() {
   list.innerHTML = html;
 }
 
-function goPage(id) {
-  currentPage = id;
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.id === id));
-  document.querySelectorAll('.bnav-item').forEach(b => b.classList.toggle('active', b.dataset.page === id));
-  toggleSidebar(false);
-  window.scrollTo(0,0);
-  const renderMap = {
+/* 全局渲染映射（懒加载：避免在脚本顶层过早引用尚未定义的扩展板块渲染函数） */
+function getRenderMap() {
+  return {
     daily: renderTodos, review: renderReviews, english: renderEnglish, exam: renderExam,
     medical: renderMedical, inspiration: renderInspiration, viral: renderViral, edit: renderEdit,
     recruit: renderRecruit, fitness: renderFitness, finance: renderFinance, novel: renderNovel,
@@ -100,7 +94,18 @@ function goPage(id) {
     accounting: renderAccounting, seasonaldish: renderSeasonalDish, booklearn: renderBookLearn,
     exam: renderExamWrap, recruit: renderRecruitWrap
   };
-  if (renderMap[id]) renderMap[id]();
+}
+
+function goPage(id) {
+  currentPage = id;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.id === id));
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.toggle('active', b.dataset.page === id));
+  toggleSidebar(false);
+  window.scrollTo(0,0);
+  const rm = getRenderMap();
+  if (rm[id]) rm[id]();
   renderMyNotes(id);
 }
 
@@ -593,15 +598,18 @@ let wordsReady = false;
 let newWords = [], reviewWords = [], wordList = [];
 let wordTab = 'new';
 let wordIdx = 0;
+let wordBatch = store.get('luo_word_batch', 0);
 let learnedSet = new Set(store.get('luo_eng_learned', []));
 
 function pickDailyNew() {
   const all = window.cet4Core || [];
   if (!all.length) return [];
   const n = all.length;
-  const day = Math.floor(Date.now() / 86400000) % n;
+  const day = Math.floor(Date.now() / 86400000);
+  // 按「日期 + 批次」偏移，背完一批可换下一批，持续出新词
+  const base = ((day + wordBatch * DAILY_NEW) % n + n * 2) % n;
   const arr = [];
-  for (let i = 0; i < DAILY_NEW; i++) arr.push(all[(day + i) % n]);
+  for (let i = 0; i < DAILY_NEW; i++) arr.push(all[(base + i) % n]);
   return arr;
 }
 function pickDailyReview(newSet) {
@@ -609,15 +617,24 @@ function pickDailyReview(newSet) {
   const n = all.length;
   if (!n) return [];
   const newEn = new Set(newSet.map(w => w.en));
-  // 复习窗口取「今天往前 31 天」的 30 个词（[day-31, day-1)），与今日新词窗口 [day, day+30) 完全错开，
-  // 保证每天都有 30 个互不重复的复习词；若仍与今日新词意外重叠则跳过。
-  const base = ((Math.floor(Date.now() / 86400000) - 31) % n + n * 2) % n;
+  // 复习窗口随批次推进，与今日新词窗口错开
+  const base = (((Math.floor(Date.now() / 86400000) - 31) + wordBatch * DAILY_REVIEW) % n + n * 2) % n;
   const arr = [];
   for (let i = 0; i < DAILY_REVIEW; i++) {
     const w = all[(base + i) % n];
     if (!newEn.has(w.en)) arr.push(w);
   }
   return arr;
+}
+function nextWordBatch() {
+  wordBatch++;
+  store.set('luo_word_batch', wordBatch);
+  newWords = pickDailyNew();
+  reviewWords = pickDailyReview(newWords);
+  wordList = wordTab === 'new' ? newWords : reviewWords;
+  wordIdx = 0;
+  showWord();
+  toast('已切换到第 ' + (wordBatch + 1) + ' 批单词');
 }
 function initDailyWords() {
   if (wordsReady) return;
@@ -652,6 +669,8 @@ function showWord() {
   const learned = learnedSet.has(w.en);
   const btn = document.getElementById('wordLearnedBtn');
   if (btn) btn.classList.toggle('on', learned);
+  const bb = document.getElementById('wordBatchBtn');
+  if (bb) bb.textContent = '🔁 换下一批（第 ' + (wordBatch + 1) + ' 批）';
   const total = newWords.length + reviewWords.length;
   let done = 0;
   learnedSet.forEach(en => { if (newWords.concat(reviewWords).some(x => x.en === en)) done++; });
@@ -669,10 +688,16 @@ function prevWord() { wordIdx = (wordIdx - 1 + wordList.length) % wordList.lengt
 function markWordLearned() {
   if (!wordList || !wordList.length) return;
   const w = wordList[wordIdx % wordList.length].en;
-  if (learnedSet.has(w)) learnedSet.delete(w); else learnedSet.add(w);
+  const wasLearned = learnedSet.has(w);
+  if (wasLearned) learnedSet.delete(w); else learnedSet.add(w);
   store.set('luo_eng_learned', [...learnedSet]);
   showWord();
-  toast(learnedSet.has(w) ? '已标记掌握 ✓' : '已取消掌握');
+  toast(wasLearned ? '已取消掌握' : '已标记掌握 ✓');
+  // 整批 30 词全部掌握后，自动切换到下一批新词
+  if (!wasLearned) {
+    const allLearned = wordList.length > 0 && wordList.every(x => learnedSet.has(x.en));
+    if (allLearned) setTimeout(() => { toast('🎉 本批已背完，已自动换下一批'); nextWordBatch(); }, 600);
+  }
 }
 
 /* ---- 每日一篇四级选词填空（取今日新词前 10 个作目标词）---- */
@@ -2701,7 +2726,7 @@ function snapshotAll() {
   return data;
 }
 function autoBackupNow() {
-  if (!store.get('luo_auto_backup_on', false)) return;
+  if (!store.get('luo_auto_backup_on', true)) return;
   const data = snapshotAll();
   const rec = { time: fmtDate() + ' ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }), data };
   store.set('luo_auto_backup', rec);
@@ -2720,7 +2745,7 @@ function restoreAutoBackup() {
 }
 let _autoBackupTimer = null, _unloadBound = false;
 function toggleAutoBackup() {
-  const on = !store.get('luo_auto_backup_on', false);
+  const on = !store.get('luo_auto_backup_on', true);
   store.set('luo_auto_backup_on', on);
   if (on) {
     autoBackupNow();
@@ -2734,7 +2759,7 @@ function toggleAutoBackup() {
   updateBackupUI();
 }
 function updateBackupUI() {
-  const on = store.get('luo_auto_backup_on', false);
+  const on = store.get('luo_auto_backup_on', true);
   const tgl = document.getElementById('autoBackupToggle');
   if (tgl) { tgl.textContent = on ? '🔁 自动备份：开' : '🔁 自动备份：关'; tgl.classList.toggle('on', on); }
   const last = store.get('luo_auto_backup', null);
@@ -2748,12 +2773,15 @@ function isGolden(id) { return getGolden().some(g => g.id === id); }
 function toggleGolden(id, type, title, text) {
   let arr = getGolden();
   if (arr.some(g => g.id === id)) { arr = arr.filter(g => g.id !== id); store.set('luo_golden', arr); toast('已取消收藏'); }
-  else { arr.unshift({ id, type, title, text, date: fmtDate() }); store.set('luo_golden', arr); toast('⭐ 已收藏：' + title); }
-  if (currentPage === 'material') renderMaterial();
-  if (currentPage === 'meme') renderMeme();
-  if (currentPage === 'mine') renderMine();
+  else { arr.unshift({ id, type, title, text, date: fmtDate(), source: currentPage }); store.set('luo_golden', arr); toast('⭐ 已收藏：' + title); }
+  // 重新渲染当前页，让星标立即变黄 / 取消
+  try { const rm = getRenderMap(); if (rm[currentPage]) rm[currentPage](); } catch (e) {}
 }
-function goldenStar(id) { return `<button class="golden-star ${isGolden(id) ? 'on' : ''}" onclick="toggleGolden('${id}','${esc(id).split('-')[0]}','${esc(id)}','')">${isGolden(id) ? '★' : '☆'}</button>`; }
+function goldenStar(id) {
+  const on = isGolden(id);
+  const payload = encodeURIComponent(JSON.stringify({ id: String(id), type: '', title: '', text: '' })).replace(/"/g, '&quot;');
+  return `<button class="golden-star ${on ? 'on' : ''}" data-gold="${payload}" onclick="toggleGoldenData(this)">${on ? '★' : '☆'}</button>`;
+}
 
 /* ---- 榜单扒文（真实作品，结构拆解） ---- */
 const jjwxcWorks = [
@@ -3346,6 +3374,13 @@ function init() {
   renderTodos();
   renderMyNotes('daily');
   updateBackupUI();
+  // 默认开启自动备份，防止数据丢失（仅当从未手动关闭时）
+  if (store.get('luo_auto_backup_on', true)) {
+    store.set('luo_auto_backup_on', true);
+    autoBackupNow();
+    if (!_autoBackupTimer) _autoBackupTimer = setInterval(autoBackupNow, 5 * 60 * 1000);
+    if (!_unloadBound) { window.addEventListener('beforeunload', autoBackupNow); _unloadBound = true; }
+  }
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
@@ -3355,21 +3390,21 @@ const COLLECT_COLORS = { '收藏': '#8e44ad', '笔记': '#1565c0', '书摘': '#2
 let collectItems = [], collectQ = '', collectType = 'all';
 function buildCollectItems() {
   const items = [];
-  // 收藏（金句/好评/雷点）
-  (store.get('luo_golden', []) || []).forEach(g => items.push({ type: '收藏', title: g.title || (g.type || '收藏'), body: g.text || '', date: g.date || '' }));
-  // 笔记（各板块 luo_notes_*）
+  // 收藏（金句/好评/雷点/各板块单条收藏）—— 记录来源版块，便于跳转
+  (store.get('luo_golden', []) || []).forEach(g => items.push({ type: '收藏', title: g.title || (g.type || '收藏'), body: g.text || '', date: g.date || '', source: g.source || '' }));
+  // 笔记（各板块 luo_notes_*，section 即来源页 id）
   const noteKeys = [];
   for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) noteKeys.push(k); }
   noteKeys.forEach(k => {
     const sec = k.slice('luo_notes_'.length);
-    (store.get(k, []) || []).forEach(n => items.push({ type: '笔记', title: (n.title || '笔记') + (sec ? '（' + sec + '）' : ''), body: n.content || '', date: n.date || '' }));
+    (store.get(k, []) || []).forEach(n => items.push({ type: '笔记', title: (n.title || '笔记') + (sec ? '（' + sec + '）' : ''), body: n.content || '', date: n.date || '', source: sec }));
   });
   // 书摘
-  (store.get('luo_booknotes', []) || []).forEach(b => items.push({ type: '书摘', title: b.book || '未命名', body: b.text || '', date: b.date || '' }));
+  (store.get('luo_booknotes', []) || []).forEach(b => items.push({ type: '书摘', title: b.book || '未命名', body: b.text || '', date: b.date || '', source: 'booknotes' }));
   // 复盘：内容复盘
-  (store.get('luo_reviews', []) || []).forEach(r => items.push({ type: '复盘', title: r.title || '内容复盘', body: [r.data, r.pros ? '优点：' + r.pros : '', r.cons ? '缺点：' + r.cons : ''].filter(Boolean).join('\n'), date: r.date || '' }));
+  (store.get('luo_reviews', []) || []).forEach(r => items.push({ type: '复盘', title: r.title || '内容复盘', body: [r.data, r.pros ? '优点：' + r.pros : '', r.cons ? '缺点：' + r.cons : ''].filter(Boolean).join('\n'), date: r.date || '', source: 'review' }));
   // 复盘：每日复盘
-  (store.get('luo_daily_reviews', []) || []).forEach(r => items.push({ type: '复盘', title: '每日复盘 ' + (r.date || ''), body: r.text || '', date: r.date || '' }));
+  (store.get('luo_daily_reviews', []) || []).forEach(r => items.push({ type: '复盘', title: '每日复盘 ' + (r.date || ''), body: r.text || '', date: r.date || '', source: 'review' }));
   items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   return items;
 }
@@ -3419,6 +3454,11 @@ function openCollectDetail(gi) {
   modal.querySelector('#collectModalTitle').textContent = it.title || '';
   modal.querySelector('#collectModalDate').textContent = it.date || '';
   modal.querySelector('#collectModalBody').innerHTML = renderRich(it.body || '(无内容)');
+  const jump = modal.querySelector('#collectModalJump');
+  if (jump) {
+    if (it.source) { jump.style.display = ''; jump.textContent = '前往来源版块 ›'; jump.onclick = () => { goPage(it.source); closeCollectDetail(); }; }
+    else jump.style.display = 'none';
+  }
   modal.classList.add('open');
 }
 function closeCollectDetail() {

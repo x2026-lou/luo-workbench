@@ -8,10 +8,21 @@
         totalPoints / mustDos / levelFor
    ===================================================================== */
 
-/* ---------- 通用：收藏星标 ---------- */
+/* ---------- 通用：收藏星标 ----------
+   注意：正文/标题可能含换行与单引号，直接拼进 onclick 字符串会破坏 JS 语法，
+   导致点击失效。改用 data 属性存放 URL 安全编码的 JSON，点击时再解码。 */
 function gstar(id, type, title, text) {
   const on = isGolden(id);
-  return `<button class="golden-star ${on ? 'on' : ''}" onclick="toggleGolden('${esc(id)}','${esc(type)}','${esc(title)}','${esc(text || '')}')">${on ? '★' : '☆'}</button>`;
+  const payload = encodeURIComponent(JSON.stringify({
+    id: String(id), type: String(type || ''), title: String(title || ''), text: String(text || '')
+  })).replace(/"/g, '&quot;');
+  return `<button class="golden-star ${on ? 'on' : ''}" data-gold="${payload}" onclick="toggleGoldenData(this)">${on ? '★' : '☆'}</button>`;
+}
+function toggleGoldenData(btn) {
+  let d;
+  try { d = JSON.parse(decodeURIComponent(btn.getAttribute('data-gold'))); }
+  catch (e) { return; }
+  toggleGolden(d.id, d.type, d.title, d.text);
 }
 /* 通用 tab 切换（新页面使用 data-panel） */
 function switchTab(tabEl, panelId) {
