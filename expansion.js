@@ -138,6 +138,49 @@ function vocabBatches() {
   for (let i = 0; i < cetWords.length; i += VOCAB_BATCH) arr.push(cetWords.slice(i, i + VOCAB_BATCH));
   return arr;
 }
+/* ================= 高频词详解（中英文释义 / 音标 / 真实场景例句+翻译 / 记忆提示） ================= */
+const HIGH_FREQ_WORDS = [
+  { en: 'abandon', ph: '/əˈbændən/', pos: 'v.', cn: '放弃；抛弃', ex: 'They had to abandon the plan due to lack of funds.', exCn: '由于资金不足，他们不得不放弃这个计划。', tip: 'a-（不）+ bandon（约束）→ 不再受约束 → 抛弃；谐音「阿板凳」被丢下。' },
+  { en: 'achieve', ph: '/əˈtʃiːv/', pos: 'v.', cn: '实现；达成', ex: 'She achieved her goal through years of effort.', exCn: '她通过多年努力实现了目标。', tip: 'a（朝向）+ chieve（chief 首领）→ 走到首领位置 → 达成；场景：年终 KPI 达成。' },
+  { en: 'analyze', ph: '/ˈænəlaɪz/', pos: 'v.', cn: '分析；剖析', ex: 'We need to analyze the data before making a decision.', exCn: '做决定前我们需要先分析数据。', tip: 'ana-（贯穿）+ lyze（松开）→ 拆开来看 → 分析；同根 analysis（分析）。' },
+  { en: 'benefit', ph: '/ˈbenɪfɪt/', pos: 'n./v.', cn: '益处；使受益', ex: 'Regular exercise benefits both body and mind.', exCn: '规律运动对身心都有益。', tip: 'bene-（好）+ fit（做）→ 做的好事 → 益处；beneficial 有益的。' },
+  { en: 'contribute', ph: '/kənˈtrɪbjuːt/', pos: 'v.', cn: '贡献；投稿', ex: 'Everyone contributed to the success of the project.', exCn: '每个人都对项目成功作出了贡献。', tip: 'con-（共同）+ tribute（给予）→ 共同给予 → 贡献；attribute 归因。' },
+  { en: 'demonstrate', ph: '/ˈdemənstreɪt/', pos: 'v.', cn: '证明；演示', ex: 'The study demonstrates a clear link between sleep and memory.', exCn: '研究证明了睡眠与记忆之间的明确关联。', tip: 'de-（完全）+ monstr（展示）+ ate → 充分展示 → 证明/演示。' },
+  { en: 'establish', ph: '/ɪˈstæblɪʃ/', pos: 'v.', cn: '建立；确立', ex: 'The company was established in 2010.', exCn: '这家公司成立于 2010 年。', tip: 'e-（出）+ stable（稳定）+ ish → 使稳定下来 → 建立；establishment 机构。' },
+  { en: 'fundamental', ph: '/ˌfʌndəˈmentl/', pos: 'adj.', cn: '基本的；根本的', ex: 'Trust is fundamental to any relationship.', exCn: '信任是任何关系的基础。', tip: 'fund（基础）+ a + mental（心智）→ 基础的；foundation 根基。' },
+  { en: 'significant', ph: '/sɪɡˈnɪfɪkənt/', pos: 'adj.', cn: '重要的；显著的', ex: 'There was a significant rise in sales last quarter.', exCn: '上季度销售额显著上升。', tip: 'sign（记号）+ i + fic（做）+ ant → 做出标记的 → 重要的；signify 意味着。' },
+  { en: 'circumstance', ph: '/ˈsɜːrkəmstæns/', pos: 'n.', cn: '情况；环境', ex: 'Under no circumstances should you give up.', exCn: '无论如何你都不应放弃。', tip: 'circum-（环绕）+ stance（站立）→ 站在周围的事物 → 环境；站姿 stance。' },
+  { en: 'nevertheless', ph: '/ˌnevərðəˈles/', pos: 'adv.', cn: '然而；尽管如此', ex: 'The task was hard; nevertheless, they finished it.', exCn: '任务很难，尽管如此他们还是完成了。', tip: 'never（从不）+ the + less（更少）→ 虽不更少 → 尽管如此；= however。' },
+  { en: 'phenomenon', ph: '/fəˈnɑːmɪnən/', pos: 'n.', cn: '现象', ex: 'Climate change is a global phenomenon.', exCn: '气候变化是一个全球性现象。', tip: 'pheno-（显现）+ menon（事物）→ 显现出来的事物 → 现象；复数 phenomena。' },
+  { en: 'pursue', ph: '/pərˈsuː/', pos: 'v.', cn: '追求；从事', ex: 'He pursued a career in medicine.', exCn: '他从事医学职业。', tip: 'pur（前，pro 变体）+ sue（跟随）→ 在后面追 → 追求；pursuit 追求。' },
+  { en: 'sufficient', ph: '/səˈfɪʃnt/', pos: 'adj.', cn: '足够的', ex: 'We have sufficient evidence to support the claim.', exCn: '我们有足够的证据支持这一说法。', tip: 'suf-（下）+ fic（做）+ ient → 做到底下的 → 足够的；deficient 不足的。' },
+  { en: 'transform', ph: '/trænsˈfɔːrm/', pos: 'v.', cn: '使改变；转化', ex: 'The internet transformed how we communicate.', exCn: '互联网改变了我们的沟通方式。', tip: 'trans-（跨越）+ form（形状）→ 改变形状 → 转变；transformation 转型。' },
+  { en: 'underestimate', ph: '/ˌʌndərˈestɪmeɪt/', pos: 'v.', cn: '低估', ex: 'Don’t underestimate the difficulty of the exam.', exCn: '别低估这场考试的难度。', tip: 'under（不足）+ estimate（估计）→ 估计不足 → 低估；overestimate 高估。' },
+  { en: 'vital', ph: '/ˈvaɪtl/', pos: 'adj.', cn: '至关重要的', ex: 'Water is vital to all living things.', exCn: '水对所有生物都至关重要。', tip: 'vit（生命，如 vitamin 维生素）+ al → 关乎生命的 → 至关重要的。' },
+  { en: 'widespread', ph: '/ˈwaɪdspred/', pos: 'adj.', cn: '广泛的；普遍的', ex: 'There is widespread support for the policy.', exCn: '这项政策得到广泛支持。', tip: 'wide（广）+ spread（传播）→ 广泛传播的 → 普遍的。' },
+  { en: 'confront', ph: '/kənˈfrʌnt/', pos: 'v.', cn: '面对；对抗', ex: 'We must confront the problem directly.', exCn: '我们必须直面对这个问题。', tip: 'con-（共同）+ front（前面）→ 站到前面一起 → 面对；front 前面。' },
+  { en: 'illustrate', ph: '/ˈɪləstreɪt/', pos: 'v.', cn: '说明；举例阐明', ex: 'The chart illustrates the change in population.', exCn: '该图表说明了人口的变化。', tip: 'il-（入）+ lustr（光）+ ate → 照亮 → 说明；illustration 插图。' },
+  { en: 'obstacle', ph: '/ˈɑːbstəkl/', pos: 'n.', cn: '障碍', ex: 'Fear of failure is the biggest obstacle.', exCn: '对失败的恐惧是最大的障碍。', tip: 'ob-（反）+ sta（站立）+ cle → 挡在前面站着的 → 障碍；stand 站。' },
+  { en: 'perspective', ph: '/pərˈspektɪv/', pos: 'n.', cn: '观点；视角', ex: 'Try to see it from a different perspective.', exCn: '试着从不同角度看这件事。', tip: 'per-（透过）+ spect（看）+ ive → 透过去看 → 视角；inspect 检查。' },
+  { en: 'reluctant', ph: '/rɪˈlʌktənt/', pos: 'adj.', cn: '不情愿的', ex: 'He was reluctant to admit the mistake.', exCn: '他不情愿承认错误。', tip: 're-（回）+ luct（挣扎）+ ant → 往后挣扎 → 不情愿的；reluctance 不情愿。' },
+  { en: 'tendency', ph: '/ˈtendənsi/', pos: 'n.', cn: '趋势；倾向', ex: 'There is a tendency to work late in big cities.', exCn: '大城市里有熬夜工作的倾向。', tip: 'tend（趋向）+ ency（名词后缀）→ 趋向；tend 照料/倾向。' }
+];
+function highFreqWordsHtml() {
+  return `<div class="card mt-2">
+    <div class="font-bold mb-2">🔥 高频词详解 <span class="text-sm text-muted">（音标 · 中英文释义 · 真实场景例句+翻译 · 记忆提示）</span></div>
+    <div class="word-list">
+      ${HIGH_FREQ_WORDS.map(w => `
+        <div class="word-card">
+          <div class="word-head"><span class="word-w">${esc(w.en)}</span><span class="tier-S">高频</span></div>
+          <div class="word-ph">${w.pho || ''} <span class="text-muted">${w.pos || ''}</span></div>
+          <div class="word-cn">${esc(w.cn)}</div>
+          <div class="word-ex">📌 ${esc(w.ex)}</div>
+          <div class="word-cn" style="color:#1565c0">↳ ${esc(w.exCn)}</div>
+          <div class="word-mnem"><span class="mnem-ico">💡</span><span class="mnem-body">${esc(w.tip)}</span></div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
 function renderVocab() {
   const el = document.getElementById('vocabBox'); if (!el) return;
   const batches = vocabBatches();
@@ -146,6 +189,7 @@ function renderVocab() {
   const totalBatch = batches.length;
   const learned = vocabState.learned.length;
   el.innerHTML = `
+    ${highFreqWordsHtml()}
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-num">${vocabState.batch + 1}/${totalBatch}</div><div class="stat-label">当前组</div></div>
       <div class="stat-card"><div class="stat-num">${learned}</div><div class="stat-label">已背单词</div></div>
@@ -1083,6 +1127,93 @@ function toggleLearn(i, si) {
   store.set('luo_booklearn_' + i, prog);
   addPoints(k >= 0 ? -1 : 1, true);
   renderBookLearn();
+}
+
+/* ================= 每日语法 / 每日口语（按日期轮换，可手动浏览） ================= */
+const GRAMMAR_TOPICS = [
+  { title: '从句', brief: '从句不能独立成句，需依附主句；按在句中成分分为定语/状语/名词性从句，是长难句拆分的重点。', points: [
+    { t: '定语从句：修饰名词/代词', d: '先行词指人用 who/whom，指物用 which/that。阅读中常用来修饰 device、scenario、commerce 等名词，如 The device that changed my life was a tiny sensor.' },
+    { t: '状语从句：表时间/原因/条件/让步', d: '让步状语从句 while/although 阅读高频：文中大量用 while 表"尽管"，突出对比，如对比数字时代的利弊——While technology brings convenience, it also causes anxiety.' },
+    { t: '名词性从句：作主/宾/表语', d: '常用 that / whether / what 引导，如 What matters most is work-life balance.（主语从句）' } ] },
+  { title: '非谓语动词', brief: '不作谓语的动词形式：不定式 to do、动名词 doing、分词 doing/done；是写作提分与长句理解的关键。', points: [
+    { t: '分词作状语（阅读高频）', d: '现在分词表主动/进行，过去分词表被动/完成，常表伴随、原因。如 Walking in the park, she saw a dog.（伴随）/ Confused by the question, he kept silent.（原因）' },
+    { t: '不定式 to do', d: '常表目的或结果，如 To improve English, he listens daily.（目的）' },
+    { t: '动名词 doing 作主语/宾语', d: '如 Reading widely helps writing. 注意介词后接动名词：look forward to doing。' } ] },
+  { title: '倒装句', brief: '为强调或固定结构，把助动词/be 动词提到主语前；常出现在写作强调与阅读难点。', points: [
+    { t: '否定词开头（never/seldom/hardly）', d: '句首否定词触发部分倒装，如 Never have I seen such a view.' },
+    { t: 'Only + 状语开头', d: 'Only then did he realize the truth. 注意 Only 修饰主语时不倒装。' },
+    { t: 'So/Such…that 结构', d: 'So tired was he that he fell asleep at once.' } ] },
+  { title: '虚拟语气', brief: '表达与事实相反、愿望、建议；动词用过去式或 (should) do，是写作高级感来源。', points: [
+    { t: 'If 引导（与现在相反用 were/过去式）', d: 'If I were you, I would take the job. 与过去相反用 had done。' },
+    { t: 'Wish 后接过去式表遗憾', d: 'I wish I knew the answer.（现在愿望）/ I wish I had prepared earlier.（过去遗憾）' },
+    { t: '建议/要求类动词后接 (should) do', d: 'suggest / insist / demand / require 后接 He suggested we (should) start now.' } ] },
+  { title: '固定搭配', brief: '词与词的固定组合，地道表达的核心，靠积累而非逐字直译。', points: [
+    { t: '动词 + 介词', d: 'rely on, depend on, apply for, complain about, apologize for, approve of。' },
+    { t: '形容词 + 介词', d: 'be aware of, be responsible for, be fond of, be tired of。' },
+    { t: '高频动词短语', d: 'carry out（执行）, figure out（弄懂）, come up with（提出）, put off（推迟）, keep up with（跟上）。' } ] }
+];
+const SPEAKING_TOPICS = [
+  { title: '点餐', scene: '餐厅 / 咖啡店', exp: ['Could I see the menu, please?（能看一下菜单吗？）', 'I\'d like a medium latte.（我要中杯拿铁。）', 'Could I get the bill?（买单。）', 'Is this dish spicy?（这道辣吗？）'] },
+  { title: '问路', scene: '街道 / 地铁', exp: ['Excuse me, how do I get to the station?（请问车站怎么走？）', 'Is it within walking distance?（走路到得了吗？）', 'Go straight and turn left at the corner.（直走，路口左转。）'] },
+  { title: '面试', scene: '面试间', exp: ['Could you tell me about the role?（能介绍下岗位吗？）', 'I\'m good at teamwork and problem-solving.（我擅长协作与解决问题。）', 'What are the next steps?（后续流程是什么？）'] },
+  { title: '电话沟通', scene: '工作来电', exp: ['May I speak to Mr. Li?（请找李先生。）', 'Sorry, he\'s not available right now.（他现在不在。）', 'Could you take a message?（能留言吗？）'] },
+  { title: '购物', scene: '商场', exp: ['Do you have this in a larger size?（有大一码吗？）', 'Is there a discount today?（今天有折扣吗？）', 'I\'m just browsing, thanks.（随便看看，谢谢。）'] },
+  { title: '请假', scene: '职场', exp: ['I\'d like to request a day off.（我想请一天假。）', 'I\'m not feeling well today.（今天不太舒服。）', 'I\'ll catch up on the work tomorrow.（明天补上进度。）'] },
+  { title: '道歉', scene: '失误场景', exp: ['I\'m so sorry for the mistake.（很抱歉出了错。）', 'It was my fault.（是我的责任。）', 'I\'ll make sure it doesn\'t happen again.（我会避免再犯。）'] },
+  { title: '邀请', scene: '社交', exp: ['Would you like to join us for dinner?（一起吃饭吗？）', 'I\'d love to, thanks for inviting me.（很乐意，谢谢邀请。）', 'Maybe another time?（改天？）'] },
+  { title: '商务邮件', scene: '邮件沟通', exp: ['I\'m writing to follow up on the proposal.（就提案跟进。）', 'Please find the file attached.（见附件。）', 'Looking forward to your reply.（盼复。）'] },
+  { title: '会议发言', scene: '会议', exp: ['Let me kick off the meeting.（我开场。）', 'To sum up, we need a clear plan.（总结：需要清晰方案。）', 'Does anyone have questions?（有疑问吗？）'] },
+  { title: '酒店入住', scene: '前台', exp: ['I have a reservation under Wang.（我以 Wang 预订了。）', 'What time is checkout?（几点退房？）', 'Could I get a quiet room?（要安静的房间。）'] },
+  { title: '看病', scene: '诊所', exp: ['I\'ve had a headache since yesterday.（从昨天起头痛。）', 'How long should I take this?（这药吃多久？）', 'Is it contagious?（会传染吗？）'] },
+  { title: '社交破冰', scene: '聚会', exp: ['So what do you do?（你做什么工作？）', 'Have you been here before?（来过这儿吗？）', 'The weather\'s been great, hasn\'t it?（天气真好。）'] },
+  { title: '投诉退换', scene: '售后', exp: ['I\'d like to return this item.（我想退货。）', 'It stopped working after a week.（一周就坏了。）', 'Can I get a refund?（能退款吗？）'] }
+];
+function dayOfYearIndex(n) { const d = new Date(); const start = new Date(d.getFullYear(), 0, 0); return Math.floor((d - start) / 86400000) % n; }
+let grammarIdx = -1, speakingIdx = -1;
+function renderGrammar() {
+  const el = document.getElementById('grammarBox'); if (!el) return;
+  if (grammarIdx < 0) grammarIdx = dayOfYearIndex(GRAMMAR_TOPICS.length);
+  const t = GRAMMAR_TOPICS[grammarIdx];
+  const n = GRAMMAR_TOPICS.length;
+  el.innerHTML = `
+    <div class="font-bold mb-2">📐 今日语法：<b>${esc(t.title)}</b> <span class="text-sm text-muted">（每日轮换 · 第 ${grammarIdx + 1}/${n} 个）</span></div>
+    <div class="card">
+      <div class="text-sm mb-2" style="color:var(--text-main)">${esc(t.brief)}</div>
+      ${t.points.map((p, i) => `<div class="ana-li"><b>${i + 1}. ${esc(p.t)}</b><br><span class="text-muted">${esc(p.d)}</span></div>`).join('')}
+    </div>
+    <div class="flex-between mt-2" style="gap:6px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="grammarIdx=(grammarIdx-1+${n})%${n};renderGrammar()">‹ 上一个</button>
+      <button class="btn btn-outline btn-sm" onclick="grammarIdx=dayOfYearIndex(${n});renderGrammar()">🌞 回到今日</button>
+      <button class="btn btn-outline btn-sm" onclick="grammarIdx=(grammarIdx+1)%${n};renderGrammar()">下一个 ›</button>
+    </div>
+    <div class="card mt-2">
+      <div class="font-bold mb-1 text-sm">📚 全部语法专题</div>
+      <div>${GRAMMAR_TOPICS.map((g, i) => `<span class="gptag ${i === grammarIdx ? 'on' : ''}" onclick="grammarIdx=${i};renderGrammar()">${esc(g.title)}</span>`).join(' ')}</div>
+    </div>`;
+}
+function renderSpeaking() {
+  const el = document.getElementById('speakingBox'); if (!el) return;
+  if (speakingIdx < 0) speakingIdx = dayOfYearIndex(SPEAKING_TOPICS.length);
+  const t = SPEAKING_TOPICS[speakingIdx];
+  const n = SPEAKING_TOPICS.length;
+  el.innerHTML = `
+    <div class="font-bold mb-2">🗣️ 今日口语：<b>${esc(t.title)}</b> <span class="text-sm text-muted">（场景：${esc(t.scene)} · 每日轮换 · 第 ${speakingIdx + 1}/${n} 个）</span></div>
+    <div class="card">
+      <div class="text-sm mb-2 text-muted">实用表达（点一句可朗读练习）：</div>
+      ${t.exp.map((e, i) => `<div class="ana-li" style="cursor:pointer" data-text="${esc(e)}" onclick="speakText(this.dataset.text)">🔊 ${esc(e)}</div>`).join('')}
+    </div>
+    <div class="flex-between mt-2" style="gap:6px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="speakingIdx=(speakingIdx-1+${n})%${n};renderSpeaking()">‹ 上一个</button>
+      <button class="btn btn-outline btn-sm" onclick="speakingIdx=dayOfYearIndex(${n});renderSpeaking()">🌞 回到今日</button>
+      <button class="btn btn-outline btn-sm" onclick="speakingIdx=(speakingIdx+1)%${n};renderSpeaking()">下一个 ›</button>
+    </div>
+    <div class="card mt-2">
+      <div class="font-bold mb-1 text-sm">📚 全部口语场景</div>
+      <div>${SPEAKING_TOPICS.map((g, i) => `<span class="gptag ${i === speakingIdx ? 'on' : ''}" onclick="speakingIdx=${i};renderSpeaking()">${esc(g.title)}</span>`).join(' ')}</div>
+    </div>`;
+}
+function speakText(text) {
+  try { if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = 0.95; window.speechSynthesis.speak(u); } } catch (e) {}
 }
 
 /* ===================================================================

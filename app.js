@@ -10,6 +10,8 @@ const navItems = [
   // 2. 学习备考
   { id: 'english', icon: '🌍', label: '英语学习', group: '学习备考' },
   { id: 'vocab', icon: '🔤', label: '单词背诵', group: '学习备考' },
+  { id: 'grammar', icon: '📐', label: '每日语法', group: '学习备考', new: true },
+  { id: 'speaking', icon: '🗣️', label: '每日口语', group: '学习备考', new: true },
   { id: 'exam', icon: '📚', label: '考公考编学习', group: '学习备考' },
   { id: 'medical', icon: '🩺', label: '医学专业课学习', group: '学习备考' },
   // 3. 创作与写作
@@ -88,6 +90,7 @@ function getRenderMap() {
     eq: renderEq, ai: renderAi,     jjwxc: renderJJWXC, meme: renderMeme,
     mine: renderMine, genius: renderGenius, material: renderMaterial,
     vocab: renderVocab, novelcraft: renderNovelCraft, videoscr: renderVideoScr,
+    grammar: renderGrammar, speaking: renderSpeaking,
     editcheck: renderEditCheck, goods: renderGoods, rewards: renderRewards,
     dailyreview: renderDailyReview, booknotes: renderBookNotes, film: renderFilm,
     collect: renderCollect,
@@ -132,7 +135,7 @@ function renderMyNotes(id) {
         <textarea id="noteContent-${id}" class="form-textarea" placeholder="记录这一板块的想法、重点、灵感…可点「插图片」加入照片"></textarea>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-primary" id="noteSaveBtn-${id}" onclick="saveMyNote('${id}')">保存笔记</button>
-          <label class="btn btn-outline btn-small">🖼️ 插图片<input type="file" accept="image/*" style="display:none" onchange="insertNoteImage('${id}',this)"></label>
+          <label class="btn btn-outline btn-small">🖼️ 插图片（可多选）<input type="file" accept="image/*" multiple style="display:none" onchange="insertNoteImage('${id}',this)"></label>
           <button class="btn btn-small" id="noteCancel-${id}" style="display:none" onclick="cancelNoteEdit('${id}')">取消</button>
         </div>
       </div>`;
@@ -153,6 +156,7 @@ function renderMyNotes(id) {
       </div>
       <div class="note-actions">
         ${gstar('note-' + n.id, '笔记', n.title || '笔记', n.content)}
+        <button class="note-btn ${n.reviewed ? 'done' : ''}" onclick="reviewMyNote('${id}',${i})">${n.reviewed ? '✓ 已复习' : '复习'}</button>
         <button class="note-btn" onclick="editMyNote('${id}',${i})">编辑</button>
         <button class="note-btn del" onclick="deleteMyNote('${id}',${i})">删除</button>
       </div>
@@ -169,8 +173,9 @@ function saveMyNote(id) {
     if (idx >= 0) notes[idx] = { ...notes[idx], title, content, date: notes[idx].date };
     toast('笔记已更新');
   } else {
-    notes.unshift({ id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title, content, date: fmtDate() });
-    toast('笔记已保存');
+    notes.unshift({ id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title, content, date: fmtDate(), reviewed: false });
+    addPoints(2, true);
+    toast('笔记已保存 +2 积分');
   }
   editingNote = { id: null };
   t.value = ''; c.value = '';
@@ -183,6 +188,16 @@ function deleteMyNote(id, i) {
   const notes = store.get('luo_notes_' + id, []);
   notes.splice(i, 1);
   store.set('luo_notes_' + id, notes);
+  renderMyNotes(id);
+}
+function reviewMyNote(id, i) {
+  const notes = store.get('luo_notes_' + id, []);
+  const n = notes[i]; if (!n) return;
+  if (n.reviewed) { toast('这条笔记今天已复习过 ✅'); return; }
+  n.reviewed = true;
+  store.set('luo_notes_' + id, notes);
+  addPoints(1, true);
+  toast('复习笔记 +1 积分 ✅');
   renderMyNotes(id);
 }
 function editMyNote(id, i) {
@@ -204,26 +219,33 @@ function cancelNoteEdit(id) {
   const btn = document.getElementById('noteSaveBtn-' + id); if (btn) btn.textContent = '保存笔记';
 }
 function insertNoteImage(id, input) {
-  const file = input.files && input.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const url = e.target.result;
-    const ta = document.getElementById('noteContent-' + id);
-    const img = new Image();
-    const finish = (durl) => { ta.value += (ta.value ? '\n' : '') + '[[IMG:' + durl + ']]'; };
-    img.onload = () => {
-      const MAX = 1000; let w = img.width, h = img.height;
-      if (w > h && w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
-      else if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
-      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-      cv.getContext('2d').drawImage(img, 0, 0, w, h);
-      try { finish(cv.toDataURL('image/jpeg', 0.7)); }
-      catch (err) { finish(url); }
-    };
-    img.onerror = () => finish(url);
-    img.src = url;
+  const files = input.files ? Array.from(input.files) : [];
+  if (!files.length) return;
+  const ta = document.getElementById('noteContent-' + id);
+  const append = (durl) => {
+    ta.value += (ta.value && !ta.value.endsWith('\n') ? '\n' : '') + '[[IMG:' + durl + ']]';
   };
-  reader.readAsDataURL(file);
+  let pending = files.length, done = 0, errs = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const url = e.target.result;
+      const img = new Image();
+      const finish = (durl) => { append(durl); done++; if (done + errs === pending) toast('已插入 ' + done + ' 张图片' + (errs ? '（' + errs + ' 张失败）' : '')); };
+      img.onload = () => {
+        const MAX = 1000; let w = img.width, h = img.height;
+        if (w > h && w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        else if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        try { finish(cv.toDataURL('image/jpeg', 0.7)); }
+        catch (err) { finish(url); }
+      };
+      img.onerror = () => { errs++; if (done + errs === pending) toast('有 ' + errs + ' 张图片读取失败'); };
+      img.src = url;
+    };
+    reader.readAsDataURL(file);
+  });
   input.value = '';
 }
 
@@ -739,6 +761,14 @@ function markWordLearned() {
   const wasLearned = learnedSet.has(w);
   if (wasLearned) learnedSet.delete(w); else learnedSet.add(w);
   store.set('luo_eng_learned', [...learnedSet]);
+  // 英语版块：累计背完/复习满 30 词，当日 +5 积分（每日仅一次）
+  if (!wasLearned) {
+    let dw = store.get('luo_eng_daily_words', { date: fmtDate(), count: 0, awarded: false });
+    if (dw.date !== fmtDate()) dw = { date: fmtDate(), count: 0, awarded: false };
+    dw.count++;
+    if (dw.count >= 30 && !dw.awarded) { dw.awarded = true; addPoints(5, true); toast('🎉 今日英语单词达标 30 个，+5 积分'); }
+    store.set('luo_eng_daily_words', dw);
+  }
   showWord();
   toast(wasLearned ? '已取消掌握' : '已标记掌握 ✓');
   // 整批 30 词全部掌握后，自动切换到下一批新词
@@ -897,6 +927,10 @@ function submitCloze() {
   clozeSubmitted = true;
   let correct = 0;
   clozeData.targets.forEach((t, i) => { if (clozeFills[i] === t.en) correct++; });
+  // 完成一篇随堂测试 +5 积分（每篇每日仅计一次，避免重复刷分）
+  const key = fmtDate() + '#' + clozeSession;
+  const doneSet = new Set(store.get('luo_cloze_done', []));
+  if (!doneSet.has(key)) { doneSet.add(key); store.set('luo_cloze_done', [...doneSet]); addPoints(5, true); toast('✅ 完成随堂测试 +5 积分'); }
   const fb = document.getElementById('eFeedback');
   if (fb) {
     fb.innerHTML = '<div class="cloze-score">本篇得分：' + correct + ' / ' + clozeData.targets.length + '</div>' +
@@ -942,6 +976,7 @@ function renderEnglish() {
   initDailyWords();
   switchWordTab(wordTab);
   document.getElementById('englishVideoList').innerHTML = videoList('english', englishVideos);
+  renderDailyWords();
 }
 
 document.querySelectorAll('#engTabs .tab').forEach(tab => {
@@ -956,6 +991,152 @@ document.querySelectorAll('#engTabs .tab').forEach(tab => {
     if (mode === 'prep') renderCetPrep();
   };
 });
+
+/* ================= 每日 7:30 单词定时推荐（生活场景 / 职场沟通 · 四六级） ================= */
+const DAILY_RECOMMEND_POOL = [
+  { en: 'routine', ph: '/ruːˈtiːn/', cn: 'n. 日常事务；惯例' },
+  { en: 'deadline', ph: '/ˈdedlaɪn/', cn: 'n. 截止期限' },
+  { en: 'schedule', ph: '/ˈskedʒuːl/', cn: 'n./v. 日程；安排' },
+  { en: 'meeting', ph: '/ˈmiːtɪŋ/', cn: 'n. 会议' },
+  { en: 'client', ph: '/ˈklaɪənt/', cn: 'n. 客户' },
+  { en: 'feedback', ph: '/ˈfiːdbæk/', cn: 'n. 反馈' },
+  { en: 'goal', ph: '/ɡoʊl/', cn: 'n. 目标' },
+  { en: 'priority', ph: '/praɪˈɔːrəti/', cn: 'n. 优先事项' },
+  { en: 'task', ph: '/tæsk/', cn: 'n. 任务' },
+  { en: 'budget', ph: '/ˈbʌdʒɪt/', cn: 'n./v. 预算' },
+  { en: 'negotiate', ph: '/nɪˈɡoʊʃieɪt/', cn: 'v. 谈判；协商' },
+  { en: 'cooperate', ph: '/koʊˈɑːpəreɪt/', cn: 'v. 合作' },
+  { en: 'efficient', ph: '/ɪˈfɪʃnt/', cn: 'adj. 高效的' },
+  { en: 'punctual', ph: '/ˈpʌŋktʃuəl/', cn: 'adj. 准时的' },
+  { en: 'reliable', ph: '/rɪˈlaɪəbl/', cn: 'adj. 可靠的' },
+  { en: 'professional', ph: '/prəˈfeʃənl/', cn: 'adj. 专业的；n. 专业人士' },
+  { en: 'communicate', ph: '/kəˈmjuːnɪkeɪt/', cn: 'v. 沟通' },
+  { en: 'proposal', ph: '/prəˈpoʊzl/', cn: 'n. 提案；建议' },
+  { en: 'interview', ph: '/ˈɪntərvjuː/', cn: 'n./v. 面试；访谈' },
+  { en: 'resume', ph: '/ˈrezumeɪ/', cn: 'n. 简历' },
+  { en: 'colleague', ph: '/ˈkɒliːɡ/', cn: 'n. 同事' },
+  { en: 'supervisor', ph: '/ˈsuːpərvaɪzər/', cn: 'n. 主管；上司' },
+  { en: 'intern', ph: '/ˈɪntɜːrn/', cn: 'n. 实习生' },
+  { en: 'overtime', ph: '/ˈoʊvərtaɪm/', cn: 'n. 加班' },
+  { en: 'workload', ph: '/ˈwɜːrkloʊd/', cn: 'n. 工作量' },
+  { en: 'remote', ph: '/rɪˈmoʊt/', cn: 'adj. 远程的' },
+  { en: 'commute', ph: '/kəˈmjuːt/', cn: 'v./n. 通勤' },
+  { en: 'balance', ph: '/ˈbæləns/', cn: 'n./v. 平衡' },
+  { en: 'stress', ph: '/stres/', cn: 'n./v. 压力；强调' },
+  { en: 'motivate', ph: '/ˈmoʊtɪveɪt/', cn: 'v. 激励' },
+  { en: 'confident', ph: '/ˈkɑːnfɪdənt/', cn: 'adj. 自信的' },
+  { en: 'fluent', ph: '/ˈfluːənt/', cn: 'adj. 流利的' },
+  { en: 'polite', ph: '/pəˈlaɪt/', cn: 'adj. 有礼貌的' },
+  { en: 'apologize', ph: '/əˈpɑːlədʒaɪz/', cn: 'v. 道歉' },
+  { en: 'appreciate', ph: '/əˈpriːʃieɪt/', cn: 'v. 感激；欣赏' },
+  { en: 'confirm', ph: '/kənˈfɜːrm/', cn: 'v. 确认' },
+  { en: 'remind', ph: '/rɪˈmaɪnd/', cn: 'v. 提醒' },
+  { en: 'arrange', ph: '/əˈreɪndʒ/', cn: 'v. 安排' },
+  { en: 'postpone', ph: '/poʊˈspoʊn/', cn: 'v. 推迟' },
+  { en: 'register', ph: '/ˈredʒɪstər/', cn: 'v. 注册；登记' },
+  { en: 'hire', ph: '/haɪər/', cn: 'v. 雇佣' },
+  { en: 'promote', ph: '/prəˈmoʊt/', cn: 'v. 晋升；推广' },
+  { en: 'resign', ph: '/rɪˈzaɪn/', cn: 'v. 辞职' },
+  { en: 'salary', ph: '/ˈsæləri/', cn: 'n. 薪水' },
+  { en: 'bonus', ph: '/ˈboʊnəs/', cn: 'n. 奖金' },
+  { en: 'invoice', ph: '/ˈɪnvɔɪs/', cn: 'n. 发票' },
+  { en: 'discount', ph: '/ˈdɪskaʊnt/', cn: 'n. 折扣' },
+  { en: 'deliver', ph: '/dɪˈlɪvər/', cn: 'v. 交付；送货' },
+  { en: 'quality', ph: '/ˈkwɑːləti/', cn: 'n. 质量' },
+  { en: 'sample', ph: '/ˈsæmpl/', cn: 'n. 样品' },
+  { en: 'order', ph: '/ˈɔːrdər/', cn: 'n./v. 订单；订购' },
+  { en: 'market', ph: '/ˈmɑːrkɪt/', cn: 'n. 市场' },
+  { en: 'customer', ph: '/ˈkʌstəmər/', cn: 'n. 顾客' },
+  { en: 'service', ph: '/ˈsɜːrvɪs/', cn: 'n. 服务' },
+  { en: 'complain', ph: '/kəmˈpleɪn/', cn: 'v. 投诉；抱怨' },
+  { en: 'refund', ph: '/ˈriːfʌnd/', cn: 'n./v. 退款' },
+  { en: 'guarantee', ph: '/ˌɡærənˈtiː/', cn: 'v./n. 保证' },
+  { en: 'launch', ph: '/lɔːntʃ/', cn: 'v. 发布；推出' },
+  { en: 'campaign', ph: '/kæmˈpeɪn/', cn: 'n. 活动；战役' },
+  { en: 'profit', ph: '/ˈprɑːfɪt/', cn: 'n. 利润' },
+  { en: 'invest', ph: '/ɪnˈvest/', cn: 'v. 投资' },
+  { en: 'loan', ph: '/loʊn/', cn: 'n. 贷款' },
+  { en: 'tax', ph: '/tæks/', cn: 'n. 税' },
+  { en: 'contract', ph: '/ˈkɑːntrækt/', cn: 'n. 合同' },
+  { en: 'seminar', ph: '/ˈsemɪnɑːr/', cn: 'n. 研讨会' },
+  { en: 'training', ph: '/ˈtreɪnɪŋ/', cn: 'n. 培训' },
+  { en: 'certificate', ph: '/sərˈtɪfɪkət/', cn: 'n. 证书' },
+  { en: 'assignment', ph: '/əˈsaɪnmənt/', cn: 'n. 任务；作业' },
+  { en: 'lecture', ph: '/ˈlektʃər/', cn: 'n./v. 讲座' },
+  { en: 'research', ph: '/ˈriːsɜːrtʃ/', cn: 'n./v. 研究' },
+  { en: 'analyze', ph: '/ˈænəlaɪz/', cn: 'v. 分析' },
+  { en: 'summarize', ph: '/ˈsʌməraɪz/', cn: 'v. 总结' },
+  { en: 'persuade', ph: '/pərˈsweɪd/', cn: 'v. 说服' },
+  { en: 'clarify', ph: '/ˈklærəfaɪ/', cn: 'v. 澄清' },
+  { en: 'resolve', ph: '/rɪˈzɑːlv/', cn: 'v. 解决' },
+  { en: 'tackle', ph: '/ˈtækl/', cn: 'v. 处理；应对' }
+];
+let dailyWordCfg = store.get('luo_daily_word_cfg', { enabled: true, time: '07:30' });
+let dailyWordHistory = store.get('luo_daily_words_history', []);
+function dailyWordAllPushed() {
+  const s = new Set();
+  dailyWordHistory.forEach(h => (h.words || []).forEach(w => s.add((w || '').toLowerCase())));
+  return s;
+}
+function renderDailyWords() {
+  const box = document.getElementById('dailyWordPanel'); if (!box) return;
+  const today = fmtDate();
+  const entry = dailyWordHistory.find(h => h.date === today);
+  const poolMap = {}; DAILY_RECOMMEND_POOL.forEach(w => poolMap[w.en.toLowerCase()] = w);
+  let html = `<div class="font-bold mb-2">🌅 每日 7:30 单词推荐 <span class="text-sm text-muted">（生活/职场 · 四六级 · 不与历史重复）</span></div>`;
+  html += `<div class="flex-between mb-2">
+    <label class="text-sm"><input type="checkbox" id="dailyWordChk" ${dailyWordCfg.enabled ? 'checked' : ''} onchange="toggleDailyWordCfg(this.checked)"> 启用定时推荐（${dailyWordCfg.time}）</label>
+    <button class="btn btn-outline btn-sm" onclick="genDailyWords(true)">立即生成今日推荐</button>
+  </div>`;
+  if (entry && entry.words.length) {
+    html += entry.words.map(en => {
+      const w = poolMap[en.toLowerCase()] || { en, ph: '', cn: '' };
+      return `<div class="word-card done" style="margin-bottom:8px">
+        <div class="word-head"><span class="word-w">${esc(w.en)}</span><span class="tier-A">推荐</span></div>
+        <div class="word-ph">${w.ph || ''}</div>
+        <div class="word-cn">${w.cn || ''}</div>
+      </div>`;
+    }).join('');
+    html += `<div class="text-sm text-muted">今日已生成 ${entry.words.length} 个推荐词，已自动避开历史推送。</div>`;
+  } else {
+    html += `<div class="list-empty">今天还没生成～到点（${dailyWordCfg.time}）打开工作台会自动推荐 5 个，也可点「立即生成」。</div>`;
+  }
+  box.innerHTML = html;
+}
+function toggleDailyWordCfg(on) {
+  dailyWordCfg.enabled = on; store.set('luo_daily_word_cfg', dailyWordCfg);
+  if (on && 'Notification' in window && Notification.permission === 'default') { try { Notification.requestPermission(); } catch (e) {} }
+  renderDailyWords();
+}
+function genDailyWords(force) {
+  const today = fmtDate();
+  const existing = dailyWordHistory.find(h => h.date === today);
+  if (existing && !force) return existing.words;
+  const pushed = dailyWordAllPushed();
+  let pool = DAILY_RECOMMEND_POOL.filter(w => !pushed.has(w.en.toLowerCase()));
+  if (pool.length < 5) pool = DAILY_RECOMMEND_POOL.slice(); // 历史用尽则循环
+  const picked = seededShuffle(pool, today + '_dailyword').slice(0, 5).map(w => w.en);
+  if (existing) existing.words = picked; else dailyWordHistory.push({ date: today, words: picked });
+  store.set('luo_daily_words_history', dailyWordHistory);
+  notifyDailyWords(picked);
+  renderDailyWords();
+  return picked;
+}
+function checkDailyRecommend() {
+  if (!dailyWordCfg.enabled) return;
+  const now = new Date();
+  const [h, m] = dailyWordCfg.time.split(':').map(Number);
+  const today = fmtDate();
+  if (dailyWordHistory.some(x => x.date === today)) return; // 今天已生成
+  if (now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m)) {
+    const words = genDailyWords(false);
+    toast('🌅 已为你推荐今日 ' + words.length + ' 个实用单词');
+  }
+}
+function notifyDailyWords(words) {
+  try { if ('Notification' in window && Notification.permission === 'granted') new Notification('🌅 今日单词推荐', { body: '已推荐 ' + words.length + ' 个生活/职场实用词，去「英语学习」看看吧' }); } catch (e) {}
+}
+setInterval(checkDailyRecommend, 60000);
 
 /* ================= 四六级备考计划 ================= */
 let cetState = { date: store.get('luo_cet_date', '') };
@@ -1974,36 +2155,41 @@ function renderWardrobe() {
   if (wardrobe.length < 9) {
     html += `
       <label class="wardrobe-item">
-        <span style="font-size:24px">📷</span><span>拍照添加</span>
-        <input type="file" accept="image/*" style="display:none" onchange="uploadWardrobe(this)">
+        <span style="font-size:24px">📷</span><span>拍照/多选添加</span>
+        <input type="file" accept="image/*" multiple style="display:none" onchange="uploadWardrobe(this)">
       </label>
     `;
   }
   grid.innerHTML = html;
 }
 function uploadWardrobe(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      const MAX = 1000;
-      let { width, height } = img;
-      if (width > height && width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
-      else if (height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
-      const canvas = document.createElement('canvas');
-      canvas.width = width; canvas.height = height;
-      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
-      wardrobe.push({ id: Date.now(), name: '单品 ' + (wardrobe.length + 1), img: dataUrl });
-      store.set('luo_wardrobe', wardrobe);
-      renderWardrobe();
+  const files = input.files ? Array.from(input.files) : [];
+  if (!files.length) return;
+  let pending = files.length, done = 0, errs = 0, cnt = wardrobe.length;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1000;
+        let { width, height } = img;
+        if (width > height && width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
+        else if (height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+        cnt++;
+        wardrobe.push({ id: Date.now() + Math.floor(Math.random() * 1000), name: '单品 ' + cnt, img: dataUrl });
+        done++;
+        if (done + errs === pending) { store.set('luo_wardrobe', wardrobe); renderWardrobe(); toast('已添加 ' + done + ' 件单品' + (errs ? '（' + errs + ' 张失败）' : '')); }
+      };
+      img.onerror = () => { errs++; if (done + errs === pending) { store.set('luo_wardrobe', wardrobe); renderWardrobe(); toast('有 ' + errs + ' 张图片读取失败'); } };
+      img.src = e.target.result;
     };
-    img.onerror = () => toast('图片读取失败');
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
 }
 function deleteWardrobe(i) { wardrobe.splice(i, 1); store.set('luo_wardrobe', wardrobe); renderWardrobe(); }
 document.querySelectorAll('#imageTabs .tab').forEach(tab => {
@@ -2231,37 +2417,53 @@ function renderKitchen() {
 
 /* ================= Recipe Space (electronic cookbook) ================= */
 let recipes = store.get('luo_recipes', []);
-let pendingRecipePhoto = '';
+let pendingRecipePhotos = [];
 function uploadRecipePhoto(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      const MAX = 1000;
-      let { width, height } = img;
-      if (width > height && width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
-      else if (height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
-      const canvas = document.createElement('canvas');
-      canvas.width = width; canvas.height = height;
-      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.75); // 压缩后存储，避免 localStorage 爆满导致卡顿/白屏
-      pendingRecipePhoto = dataUrl;
-      document.getElementById('recipePhotoPreview').innerHTML = `<img src="${dataUrl}" style="max-width:100%;border-radius:10px;margin-top:8px">`;
+  const files = input.files ? Array.from(input.files) : [];
+  if (!files.length) return;
+  let pending = files.length, done = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1000;
+        let { width, height } = img;
+        if (width > height && width > MAX) { height = Math.round(height * MAX / width); width = MAX; }
+        else if (height > MAX) { width = Math.round(width * MAX / height); height = MAX; }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.75); // 压缩后存储，避免 localStorage 爆满导致卡顿/白屏
+        pendingRecipePhotos.push(dataUrl);
+        done++;
+        if (done === pending) paintRecipePreview();
+      };
+      img.onerror = () => { done++; if (done === pending) paintRecipePreview(); };
+      img.src = e.target.result;
     };
-    img.onerror = () => toast('图片读取失败');
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
 }
+function paintRecipePreview() {
+  const el = document.getElementById('recipePhotoPreview');
+  if (!el) return;
+  el.innerHTML = pendingRecipePhotos.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">` + pendingRecipePhotos.map((p, i) =>
+        `<div style="position:relative"><img src="${p}" style="width:88px;height:88px;object-fit:cover;border-radius:10px">
+          <button type="button" onclick="removePendingRecipePhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#e53935;color:#fff;cursor:pointer">×</button></div>`).join('')
+        + `</div><div class="text-sm text-muted mt-1">已选 ${pendingRecipePhotos.length} 张，可继续添加</div>`
+    : '';
+}
+function removePendingRecipePhoto(i) { pendingRecipePhotos.splice(i, 1); paintRecipePreview(); }
 function addRecipe() {
   const name = document.getElementById('recipeName').value.trim();
   if (!name) return toast('请填写菜名');
-  recipes.unshift({ id: Date.now(), name, price: document.getElementById('recipePrice').value, prep: document.getElementById('recipePrep').value, photo: pendingRecipePhoto, date: fmtDate() });
+  recipes.unshift({ id: Date.now(), name, price: document.getElementById('recipePrice').value, prep: document.getElementById('recipePrep').value, photos: pendingRecipePhotos.slice(), date: fmtDate() });
   store.set('luo_recipes', recipes);
   addPoints(3, true);
-  pendingRecipePhoto = '';
+  pendingRecipePhotos = [];
   document.getElementById('recipeName').value = ''; document.getElementById('recipePrice').value = ''; document.getElementById('recipePrep').value = ''; document.getElementById('recipePhoto').value = ''; document.getElementById('recipePhotoPreview').innerHTML = '';
   renderRecipes();
   toast('已保存到菜谱 +3');
@@ -2269,9 +2471,11 @@ function addRecipe() {
 function renderRecipes() {
   const list = document.getElementById('recipeList');
   if (!list) return;
-  list.innerHTML = recipes.length ? recipes.map(r => `
+  list.innerHTML = recipes.length ? recipes.map(r => {
+    const photos = (r.photos && r.photos.length) ? r.photos : (r.photo ? [r.photo] : []);
+    return `
     <div class="card-flat">
-      ${r.photo ? `<img src="${r.photo}" style="width:100%;border-radius:10px;margin-bottom:8px">` : ''}
+      ${photos.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">` + photos.map(p => `<img src="${p}" style="width:100%;max-width:160px;border-radius:10px;object-fit:cover">`).join('') + `</div>` : ''}
       <div class="font-bold mb-1">${r.name}</div>
       ${r.price ? `<div class="text-sm mb-1"><span class="text-orange">物价：</span>${r.price}</div>` : ''}
       ${r.prep ? `<div class="text-sm text-muted" style="white-space:pre-wrap">${r.prep}</div>` : ''}
@@ -2279,7 +2483,8 @@ function renderRecipes() {
         ${gstar('rcp-' + r.id, '电子菜谱', r.name, [r.price ? '物价：' + r.price : '', r.prep].filter(Boolean).join('\n'))}
         <button class="btn btn-outline btn-small" onclick="deleteRecipe(${r.id})">删除</button>
       </div>
-    </div>`).join('') : '<div class="list-empty">还没有菜谱，添加第一道吧 🍳</div>';
+    </div>`;
+  }).join('') : '<div class="list-empty">还没有菜谱，添加第一道吧 🍳</div>';
 }
 function deleteRecipe(id) { recipes = recipes.filter(r => r.id !== id); store.set('luo_recipes', recipes); renderRecipes(); }
 
@@ -3424,6 +3629,8 @@ async function init() {
   renderTodos();
   renderMyNotes('daily');
   updateBackupUI();
+  // 每日 7:30 单词定时推荐：进入即检查是否到点需要生成
+  try { checkDailyRecommend(); } catch (e) {}
   // 默认开启自动备份，防止数据丢失（仅当从未手动关闭时）
   if (store.get('luo_auto_backup_on', true)) {
     store.set('luo_auto_backup_on', true);

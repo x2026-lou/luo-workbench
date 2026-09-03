@@ -132,6 +132,7 @@
         <div class="page" id="page-english">
           <div class="section-title"><div class="icon">🌍</div>英语学习</div>
           <div class="section-sub">四六级+日常口语，单词与测试双模块</div>
+          <div class="card mt-2" id="dailyWordPanel"></div>
           <div class="tabs" id="engTabs">
             <div class="tab active" data-eng="words">单词背诵</div>
             <div class="tab" data-eng="quiz">随堂测试</div>
@@ -549,7 +550,7 @@
               <div class="form-group"><label class="form-label">菜名</label><input class="form-input" id="recipeName" placeholder="例如：番茄牛腩煲"></div>
               <div class="form-group"><label class="form-label">物价参考（人均/份）</label><input class="form-input" id="recipePrice" placeholder="例如：牛肉18+番茄3≈21元/份"></div>
               <div class="form-group"><label class="form-label">常规备菜流程</label><textarea class="form-textarea" id="recipePrep" placeholder="1. 牛腩焯水去血沫；2. 番茄去皮切块；3. 小火炖40分钟…"></textarea></div>
-              <div class="form-group"><label class="form-label">上传成品图</label><input type="file" accept="image/*" id="recipePhoto" onchange="uploadRecipePhoto(this)"></div>
+              <div class="form-group"><label class="form-label">上传成品图（可多选）</label><input type="file" accept="image/*" multiple id="recipePhoto" onchange="uploadRecipePhoto(this)"></div>
               <div id="recipePhotoPreview"></div>
               <button class="btn btn-primary" style="width:100%" onclick="addRecipe()">保存到菜谱</button>
             </div>
@@ -820,6 +821,20 @@
           <div id="vocabBox"></div>
         </div>
 
+        <!-- 每日语法 -->
+        <div class="page" id="page-grammar">
+          <div class="section-title"><div class="icon">📐</div>每日语法</div>
+          <div class="section-sub">从句 / 非谓语 / 倒装 / 虚拟 / 固定搭配 · 每日轮换一讲</div>
+          <div id="grammarBox"></div>
+        </div>
+
+        <!-- 每日口语 -->
+        <div class="page" id="page-speaking">
+          <div class="section-sub">生活 / 职场高频场景 · 每日轮换一个话题 · 点句子可朗读</div>
+          <div class="section-title"><div class="icon">🗣️</div>每日口语</div>
+          <div id="speakingBox"></div>
+        </div>
+
         <!-- 小说创作进阶 -->
         <div class="page" id="page-novelcraft">
           <div class="section-title"><div class="icon">✨</div>小说创作进阶</div>
@@ -968,17 +983,17 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=18"></script>
-  <script src="cet4_core.js?v=18"></script>
-  <script src="cet4_full.js?v=18"></script>
-  <script src="cet4_enhance.js?v=18"></script>
+  <script src="app.js?v=19"></script>
+  <script src="cet4_core.js?v=19"></script>
+  <script src="cet4_full.js?v=19"></script>
+  <script src="cet4_enhance.js?v=19"></script>
 
-  <script src="gaokao_core.js?v=18"></script>
-  <script src="expansion.js?v=18"></script>
-  <script src="jjwxc_analysis.js?v=18"></script>
+  <script src="gaokao_core.js?v=19"></script>
+  <script src="expansion.js?v=19"></script>
+  <script src="jjwxc_analysis.js?v=19"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=18').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=19').then(reg => {
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;

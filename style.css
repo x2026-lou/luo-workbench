@@ -188,6 +188,12 @@ body {
 .tag-green { background: var(--green-light); color: var(--green-main); }
 .tag-pink { background: var(--pink-light); color: #C2185B; }
 .tag-purple { background: var(--purple-light); color: #7B1FA2; }
+.gptag {
+  display: inline-block; padding: 5px 12px; margin: 3px 4px 0 0; border-radius: 14px; font-size: 12px; font-weight: 700;
+  background: var(--surface); color: var(--text-main); border: 1px solid var(--border); cursor: pointer; transition: all .15s;
+}
+.gptag.on { background: var(--primary); color: #fff; border-color: var(--primary); }
+.gptag:hover { border-color: var(--primary); }
 .todo-del {
   width: 26px; height: 26px; border-radius: 50%; border: none; background: transparent;
   color: var(--text-light); font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer;
