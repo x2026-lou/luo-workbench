@@ -163,7 +163,37 @@ const HIGH_FREQ_WORDS = [
   { en: 'obstacle', ph: '/ˈɑːbstəkl/', pos: 'n.', cn: '障碍', ex: 'Fear of failure is the biggest obstacle.', exCn: '对失败的恐惧是最大的障碍。', tip: 'ob-（反）+ sta（站立）+ cle → 挡在前面站着的 → 障碍；stand 站。' },
   { en: 'perspective', ph: '/pərˈspektɪv/', pos: 'n.', cn: '观点；视角', ex: 'Try to see it from a different perspective.', exCn: '试着从不同角度看这件事。', tip: 'per-（透过）+ spect（看）+ ive → 透过去看 → 视角；inspect 检查。' },
   { en: 'reluctant', ph: '/rɪˈlʌktənt/', pos: 'adj.', cn: '不情愿的', ex: 'He was reluctant to admit the mistake.', exCn: '他不情愿承认错误。', tip: 're-（回）+ luct（挣扎）+ ant → 往后挣扎 → 不情愿的；reluctance 不情愿。' },
-  { en: 'tendency', ph: '/ˈtendənsi/', pos: 'n.', cn: '趋势；倾向', ex: 'There is a tendency to work late in big cities.', exCn: '大城市里有熬夜工作的倾向。', tip: 'tend（趋向）+ ency（名词后缀）→ 趋向；tend 照料/倾向。' }
+  { en: 'tendency', ph: '/ˈtendənsi/', pos: 'n.', cn: '趋势；倾向', ex: 'There is a tendency to work late in big cities.', exCn: '大城市里有熬夜工作的倾向。', tip: 'tend（趋向）+ ency（名词后缀）→ 趋向；tend 照料/倾向。' },
+  { en: 'absorb', ph: '/əbˈsɔːrb/', pos: 'v.', cn: '吸收；理解', ex: 'The sponge absorbs water quickly.', exCn: '海绵很快吸收水分。', tip: 'ab-（加强）+ sorb（吸）→ 吸收；同根 absorbent 吸水的。' },
+  { en: 'accurate', ph: '/ˈækjərət/', pos: 'adj.', cn: '准确的；精确的', ex: 'Please give me an accurate estimate.', exCn: '请给我一个准确的估算。', tip: 'ac-（去）+ cur（关心/注意）+ ate → 做到位的 → 准确的；care 同源。' },
+  { en: 'acquire', ph: '/əˈkwaɪər/', pos: 'v.', cn: '获得；习得', ex: 'She acquired fluency in French.', exCn: '她掌握了流利的法语。', tip: 'ac-（去）+ quir（寻求）+ e → 去求得 → 获得；同根 require 需要。' },
+  { en: 'adapt', ph: '/əˈdæpt/', pos: 'v.', cn: '适应；改编', ex: 'We must adapt to the new environment.', exCn: '我们必须适应新环境。', tip: 'ad-（朝向）+ apt（适合）→ 使适合 → 适应；adapter 适配器。' },
+  { en: 'adequate', ph: '/ˈædɪkwət/', pos: 'adj.', cn: '充足的；适当的', ex: 'The food supply is not adequate.', exCn: '食物供给不充足。', tip: 'ad-（去）+ equ（相等）+ ate → 达到相等 → 足够的；equal 相等。' },
+  { en: 'advocate', ph: '/ˈædvəkeɪt/', pos: 'v.', cn: '提倡；拥护', ex: 'They advocate a healthy lifestyle.', exCn: '他们提倡健康的生活方式。', tip: 'ad-（加强）+ voc（声音）+ ate → 大声说 → 拥护；voice 声音。' },
+  { en: 'approximate', ph: '/əˈprɑːksɪmət/', pos: 'adj.', cn: '近似的；大约', ex: 'The cost is approximately 100 yuan.', exCn: '花费大约是 100 元。', tip: 'ap-（去）+ proxim（近）+ ate → 靠近 → 近似；proximity 接近。' },
+  { en: 'assign', ph: '/əˈsaɪn/', pos: 'v.', cn: '分配；指派', ex: 'The teacher assigned us homework.', exCn: '老师给我们布置了作业。', tip: 'as-（朝向）+ sign（标记）→ 做上标记分派 → 分配；signal 信号。' },
+  { en: 'assume', ph: '/əˈsuːm/', pos: 'v.', cn: '假定；承担', ex: 'We assume the plan will work.', exCn: '我们假定这个计划可行。', tip: 'as-（朝向）+ sum（拿/承担）→ 承担起来 → 假定/担任；consume 消耗。' },
+  { en: 'attribute', ph: '/əˈtrɪbjuːt/', pos: 'v.', cn: '归因于；特质', ex: 'She attributes her success to hard work.', exCn: '她把成功归因于努力。', tip: 'at-（朝向）+ tribute（给予）→ 把…归于 → 归因；contribute 贡献。' },
+  { en: 'automatic', ph: '/ˌɔːtəˈmætɪk/', pos: 'adj.', cn: '自动的', ex: 'The door opens in an automatic way.', exCn: '门自动打开。', tip: 'auto-（自己）+ mat（动）+ ic → 自己动的 → 自动的；automobile 汽车。' },
+  { en: 'awkward', ph: '/ˈɔːkwərd/', pos: 'adj.', cn: '尴尬的；笨拙的', ex: 'There was an awkward silence.', exCn: '出现了一阵尴尬的沉默。', tip: '谐音「奥客的」→ awkward 难缠的奥客让人尴尬；场景：社交冷场。' },
+  { en: 'brilliant', ph: '/ˈbrɪliənt/', pos: 'adj.', cn: '杰出的；明亮的', ex: 'She had a brilliant idea.', exCn: '她有一个绝妙的想法。', tip: 'brill（发光）+ iant → 闪闪发光的 → 杰出的；场景：灵光一现。' },
+  { en: 'colleague', ph: '/ˈkɑːliːɡ/', pos: 'n.', cn: '同事', ex: 'My colleague helped me finish the report.', exCn: '同事帮我完成了报告。', tip: 'col-（共同）+ league（联盟）→ 同一阵营的人 → 同事；league 联盟。' },
+  { en: 'competent', ph: '/ˈkɑːmpɪtənt/', pos: 'adj.', cn: '胜任的；有能力的', ex: 'He is competent for the job.', exCn: '他能胜任这份工作。', tip: 'com-（共同）+ pet（追求/能力）+ ent → 能比拼的 → 胜任的；compete 竞争。' },
+  { en: 'comprehensive', ph: '/ˌkɑːmprɪˈhensɪv/', pos: 'adj.', cn: '全面的；综合的', ex: 'We need a comprehensive plan.', exCn: '我们需要一个全面的计划。', tip: 'com-（完全）+ prehens（抓住）+ ive → 全抓住的 → 全面的；comprehend 理解。' },
+  { en: 'conscious', ph: '/ˈkɑːnʃəs/', pos: 'adj.', cn: '有意识的；清醒的', ex: 'He is conscious of the risk.', exCn: '他意识到风险。', tip: 'con-（共同）+ sci（知道）+ ous → 知道的 → 有意识的；science 科学（知）。' },
+  { en: 'consequence', ph: '/ˈkɑːnsɪkwens/', pos: 'n.', cn: '后果；结果', ex: 'Face the consequence of your choice.', exCn: '承担你选择的后果。', tip: 'con-（跟着）+ sequ（跟随）+ ence → 随后而来的 → 后果；sequence 顺序。' },
+  { en: 'consistent', ph: '/kənˈsɪstənt/', pos: 'adj.', cn: '一致的；始终如一的', ex: 'His story is consistent with facts.', exCn: '他的说法与事实一致。', tip: 'con-（共同）+ sist（站立）+ ent → 站在一起的 → 一致的；assist 协助。' },
+  { en: 'contemporary', ph: '/kənˈtempəreri/', pos: 'adj.', cn: '当代的；同时代的', ex: 'Contemporary art attracts young people.', exCn: '当代艺术吸引年轻人。', tip: 'con-（共同）+ tempor（时间）+ ary → 同时期的 → 当代的；temporary 暂时的。' },
+  { en: 'crisis', ph: '/ˈkraɪsɪs/', pos: 'n.', cn: '危机', ex: 'The company faces a financial crisis.', exCn: '公司面临财务危机。', tip: '谐音「可来急死」→ crisis 危急时刻急死人；场景：突发状况。' },
+  { en: 'crucial', ph: '/ˈkruːʃl/', pos: 'adj.', cn: '关键的；至关重要的', ex: 'Timing is crucial to success.', exCn: '时机对成功至关重要。', tip: 'cruc（十字）+ ial → 像十字路口一样关键 → 关键的；cross 十字。' },
+  { en: 'decline', ph: '/dɪˈklaɪn/', pos: 'v./n.', cn: '下降；拒绝', ex: 'Sales declined last month.', exCn: '上月销售额下降。', tip: 'de-（向下）+ clin（倾斜）+ e → 向下倾 → 下降/拒绝；incline 倾斜。' },
+  { en: 'distinct', ph: '/dɪˈstɪŋkt/', pos: 'adj.', cn: '不同的；明显的', ex: 'There are two distinct cultures.', exCn: '有两种截然不同的文化。', tip: 'di-（分开）+ sting（刺/戳）→ 分得清清楚楚 → 清楚的；distinguish 区分。' },
+  { en: 'diverse', ph: '/daɪˈvɜːrs/', pos: 'adj.', cn: '多样的；不同的', ex: 'The team is culturally diverse.', exCn: '这个团队文化多元。', tip: 'di-（分开）+ vers（转）+ e → 转向各方 → 多样的；universe 宇宙（万转）。' },
+  { en: 'efficient', ph: '/ɪˈfɪʃnt/', pos: 'adj.', cn: '高效的；效率高的', ex: 'The new system is more efficient.', exCn: '新系统更高效。', tip: 'ef-（出）+ fic（做）+ ient → 做得出的 → 高效的；deficient 不足的。' },
+  { en: 'eliminate', ph: '/ɪˈlɪmɪneɪt/', pos: 'v.', cn: '消除；淘汰', ex: 'We must eliminate errors.', exCn: '我们必须消除错误。', tip: 'e-（出）+ limit（界限）+ ate → 赶出界限 → 淘汰/消除；limit 界限。' },
+  { en: 'emphasize', ph: '/ˈemfəsaɪz/', pos: 'v.', cn: '强调；着重', ex: 'She emphasized the importance of safety.', exCn: '她强调了安全的重要性。', tip: 'em-（加强）+ phas（说/显示）+ ize → 着重说 → 强调；phase 阶段。' },
+  { en: 'enormous', ph: '/ɪˈnɔːrməs/', pos: 'adj.', cn: '巨大的；庞大的', ex: 'The project costs an enormous amount.', exCn: '这个项目耗资巨大。', tip: 'e-（超出）+ norm（标准）+ ous → 超出标准 → 巨大的；normal 正常的。' },
+  { en: 'enthusiastic', ph: '/ɪnˌθuːziˈæstɪk/', pos: 'adj.', cn: '热情的；热心的', ex: 'He is enthusiastic about the plan.', exCn: '他对这个计划充满热情。', tip: 'en-（入）+ thus（神）+ iastic → 神明附体般 → 狂热的/热情的；spontaneous 自发的。' }
 ];
 function highFreqWordsHtml() {
   return `<div class="card mt-2">
@@ -176,7 +206,7 @@ function highFreqWordsHtml() {
           <div class="word-cn">${esc(w.cn)}</div>
           <div class="word-ex">📌 ${esc(w.ex)}</div>
           <div class="word-cn" style="color:#1565c0">↳ ${esc(w.exCn)}</div>
-          <div class="word-mnem"><span class="mnem-ico">💡</span><span class="mnem-body">${esc(w.tip)}</span></div>
+          <div class="word-mnem" onclick="this.classList.toggle('open')"><span class="mnem-ico">💡</span><span class="mnem-body"><b>记忆提示：</b>${esc(w.tip)}</span></div>
         </div>`).join('')}
     </div>
   </div>`;

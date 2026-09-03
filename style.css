@@ -366,7 +366,7 @@ body {
   display: flex; align-items: center; justify-content: center;
 }
 
-.page { display: none; animation: fadeIn 0.25s ease; }
+.page { display: none; animation: fadeIn 0.25s ease; padding-bottom: 92px; }
 .page.active { display: block; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 

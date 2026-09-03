@@ -670,12 +670,13 @@ let wordTab = 'new';
 let wordIdx = 0;
 let wordBatch = store.get('luo_word_batch', 0);
 let learnedSet = new Set(store.get('luo_eng_learned', []));
+let wordDayOffset = store.get('luo_word_day', 0); // 0=今日, -1=上一日, +1=下一日
 
 function pickDailyNew() {
   const all = window.cet4Core || [];
   if (!all.length) return [];
   const n = all.length;
-  const day = Math.floor(Date.now() / 86400000);
+  const day = Math.floor(Date.now() / 86400000) + wordDayOffset;
   // 按「日期 + 批次」偏移，背完一批可换下一批，持续出新词
   const base = ((day + wordBatch * DAILY_NEW) % n + n * 2) % n;
   const arr = [];
@@ -688,7 +689,7 @@ function pickDailyReview(newSet) {
   if (!n) return [];
   const newEn = new Set(newSet.map(w => w.en));
   // 复习窗口随批次推进，与今日新词窗口错开
-  const base = (((Math.floor(Date.now() / 86400000) - 31) + wordBatch * DAILY_REVIEW) % n + n * 2) % n;
+  const base = (((Math.floor(Date.now() / 86400000) - 31) + wordDayOffset + wordBatch * DAILY_REVIEW) % n + n * 2) % n;
   const arr = [];
   for (let i = 0; i < DAILY_REVIEW; i++) {
     const w = all[(base + i) % n];
@@ -705,6 +706,16 @@ function nextWordBatch() {
   wordIdx = 0;
   showWord();
   toast('已切换到第 ' + (wordBatch + 1) + ' 批单词');
+}
+function goWordDay(delta) {
+  wordDayOffset = delta;
+  store.set('luo_word_day', wordDayOffset);
+  newWords = pickDailyNew();
+  reviewWords = pickDailyReview(newWords);
+  wordList = wordTab === 'new' ? newWords : reviewWords;
+  wordIdx = 0;
+  showWord();
+  toast(wordDayOffset === 0 ? '已回到今日单词' : (wordDayOffset < 0 ? '已切换到上一日单词（共 ' + Math.abs(wordDayOffset) + ' 天前）' : '已切换到下一日单词（共 ' + wordDayOffset + ' 天后）'));
 }
 function initDailyWords() {
   if (wordsReady) return;
@@ -746,6 +757,15 @@ function showWord() {
   learnedSet.forEach(en => { if (newWords.concat(reviewWords).some(x => x.en === en)) done++; });
   const bar = document.getElementById('wordProgress');
   if (bar) bar.style.width = (total ? Math.min(100, done / total * 100) : 0) + '%';
+  const lbl = document.getElementById('wordDayLabel');
+  if (lbl) {
+    if (wordDayOffset === 0) lbl.textContent = '📅 今日单词';
+    else {
+      const d = new Date(Date.now() + wordDayOffset * 86400000);
+      const ds = d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate();
+      lbl.textContent = '📅 ' + ds + (wordDayOffset < 0 ? '（过去）' : '（未来）');
+    }
+  }
   document.getElementById('wordGrid').innerHTML = wordList.map((x, i) => `
     <div class="word-cell${learnedSet.has(x.en) ? ' learned' : ''}" onclick="gotoWord(${i})">
       <div class="en">${esc(x.en)}</div><div class="cn">${esc(x.cn || '')}</div>
@@ -761,16 +781,23 @@ function markWordLearned() {
   const wasLearned = learnedSet.has(w);
   if (wasLearned) learnedSet.delete(w); else learnedSet.add(w);
   store.set('luo_eng_learned', [...learnedSet]);
-  // 英语版块：累计背完/复习满 30 词，当日 +5 积分（每日仅一次）
   if (!wasLearned) {
-    let dw = store.get('luo_eng_daily_words', { date: fmtDate(), count: 0, awarded: false });
-    if (dw.date !== fmtDate()) dw = { date: fmtDate(), count: 0, awarded: false };
-    dw.count++;
-    if (dw.count >= 30 && !dw.awarded) { dw.awarded = true; addPoints(5, true); toast('🎉 今日英语单词达标 30 个，+5 积分'); }
-    store.set('luo_eng_daily_words', dw);
+    addPoints(1, true); // 每掌握 1 个单词 +1 积分，即时反馈
+    let msg = '✓ 已掌握 ' + w + '，+1 积分';
+    // 仅「今日单词」(offset=0) 累计背完/复习满 30 词，当日额外 +5（每日仅一次）
+    if (wordDayOffset === 0) {
+      let dw = store.get('luo_eng_daily_words', { date: fmtDate(), count: 0, awarded: false });
+      if (dw.date !== fmtDate()) dw = { date: fmtDate(), count: 0, awarded: false };
+      dw.count++;
+      if (dw.count >= 30 && !dw.awarded) { dw.awarded = true; addPoints(5, true); msg = '🎉 今日达标 30 词！' + w + ' 再 +1，额外 +5 积分'; }
+      store.set('luo_eng_daily_words', dw);
+    }
+    showWord();
+    toast(msg);
+  } else {
+    showWord();
+    toast('已取消掌握 ' + w);
   }
-  showWord();
-  toast(wasLearned ? '已取消掌握' : '已标记掌握 ✓');
   // 整批 30 词全部掌握后，自动切换到下一批新词
   if (!wasLearned) {
     const allLearned = wordList.length > 0 && wordList.every(x => learnedSet.has(x.en));

@@ -144,6 +144,12 @@
               <div class="wb-item">🆕 新词 <b id="wordNewCnt">30</b></div>
               <div class="wb-item">🔁 复习 <b id="wordRevCnt">30</b></div>
             </div>
+            <div class="flex-between mb-2" id="wordDayNav">
+              <button class="btn btn-outline btn-sm" style="flex:1;margin:0 4px" onclick="goWordDay(wordDayOffset - 1)">← 上一日</button>
+              <button class="btn btn-primary btn-sm" style="flex:1;margin:0 4px" onclick="goWordDay(0)">📅 今日单词</button>
+              <button class="btn btn-outline btn-sm" style="flex:1;margin:0 4px" onclick="goWordDay(wordDayOffset + 1)">下一日 →</button>
+            </div>
+            <div class="text-center text-sm text-muted mb-2" id="wordDayLabel"></div>
             <div class="tabs" id="wordTabBtns" style="margin:10px 0">
               <div class="wtab active" data-tab="new" onclick="switchWordTab('new')">新词</div>
               <div class="wtab" data-tab="review" onclick="switchWordTab('review')">复习</div>
@@ -372,9 +378,9 @@
           <div class="section-sub">少年感中性风：妆容、穿搭、电子衣柜、改善建议</div>
           <div class="tabs" id="imageTabs">
             <div class="tab active" data-img="makeup">妆容教学</div>
+            <div class="tab" data-img="wardrobe">电子衣柜</div>
             <div class="tab" data-img="retouch">后期p图</div>
             <div class="tab" data-img="outfit">穿搭教学</div>
-            <div class="tab" data-img="wardrobe">电子衣柜</div>
             <div class="tab" data-img="advice">穿搭建议</div>
           </div>
           <div id="imageMakeupPanel">
@@ -983,17 +989,17 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=19"></script>
-  <script src="cet4_core.js?v=19"></script>
-  <script src="cet4_full.js?v=19"></script>
-  <script src="cet4_enhance.js?v=19"></script>
+  <script src="app.js?v=20"></script>
+  <script src="cet4_core.js?v=20"></script>
+  <script src="cet4_full.js?v=20"></script>
+  <script src="cet4_enhance.js?v=20"></script>
 
-  <script src="gaokao_core.js?v=19"></script>
-  <script src="expansion.js?v=19"></script>
-  <script src="jjwxc_analysis.js?v=19"></script>
+  <script src="gaokao_core.js?v=20"></script>
+  <script src="expansion.js?v=20"></script>
+  <script src="jjwxc_analysis.js?v=20"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=19').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=20').then(reg => {
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;

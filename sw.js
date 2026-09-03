@@ -1,4 +1,4 @@
-const CACHE = 'luo-workbench-v11';
+const CACHE = 'luo-workbench-v12';
 // 相对路径：站点部署在 /luo-workbench/ 子路径下，必须用 ./ 才能正确缓存
 const ASSETS = [
   './',
