@@ -332,6 +332,15 @@ function renderVocab() {
   renderVocabApps();
   renderVocabDouyin();
 }
+let grammarDayOffset = 0, spokenDayOffset = 0;
+function dayLabelFor(o) {
+  if (o === 0) return '📅 今日';
+  if (o === -1) return '📅 上一日';
+  if (o === 1) return '📅 下一日';
+  return `📅 ${o > 0 ? '+' : ''}${o} 日`;
+}
+function goGrammarDay(delta) { grammarDayOffset = delta; renderGrammar(); }
+function goSpokenDay(delta) { spokenDayOffset = delta; renderSpeaking(); }
 function vocabGrammar() {
   const tips = [
     '① 时态：现在完成时 have/has + done，强调「过去发生、影响现在」——I have learned 50 words.',
@@ -385,7 +394,9 @@ function vocabGrammar() {
     '㊾ 动词后接不定式：want/hope/decide/plan——I plan to study abroad.',
     '㊿ to 是介词：look forward to / be used to / devote...to 后接 doing.'
   ];
-  return seededShuffle(tips, todayKey() + '_grammar').slice(0, 5).map(s => '· ' + s).join('<br>');
+  const per = 5, n = Math.ceil(tips.length / per);
+  const idx = (((dayOfYearIndex(n) + grammarDayOffset) % n) + n) % n;
+  return tips.slice(idx * per, idx * per + per).map(s => '· ' + s).join('<br>');
 }
 function vocabSpoken() {
   const sp = [
@@ -440,7 +451,9 @@ function vocabSpoken() {
     'Let\'s wrap this up.（我们收尾吧。）',
     'I\'m rooting for you.（我支持你。）'
   ];
-  return seededShuffle(sp, todayKey() + '_spoken').slice(0, 5).map(s => '· ' + s).join('<br>');
+  const per = 5, n = Math.ceil(sp.length / per);
+  const idx = (((dayOfYearIndex(n) + spokenDayOffset) % n) + n) % n;
+  return sp.slice(idx * per, idx * per + per).map(s => '· ' + s).join('<br>');
 }
 function toggleWordLearned(idx) {
   const i = vocabState.learned.indexOf(idx);
@@ -1375,7 +1388,11 @@ function renderGrammar() {
       <div>${GRAMMAR_TOPICS.map((g, i) => `<span class="gptag ${i === grammarIdx ? 'on' : ''}" onclick="grammarIdx=${i};renderGrammar()">${esc(g.title)}</span>`).join(' ')}</div>
     </div>
     <div class="card mt-2">
-      <div class="font-bold mb-2">📘 常考简单语法（每日轮换 5 条 · 共 50 条）</div>
+      <div class="flex-between mb-2" style="gap:6px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="goGrammarDay(${grammarDayOffset - 1})">‹ 上一日</button>
+        <span class="text-sm" style="font-weight:700;color:#1565c0">${dayLabelFor(grammarDayOffset)} · 共 50 条</span>
+        <button class="btn btn-outline btn-sm" onclick="goGrammarDay(${grammarDayOffset + 1})">下一日 ›</button>
+      </div>
       <div class="text-sm text-muted">${vocabGrammar()}</div>
     </div>`;
 }
@@ -1400,7 +1417,11 @@ function renderSpeaking() {
       <div>${SPEAKING_TOPICS.map((g, i) => `<span class="gptag ${i === speakingIdx ? 'on' : ''}" onclick="speakingIdx=${i};renderSpeaking()">${esc(g.title)}</span>`).join(' ')}</div>
     </div>
     <div class="card mt-2">
-      <div class="font-bold mb-2">💬 实用口语（每日轮换 5 条 · 共 50 条）</div>
+      <div class="flex-between mb-2" style="gap:6px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="goSpokenDay(${spokenDayOffset - 1})">‹ 上一日</button>
+        <span class="text-sm" style="font-weight:700;color:#1565c0">${dayLabelFor(spokenDayOffset)} · 共 50 条</span>
+        <button class="btn btn-outline btn-sm" onclick="goSpokenDay(${spokenDayOffset + 1})">下一日 ›</button>
+      </div>
       <div class="text-sm">${vocabSpoken()}</div>
     </div>`;
 }

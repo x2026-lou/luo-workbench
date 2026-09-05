@@ -323,7 +323,8 @@ const store = {
 };
 
 /* ================= Helpers ================= */
-function fmtDate() { const d = new Date(); return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`; }
+function fmtDate(d = new Date()) { return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`; }
+function fmtDateOffset(offset) { const d = new Date(); d.setDate(d.getDate() + offset); return fmtDate(d); }
 function todayKey() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
 function toast(msg) {
   const t = document.getElementById('toast');
@@ -2176,51 +2177,98 @@ function saveWardrobe() { wardrobe.forEach(normalizeWardrobeItem); store.set('lu
 function wardrobeTypeOf(cat) { const c = WARDROBE_CATEGORIES.find(x => x.k === cat); return c ? c.type : 'other'; }
 let outfitHistory = store.get('luo_outfit_history', []);
 let outfitSuggestions = store.get('luo_outfit_suggestions', []);
+let outfitDayOffset = 0; // 在 loadPersistedState 中从 store 加载，避免 hydration 时序 bug
 function seasonFit(item, season) { return item.season === '四季' || item.season === season; }
+function outfitTargetDate() { return fmtDateOffset(outfitDayOffset); }
+function outfitDayLabel() {
+  if (outfitDayOffset === 0) return '📅 今日穿搭';
+  if (outfitDayOffset === -1) return '📅 上一日';
+  if (outfitDayOffset === 1) return '📅 下一日';
+  return `📅 ${outfitDayOffset > 0 ? '+' : ''}${outfitDayOffset} 日`;
+}
+function goOutfitDay(delta) {
+  outfitDayOffset = delta;
+  store.set('luo_outfit_day', outfitDayOffset);
+  renderOutfit();
+}
 function genOutfit() {
   if (wardrobe.length === 0) return toast('请先在衣柜上传单品');
   wardrobe.forEach(normalizeWardrobeItem);
   const season = currentSeason();
   const pool = wardrobe.filter(it => seasonFit(it, season));
   if (pool.length < 2) return toast('当前季节的单品不足，请多上传或把单品季节设为四季');
-  const tops = pool.filter(it => wardrobeTypeOf(it.category) === 'top');
+  // 按穿搭层次分组（上衣类可互相叠穿）
+  const G = { base: ['短袖','背心','长袖','衬衣'], mid: ['马甲','毛衣'], outer: ['外套','西装','大衣'] };
+  const base = pool.filter(it => G.base.includes(it.category));
+  const mid = pool.filter(it => G.mid.includes(it.category));
+  const outer = pool.filter(it => G.outer.includes(it.category));
   const bottoms = pool.filter(it => wardrobeTypeOf(it.category) === 'bottom');
   const shoes = pool.filter(it => wardrobeTypeOf(it.category) === 'shoes');
-  if (!tops.length || !bottoms.length || !shoes.length) return toast('缺少必备品类（上衣/裤子/鞋子），请补充对应分类单品');
   const acc = pool.filter(it => wardrobeTypeOf(it.category) === 'accessory');
-  const seed = todayKey();
-  const today = fmtDate();
-  // 一次生成 3 套不同组合；每件单品可在多套中重复出现
-  const count = Math.min(3, Math.min(tops.length, bottoms.length, shoes.length));
+  if (!base.length && !mid.length && !outer.length) return toast('缺少上衣类单品（短袖/背心/长袖/衬衣/外套/西装/马甲/毛衣/大衣），请补充');
+  if (!bottoms.length || !shoes.length) return toast('缺少必备品类（裤子/鞋子），请补充对应分类单品');
+
+  const targetDate = outfitTargetDate();
+  const seed = todayKey() + '_' + outfitDayOffset;
+  // 锚定单品：用全部上衣类单品各生成一套，确保每件衣服都能被搭配到
+  const anchors = base.concat(mid, outer);
+  const count = Math.min(6, anchors.length);
+  const gen = [];
   for (let i = 0; i < count; i++) {
-    const items = [
-      seededShuffle(tops, seed + 'top' + i)[0],
-      seededShuffle(bottoms, seed + 'bottom' + i)[0],
-      seededShuffle(shoes, seed + 'shoes' + i)[0]
-    ];
-    if (acc.length) items.push(seedShuffleMore(acc, seed + 'acc' + i));
-    outfitSuggestions.unshift({ id: Date.now() + i, date: today, season, items: items.map(it => ({ id: it.id, name: it.name, img: it.img })), note: '' });
+    const anchor = anchors[i];
+    const layer = G.outer.includes(anchor.category) ? 'outer' : G.mid.includes(anchor.category) ? 'mid' : 'base';
+    const items = [];
+    // 季节叠穿规则：夏只单穿；春/秋可加外套或马甲；冬叠加更厚
+    if (layer === 'outer') {
+      if (season !== '夏' && base.length) items.unshift(seedShuffleMore(base, seed + 'base' + i));
+      items.push(anchor);
+    } else if (layer === 'mid') {
+      if (season === '冬' && base.length) items.unshift(seedShuffleMore(base, seed + 'base' + i));
+      items.push(anchor);
+      if ((season === '冬' || season === '秋') && outer.length) items.push(seedShuffleMore(outer, seed + 'outer' + i));
+    } else {
+      items.push(anchor);
+      if (season === '冬' && outer.length) items.push(seedShuffleMore(outer, seed + 'outer' + i));
+      else if (season === '冬' && mid.length) items.push(seedShuffleMore(mid, seed + 'mid' + i));
+      else if ((season === '秋' || season === '春') && (outer.length || mid.length)) items.push(seedShuffleMore(outer.concat(mid), seed + 'layer' + i));
+    }
+    items.push(seedShuffleMore(bottoms, seed + 'bottom' + i));
+    items.push(seedShuffleMore(shoes, seed + 'shoes' + i));
+    if (acc.length) { const a = seedShuffleMore(acc, seed + 'acc' + i); if (a) items.push(a); }
+    // 去重（同一单品不重复出现）
+    const seen = new Set();
+    const finalItems = items.filter(it => it && !seen.has(it.id) ? (seen.add(it.id), true) : false);
+    gen.push({ id: Date.now() + i, date: targetDate, season, items: finalItems.map(it => ({ id: it.id, name: it.name, img: it.img, category: it.category })), note: '' });
   }
+  // 替换目标日期已有的建议，避免重复堆积
+  outfitSuggestions = outfitSuggestions.filter(o => o.date !== targetDate).concat(gen);
   store.set('luo_outfit_suggestions', outfitSuggestions);
   renderOutfit();
-  toast('已生成 ' + count + ' 套今日穿搭');
+  toast('已生成 ' + gen.length + ' 套「' + season + '」穿搭' + (outfitDayOffset ? '（' + outfitDayLabel() + '）' : ''));
 }
 function seedShuffleMore(arr, seed) { const s = seededShuffle(arr, seed); return s[0]; }
 function renderOutfit() {
   const today = document.getElementById('outfitToday'); if (!today) return;
-  const todayList = outfitSuggestions.filter(o => o.date === fmtDate());
-  today.innerHTML = todayList.length ? todayList.map((t, idx) => `
+  const target = outfitTargetDate();
+  const list = outfitSuggestions.filter(o => o.date === target);
+  const nav = `
+    <div class="flex-between mb-2" style="gap:6px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="goOutfitDay(${outfitDayOffset - 1})">‹ 上一日</button>
+      <span class="text-sm" style="font-weight:700;color:#1565c0">${outfitDayLabel()}</span>
+      <button class="btn btn-outline btn-sm" onclick="goOutfitDay(${outfitDayOffset + 1})">下一日 ›</button>
+    </div>`;
+  today.innerHTML = nav + (list.length ? list.map((t, idx) => `
     <div class="card mt-2">
-      <div class="flex-between mb-2"><span class="font-bold">今日 ${esc(t.season)} 穿搭 ${idx + 1}</span><span class="text-sm text-muted">${esc(t.date)}</span></div>
+      <div class="flex-between mb-2"><span class="font-bold">${esc(t.season)} 穿搭 ${idx + 1}</span><span class="text-sm text-muted">${esc(t.date)}</span></div>
       <div class="outfit-items">${t.items.map(it => `<img src="${it.img}" class="outfit-thumb" alt="${esc(it.name)}">`).join('')}</div>
       <div class="text-sm mt-2">组合：<b>${t.items.map(it => it.name).join(' + ')}</b></div>
       <div class="mt-2" style="display:flex;gap:6px;flex-wrap:wrap">
         <input type="text" class="form-input flex-1" id="outfitNote-${t.id}" value="${esc(t.note)}" placeholder="给这套穿搭写个备注">
         <button class="btn btn-primary btn-sm" onclick="saveOutfitNote(${t.id})">保存备注</button>
       </div>
-    </div>`).join('') : '<div class="text-sm text-muted">还没有生成今日穿搭</div>';
+    </div>`).join('') : '<div class="text-sm text-muted">该日期还没有穿搭，点上方「生成穿搭建议」试试</div>');
   const hist = document.getElementById('outfitHistory');
-  const older = outfitSuggestions.filter(o => o.date !== fmtDate());
+  const older = outfitSuggestions.filter(o => o.date !== target).sort((a, b) => b.date.localeCompare(a.date));
   hist.innerHTML = older.length ? '<div class="font-bold mb-2 text-sm">📅 历史穿搭记录</div>' + older.map(o => `
     <div class="card-flat">
       <div class="flex-between mb-2"><span class="text-sm text-muted">${esc(o.date)} · ${esc(o.season)}</span><button class="wardrobe-del" style="position:static" onclick="deleteOutfitSuggestion(${o.id})">×</button></div>
@@ -2243,30 +2291,28 @@ function renderWardrobe() {
   const grid = document.getElementById('wardrobeGrid');
   wardrobe.forEach(normalizeWardrobeItem);
   let html = wardrobe.map((item, i) => `
-    <div class="wardrobe-item" style="position:relative">
-      <img src="${item.img}" alt="${esc(item.name)}">
-      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,0.92);font-size:10px;padding:3px 2px;text-align:center;line-height:1.4">
-        <div>${esc(item.name)}</div>
+    <div class="wardrobe-item">
+      <div class="wardrobe-img"><img src="${item.img}" alt="${esc(item.name)}"></div>
+      <div class="wardrobe-info">
+        <div class="wardrobe-toolbar">
+          <select class="wardrobe-cat" onchange="updateWardrobeItem(${i}, 'category', this.value)">${WARDROBE_CATEGORIES.map(c => `<option value="${c.k}" ${item.category === c.k ? 'selected' : ''}>${c.k}</option>`).join('')}</select>
+          <select class="wardrobe-season" onchange="updateWardrobeItem(${i}, 'season', this.value)">${WARDROBE_SEASONS.map(s => `<option value="${s}" ${item.season === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+          <span class="wardrobe-fav">${gstar('wd-' + item.id, '电子衣橱', item.name, '')}</span>
+          <button class="wardrobe-del" onclick="deleteWardrobe(${i})">×</button>
+        </div>
+        <div class="wardrobe-name">${esc(item.name)}</div>
         <div class="wardrobe-tags"><span class="wardrobe-tag">${esc(item.category)}</span><span class="wardrobe-tag">${esc(item.season)}</span></div>
-      </div>
-      <div class="wardrobe-actions">
-        ${gstar('wd-' + item.id, '电子衣橱', item.name, '')}
-        <button class="wardrobe-del" onclick="deleteWardrobe(${i})">×</button>
-      </div>
-      <div class="wardrobe-meta">
-        <select class="form-input" style="padding:4px 6px;font-size:11px;min-width:60px;border-radius:6px" onchange="updateWardrobeItem(${i}, 'category', this.value)">${WARDROBE_CATEGORIES.map(c => `<option value="${c.k}" ${item.category === c.k ? 'selected' : ''}>${c.k}</option>`).join('')}</select>
-        <select class="form-input" style="padding:4px 6px;font-size:11px;min-width:50px;border-radius:6px" onchange="updateWardrobeItem(${i}, 'season', this.value)">${WARDROBE_SEASONS.map(s => `<option value="${s}" ${item.season === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
       </div>
     </div>
   `).join('');
-  if (wardrobe.length < 9) {
-    html += `
-      <label class="wardrobe-item">
-        <span style="font-size:24px">📷</span><span>拍照/多选添加</span>
-        <input type="file" accept="image/*" multiple style="display:none" onchange="uploadWardrobe(this)">
-      </label>
-    `;
-  }
+  // 始终保留上传入口，不再限制 9 件
+  html += `
+    <label class="wardrobe-item wardrobe-add">
+      <div class="wardrobe-img" style="display:flex;align-items:center;justify-content:center"><span style="font-size:26px">📷</span></div>
+      <div class="wardrobe-info"><div class="wardrobe-name">拍照/多选</div></div>
+      <input type="file" accept="image/*" multiple style="display:none" onchange="uploadWardrobe(this)">
+    </label>
+  `;
   grid.innerHTML = html;
 }
 function updateWardrobeItem(i, key, value) {
@@ -3756,6 +3802,7 @@ function loadPersistedState() {
   wardrobe.forEach(normalizeWardrobeItem);
   outfitHistory = store.get('luo_outfit_history', outfitHistory);
   outfitSuggestions = store.get('luo_outfit_suggestions', outfitSuggestions);
+  outfitDayOffset = store.get('luo_outfit_day', outfitDayOffset);
   excerpts = store.get('luo_excerpts', excerpts);
   guitarSeconds = store.get('luo_guitar_seconds', guitarSeconds);
   recipes = store.get('luo_recipes', recipes);
