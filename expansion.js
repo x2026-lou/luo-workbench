@@ -153,66 +153,66 @@ function vocabBatches() {
 }
 /* ================= 高频词详解（中英文释义 / 音标 / 真实场景例句+翻译 / 记忆提示） ================= */
 const HIGH_FREQ_WORDS = [
-  { en: 'abandon', ph: '/əˈbændən/', pos: 'v.', cn: '放弃；抛弃', ex: 'They had to abandon the plan due to lack of funds.', exCn: '由于资金不足，他们不得不放弃这个计划。', root: 'a-（不）+ bandon（约束）→ 不再受约束 → 抛弃', phonetic: '阿板凳', scene: '' },
-  { en: 'achieve', ph: '/əˈtʃiːv/', pos: 'v.', cn: '实现；达成', ex: 'She achieved her goal through years of effort.', exCn: '她通过多年努力实现了目标。', root: 'a（朝向）+ chieve（chief 首领）→ 走到首领位置 → 达成', phonetic: '', scene: '年终 KPI 达成' },
-  { en: 'analyze', ph: '/ˈænəlaɪz/', pos: 'v.', cn: '分析；剖析', ex: 'We need to analyze the data before making a decision.', exCn: '做决定前我们需要先分析数据。', root: 'ana-（贯穿）+ lyze（松开）→ 拆开来看 → 分析；同根 analysis（分析）。', phonetic: '', scene: '' },
-  { en: 'benefit', ph: '/ˈbenɪfɪt/', pos: 'n./v.', cn: '益处；使受益', ex: 'Regular exercise benefits both body and mind.', exCn: '规律运动对身心都有益。', root: 'bene-（好）+ fit（做）→ 做的好事 → 益处；beneficial 有益的。', phonetic: '', scene: '' },
-  { en: 'contribute', ph: '/kənˈtrɪbjuːt/', pos: 'v.', cn: '贡献；投稿', ex: 'Everyone contributed to the success of the project.', exCn: '每个人都对项目成功作出了贡献。', root: 'con-（共同）+ tribute（给予）→ 共同给予 → 贡献；attribute 归因。', phonetic: '', scene: '' },
-  { en: 'demonstrate', ph: '/ˈdemənstreɪt/', pos: 'v.', cn: '证明；演示', ex: 'The study demonstrates a clear link between sleep and memory.', exCn: '研究证明了睡眠与记忆之间的明确关联。', root: 'de-（完全）+ monstr（展示）+ ate → 充分展示 → 证明/演示。', phonetic: '', scene: '' },
-  { en: 'establish', ph: '/ɪˈstæblɪʃ/', pos: 'v.', cn: '建立；确立', ex: 'The company was established in 2010.', exCn: '这家公司成立于 2010 年。', root: 'e-（出）+ stable（稳定）+ ish → 使稳定下来 → 建立；establishment 机构。', phonetic: '', scene: '' },
-  { en: 'fundamental', ph: '/ˌfʌndəˈmentl/', pos: 'adj.', cn: '基本的；根本的', ex: 'Trust is fundamental to any relationship.', exCn: '信任是任何关系的基础。', root: 'fund（基础）+ a + mental（心智）→ 基础的；foundation 根基。', phonetic: '', scene: '' },
-  { en: 'significant', ph: '/sɪɡˈnɪfɪkənt/', pos: 'adj.', cn: '重要的；显著的', ex: 'There was a significant rise in sales last quarter.', exCn: '上季度销售额显著上升。', root: 'sign（记号）+ i + fic（做）+ ant → 做出标记的 → 重要的；signify 意味着。', phonetic: '', scene: '' },
-  { en: 'circumstance', ph: '/ˈsɜːrkəmstæns/', pos: 'n.', cn: '情况；环境', ex: 'Under no circumstances should you give up.', exCn: '无论如何你都不应放弃。', root: 'circum-（环绕）+ stance（站立）→ 站在周围的事物 → 环境；站姿 stance。', phonetic: '', scene: '' },
-  { en: 'nevertheless', ph: '/ˌnevərðəˈles/', pos: 'adv.', cn: '然而；尽管如此', ex: 'The task was hard; nevertheless, they finished it.', exCn: '任务很难，尽管如此他们还是完成了。', root: 'never（从不）+ the + less（更少）→ 虽不更少 → 尽管如此；= however。', phonetic: '', scene: '' },
-  { en: 'phenomenon', ph: '/fəˈnɑːmɪnən/', pos: 'n.', cn: '现象', ex: 'Climate change is a global phenomenon.', exCn: '气候变化是一个全球性现象。', root: 'pheno-（显现）+ menon（事物）→ 显现出来的事物 → 现象；复数 phenomena。', phonetic: '', scene: '' },
-  { en: 'pursue', ph: '/pərˈsuː/', pos: 'v.', cn: '追求；从事', ex: 'He pursued a career in medicine.', exCn: '他从事医学职业。', root: 'pur（前，pro 变体）+ sue（跟随）→ 在后面追 → 追求；pursuit 追求。', phonetic: '', scene: '' },
-  { en: 'sufficient', ph: '/səˈfɪʃnt/', pos: 'adj.', cn: '足够的', ex: 'We have sufficient evidence to support the claim.', exCn: '我们有足够的证据支持这一说法。', root: 'suf-（下）+ fic（做）+ ient → 做到底下的 → 足够的；deficient 不足的。', phonetic: '', scene: '' },
-  { en: 'transform', ph: '/trænsˈfɔːrm/', pos: 'v.', cn: '使改变；转化', ex: 'The internet transformed how we communicate.', exCn: '互联网改变了我们的沟通方式。', root: 'trans-（跨越）+ form（形状）→ 改变形状 → 转变；transformation 转型。', phonetic: '', scene: '' },
-  { en: 'underestimate', ph: '/ˌʌndərˈestɪmeɪt/', pos: 'v.', cn: '低估', ex: 'Don’t underestimate the difficulty of the exam.', exCn: '别低估这场考试的难度。', root: 'under（不足）+ estimate（估计）→ 估计不足 → 低估；overestimate 高估。', phonetic: '', scene: '' },
-  { en: 'vital', ph: '/ˈvaɪtl/', pos: 'adj.', cn: '至关重要的', ex: 'Water is vital to all living things.', exCn: '水对所有生物都至关重要。', root: 'vit（生命，如 vitamin 维生素）+ al → 关乎生命的 → 至关重要的。', phonetic: '', scene: '' },
-  { en: 'widespread', ph: '/ˈwaɪdspred/', pos: 'adj.', cn: '广泛的；普遍的', ex: 'There is widespread support for the policy.', exCn: '这项政策得到广泛支持。', root: 'wide（广）+ spread（传播）→ 广泛传播的 → 普遍的。', phonetic: '', scene: '' },
-  { en: 'confront', ph: '/kənˈfrʌnt/', pos: 'v.', cn: '面对；对抗', ex: 'We must confront the problem directly.', exCn: '我们必须直面对这个问题。', root: 'con-（共同）+ front（前面）→ 站到前面一起 → 面对；front 前面。', phonetic: '', scene: '' },
-  { en: 'illustrate', ph: '/ˈɪləstreɪt/', pos: 'v.', cn: '说明；举例阐明', ex: 'The chart illustrates the change in population.', exCn: '该图表说明了人口的变化。', root: 'il-（入）+ lustr（光）+ ate → 照亮 → 说明；illustration 插图。', phonetic: '', scene: '' },
-  { en: 'obstacle', ph: '/ˈɑːbstəkl/', pos: 'n.', cn: '障碍', ex: 'Fear of failure is the biggest obstacle.', exCn: '对失败的恐惧是最大的障碍。', root: 'ob-（反）+ sta（站立）+ cle → 挡在前面站着的 → 障碍；stand 站。', phonetic: '', scene: '' },
-  { en: 'perspective', ph: '/pərˈspektɪv/', pos: 'n.', cn: '观点；视角', ex: 'Try to see it from a different perspective.', exCn: '试着从不同角度看这件事。', root: 'per-（透过）+ spect（看）+ ive → 透过去看 → 视角；inspect 检查。', phonetic: '', scene: '' },
-  { en: 'reluctant', ph: '/rɪˈlʌktənt/', pos: 'adj.', cn: '不情愿的', ex: 'He was reluctant to admit the mistake.', exCn: '他不情愿承认错误。', root: 're-（回）+ luct（挣扎）+ ant → 往后挣扎 → 不情愿的；reluctance 不情愿。', phonetic: '', scene: '' },
-  { en: 'tendency', ph: '/ˈtendənsi/', pos: 'n.', cn: '趋势；倾向', ex: 'There is a tendency to work late in big cities.', exCn: '大城市里有熬夜工作的倾向。', root: 'tend（趋向）+ ency（名词后缀）→ 趋向；tend 照料/倾向。', phonetic: '', scene: '' },
-  { en: 'absorb', ph: '/əbˈsɔːrb/', pos: 'v.', cn: '吸收；理解', ex: 'The sponge absorbs water quickly.', exCn: '海绵很快吸收水分。', root: 'ab-（加强）+ sorb（吸）→ 吸收；同根 absorbent 吸水的。', phonetic: '', scene: '' },
-  { en: 'accurate', ph: '/ˈækjərət/', pos: 'adj.', cn: '准确的；精确的', ex: 'Please give me an accurate estimate.', exCn: '请给我一个准确的估算。', root: 'ac-（去）+ cur（关心/注意）+ ate → 做到位的 → 准确的；care 同源。', phonetic: '', scene: '' },
-  { en: 'acquire', ph: '/əˈkwaɪər/', pos: 'v.', cn: '获得；习得', ex: 'She acquired fluency in French.', exCn: '她掌握了流利的法语。', root: 'ac-（去）+ quir（寻求）+ e → 去求得 → 获得；同根 require 需要。', phonetic: '', scene: '' },
-  { en: 'adapt', ph: '/əˈdæpt/', pos: 'v.', cn: '适应；改编', ex: 'We must adapt to the new environment.', exCn: '我们必须适应新环境。', root: 'ad-（朝向）+ apt（适合）→ 使适合 → 适应；adapter 适配器。', phonetic: '', scene: '' },
-  { en: 'adequate', ph: '/ˈædɪkwət/', pos: 'adj.', cn: '充足的；适当的', ex: 'The food supply is not adequate.', exCn: '食物供给不充足。', root: 'ad-（去）+ equ（相等）+ ate → 达到相等 → 足够的；equal 相等。', phonetic: '', scene: '' },
-  { en: 'advocate', ph: '/ˈædvəkeɪt/', pos: 'v.', cn: '提倡；拥护', ex: 'They advocate a healthy lifestyle.', exCn: '他们提倡健康的生活方式。', root: 'ad-（加强）+ voc（声音）+ ate → 大声说 → 拥护；voice 声音。', phonetic: '', scene: '' },
-  { en: 'approximate', ph: '/əˈprɑːksɪmət/', pos: 'adj.', cn: '近似的；大约', ex: 'The cost is approximately 100 yuan.', exCn: '花费大约是 100 元。', root: 'ap-（去）+ proxim（近）+ ate → 靠近 → 近似；proximity 接近。', phonetic: '', scene: '' },
-  { en: 'assign', ph: '/əˈsaɪn/', pos: 'v.', cn: '分配；指派', ex: 'The teacher assigned us homework.', exCn: '老师给我们布置了作业。', root: 'as-（朝向）+ sign（标记）→ 做上标记分派 → 分配；signal 信号。', phonetic: '', scene: '' },
-  { en: 'assume', ph: '/əˈsuːm/', pos: 'v.', cn: '假定；承担', ex: 'We assume the plan will work.', exCn: '我们假定这个计划可行。', root: 'as-（朝向）+ sum（拿/承担）→ 承担起来 → 假定/担任；consume 消耗。', phonetic: '', scene: '' },
-  { en: 'attribute', ph: '/əˈtrɪbjuːt/', pos: 'v.', cn: '归因于；特质', ex: 'She attributes her success to hard work.', exCn: '她把成功归因于努力。', root: 'at-（朝向）+ tribute（给予）→ 把…归于 → 归因；contribute 贡献。', phonetic: '', scene: '' },
-  { en: 'automatic', ph: '/ˌɔːtəˈmætɪk/', pos: 'adj.', cn: '自动的', ex: 'The door opens in an automatic way.', exCn: '门自动打开。', root: 'auto-（自己）+ mat（动）+ ic → 自己动的 → 自动的；automobile 汽车。', phonetic: '', scene: '' },
+  { en: 'abandon', ph: '/əˈbændən/', pos: 'v.', cn: '放弃；抛弃', ex: 'They had to abandon the plan due to lack of funds.', exCn: '由于资金不足，他们不得不放弃这个计划。', root: 'a-（不）+ bandon（约束）→ 不再受约束 → 抛弃', phonetic: '阿板凳 → abandon 阿板凳被落在月台只能「放弃」', scene: '行李箱被落在月台，只能 abandon 这趟行程' },
+  { en: 'achieve', ph: '/əˈtʃiːv/', pos: 'v.', cn: '实现；达成', ex: 'She achieved her goal through years of effort.', exCn: '她通过多年努力实现了目标。', root: 'a（朝向）+ chieve（chief 首领）→ 走到首领位置 → 达成', phonetic: '阿起乌 → achieve 阿起乌一步步达成目标', scene: '年终 KPI 达成' },
+  { en: 'analyze', ph: '/ˈænəlaɪz/', pos: 'v.', cn: '分析；剖析', ex: 'We need to analyze the data before making a decision.', exCn: '做决定前我们需要先分析数据。', root: 'ana-（贯穿）+ lyze（松开）→ 拆开来看 → 分析；同根 analysis（分析）。', phonetic: '安娜来兹 → analyze 安娜来兹把问题拆开分析', scene: '拿到一堆数据，先 analyze 再下结论' },
+  { en: 'benefit', ph: '/ˈbenɪfɪt/', pos: 'n./v.', cn: '益处；使受益', ex: 'Regular exercise benefits both body and mind.', exCn: '规律运动对身心都有益。', root: 'bene-（好）+ fit（做）→ 做的好事 → 益处；beneficial 有益的。', phonetic: '贝尼费特 → benefit 贝尼费特得了好处', scene: '规律运动让身心都 benefit' },
+  { en: 'contribute', ph: '/kənˈtrɪbjuːt/', pos: 'v.', cn: '贡献；投稿', ex: 'Everyone contributed to the success of the project.', exCn: '每个人都对项目成功作出了贡献。', root: 'con-（共同）+ tribute（给予）→ 共同给予 → 贡献；attribute 归因。', phonetic: '肯吹比尤特 → contribute 肯吹牛特也要贡献力量（别光说）', scene: '每人都为项目成功 contribute 一份' },
+  { en: 'demonstrate', ph: '/ˈdemənstreɪt/', pos: 'v.', cn: '证明；演示', ex: 'The study demonstrates a clear link between sleep and memory.', exCn: '研究证明了睡眠与记忆之间的明确关联。', root: 'de-（完全）+ monstr（展示）+ ate → 充分展示 → 证明/演示。', phonetic: '代蒙斯吹特 → demonstrate 代蒙斯演示给你看', scene: '老师用实验 demonstrate 原理' },
+  { en: 'establish', ph: '/ɪˈstæblɪʃ/', pos: 'v.', cn: '建立；确立', ex: 'The company was established in 2010.', exCn: '这家公司成立于 2010 年。', root: 'e-（出）+ stable（稳定）+ ish → 使稳定下来 → 建立；establishment 机构。', phonetic: '伊斯塔布利什 → establish 伊斯塔布利什把公司建起来', scene: '2010 年 establish 一家新公司' },
+  { en: 'fundamental', ph: '/ˌfʌndəˈmentl/', pos: 'adj.', cn: '基本的；根本的', ex: 'Trust is fundamental to any relationship.', exCn: '信任是任何关系的基础。', root: 'fund（基础）+ a + mental（心智）→ 基础的；foundation 根基。', phonetic: '方的门偷 → fundamental 方的门偷不走的根基', scene: '信任是任何关系的 fundamental' },
+  { en: 'significant', ph: '/sɪɡˈnɪfɪkənt/', pos: 'adj.', cn: '重要的；显著的', ex: 'There was a significant rise in sales last quarter.', exCn: '上季度销售额显著上升。', root: 'sign（记号）+ i + fic（做）+ ant → 做出标记的 → 重要的；signify 意味着。', phonetic: '吸个你飞肯特 → significant 吸个你飞肯特的重要变化', scene: '上季度销量显著（significant）上升' },
+  { en: 'circumstance', ph: '/ˈsɜːrkəmstæns/', pos: 'n.', cn: '情况；环境', ex: 'Under no circumstances should you give up.', exCn: '无论如何你都不应放弃。', root: 'circum-（环绕）+ stance（站立）→ 站在周围的事物 → 环境；站姿 stance。', phonetic: '色肯姆斯唐斯 → circumstance 色肯姆斯唐斯周围的情况', scene: 'under no circumstances 无论如何都不放弃' },
+  { en: 'nevertheless', ph: '/ˌnevərðəˈles/', pos: 'adv.', cn: '然而；尽管如此', ex: 'The task was hard; nevertheless, they finished it.', exCn: '任务很难，尽管如此他们还是完成了。', root: 'never（从不）+ the + less（更少）→ 虽不更少 → 尽管如此；= however。', phonetic: '耐佛泽莱斯 → nevertheless 耐佛泽莱斯还是做完了', scene: '任务难，nevertheless 完成' },
+  { en: 'phenomenon', ph: '/fəˈnɑːmɪnən/', pos: 'n.', cn: '现象', ex: 'Climate change is a global phenomenon.', exCn: '气候变化是一个全球性现象。', root: 'pheno-（显现）+ menon（事物）→ 显现出来的事物 → 现象；复数 phenomena。', phonetic: '佛纳米嫩 → phenomenon 佛纳米嫩显现的现象', scene: '气候变化是全球 phenomenon' },
+  { en: 'pursue', ph: '/pərˈsuː/', pos: 'v.', cn: '追求；从事', ex: 'He pursued a career in medicine.', exCn: '他从事医学职业。', root: 'pur（前，pro 变体）+ sue（跟随）→ 在后面追 → 追求；pursuit 追求。', phonetic: '婆苏 → pursue 婆苏在后面追（追求）', scene: '他 pursue 医学事业' },
+  { en: 'sufficient', ph: '/səˈfɪʃnt/', pos: 'adj.', cn: '足够的', ex: 'We have sufficient evidence to support the claim.', exCn: '我们有足够的证据支持这一说法。', root: 'suf-（下）+ fic（做）+ ient → 做到底下的 → 足够的；deficient 不足的。', phonetic: '撒非申特 → sufficient 撒非申特有足够证据', scene: '我们有 sufficient 证据支持说法' },
+  { en: 'transform', ph: '/trænsˈfɔːrm/', pos: 'v.', cn: '使改变；转化', ex: 'The internet transformed how we communicate.', exCn: '互联网改变了我们的沟通方式。', root: 'trans-（跨越）+ form（形状）→ 改变形状 → 转变；transformation 转型。', phonetic: '穿斯佛姆 → transform 穿斯佛姆改变形状（变形）', scene: '互联网 transform 沟通方式' },
+  { en: 'underestimate', ph: '/ˌʌndərˈestɪmeɪt/', pos: 'v.', cn: '低估', ex: 'Don’t underestimate the difficulty of the exam.', exCn: '别低估这场考试的难度。', root: 'under（不足）+ estimate（估计）→ 估计不足 → 低估；overestimate 高估。', phonetic: '安的艾斯提美特 → underestimate 安的艾斯提美特估计不足', scene: '别 underestimate 考试难度' },
+  { en: 'vital', ph: '/ˈvaɪtl/', pos: 'adj.', cn: '至关重要的', ex: 'Water is vital to all living things.', exCn: '水对所有生物都至关重要。', root: 'vit（生命，如 vitamin 维生素）+ al → 关乎生命的 → 至关重要的。', phonetic: '歪偷 → vital 歪偷关乎生命，至关重要', scene: '水对生物 vital' },
+  { en: 'widespread', ph: '/ˈwaɪdspred/', pos: 'adj.', cn: '广泛的；普遍的', ex: 'There is widespread support for the policy.', exCn: '这项政策得到广泛支持。', root: 'wide（广）+ spread（传播）→ 广泛传播的 → 普遍的。', phonetic: '歪的斯普瑞德 → widespread 歪的斯普瑞德广泛传播', scene: '政策得到 widespread 支持' },
+  { en: 'confront', ph: '/kənˈfrʌnt/', pos: 'v.', cn: '面对；对抗', ex: 'We must confront the problem directly.', exCn: '我们必须直面对这个问题。', root: 'con-（共同）+ front（前面）→ 站到前面一起 → 面对；front 前面。', phonetic: '肯弗兰特 → confront 肯弗兰特站到前面面对', scene: '必须 confront 问题' },
+  { en: 'illustrate', ph: '/ˈɪləstreɪt/', pos: 'v.', cn: '说明；举例阐明', ex: 'The chart illustrates the change in population.', exCn: '该图表说明了人口的变化。', root: 'il-（入）+ lustr（光）+ ate → 照亮 → 说明；illustration 插图。', phonetic: '伊勒斯特雷特 → illustrate 伊勒斯特雷特用图说明', scene: '图表 illustrate 人口变化' },
+  { en: 'obstacle', ph: '/ˈɑːbstəkl/', pos: 'n.', cn: '障碍', ex: 'Fear of failure is the biggest obstacle.', exCn: '对失败的恐惧是最大的障碍。', root: 'ob-（反）+ sta（站立）+ cle → 挡在前面站着的 → 障碍；stand 站。', phonetic: '奥布斯特寇 → obstacle 奥布斯特寇挡在前面（障碍）', scene: '对失败的恐惧是最大 obstacle' },
+  { en: 'perspective', ph: '/pərˈspektɪv/', pos: 'n.', cn: '观点；视角', ex: 'Try to see it from a different perspective.', exCn: '试着从不同角度看这件事。', root: 'per-（透过）+ spect（看）+ ive → 透过去看 → 视角；inspect 检查。', phonetic: '婆斯派克提夫 → perspective 婆斯派克提夫透视角度看', scene: '换个 perspective 看问题' },
+  { en: 'reluctant', ph: '/rɪˈlʌktənt/', pos: 'adj.', cn: '不情愿的', ex: 'He was reluctant to admit the mistake.', exCn: '他不情愿承认错误。', root: 're-（回）+ luct（挣扎）+ ant → 往后挣扎 → 不情愿的；reluctance 不情愿。', phonetic: '瑞拉克腾特 → reluctant 瑞拉克腾特往后挣扎不情愿', scene: '他不情愿（reluctant）承认错误' },
+  { en: 'tendency', ph: '/ˈtendənsi/', pos: 'n.', cn: '趋势；倾向', ex: 'There is a tendency to work late in big cities.', exCn: '大城市里有熬夜工作的倾向。', root: 'tend（趋向）+ ency（名词后缀）→ 趋向；tend 照料/倾向。', phonetic: '谈等斯 → tendency 谈等斯趋向（倾向）', scene: '大城市有熬夜 tendency' },
+  { en: 'absorb', ph: '/əbˈsɔːrb/', pos: 'v.', cn: '吸收；理解', ex: 'The sponge absorbs water quickly.', exCn: '海绵很快吸收水分。', root: 'ab-（加强）+ sorb（吸）→ 吸收；同根 absorbent 吸水的。', phonetic: '阿波索波 → absorb 阿波索波海绵吸水（吸收）', scene: '海绵很快 absorb 水' },
+  { en: 'accurate', ph: '/ˈækjərət/', pos: 'adj.', cn: '准确的；精确的', ex: 'Please give me an accurate estimate.', exCn: '请给我一个准确的估算。', root: 'ac-（去）+ cur（关心/注意）+ ate → 做到位的 → 准确的；care 同源。', phonetic: '阿克尤若特 → accurate 阿克尤若特做到位的准确', scene: '请给 accurate 估算' },
+  { en: 'acquire', ph: '/əˈkwaɪər/', pos: 'v.', cn: '获得；习得', ex: 'She acquired fluency in French.', exCn: '她掌握了流利的法语。', root: 'ac-（去）+ quir（寻求）+ e → 去求得 → 获得；同根 require 需要。', phonetic: '阿克哇尔 → acquire 阿克哇尔去求得（获得）', scene: '她 acquire 流利法语' },
+  { en: 'adapt', ph: '/əˈdæpt/', pos: 'v.', cn: '适应；改编', ex: 'We must adapt to the new environment.', exCn: '我们必须适应新环境。', root: 'ad-（朝向）+ apt（适合）→ 使适合 → 适应；adapter 适配器。', phonetic: '阿达普特 → adapt 阿达普特使适合（适应）', scene: '适应（adapt）新环境' },
+  { en: 'adequate', ph: '/ˈædɪkwət/', pos: 'adj.', cn: '充足的；适当的', ex: 'The food supply is not adequate.', exCn: '食物供给不充足。', root: 'ad-（去）+ equ（相等）+ ate → 达到相等 → 足够的；equal 相等。', phonetic: '阿迪魁特 → adequate 阿迪魁特达到相等的足够', scene: '食物供给不 adequate' },
+  { en: 'advocate', ph: '/ˈædvəkeɪt/', pos: 'v.', cn: '提倡；拥护', ex: 'They advocate a healthy lifestyle.', exCn: '他们提倡健康的生活方式。', root: 'ad-（加强）+ voc（声音）+ ate → 大声说 → 拥护；voice 声音。', phonetic: '阿德沃凯特 → advocate 阿德沃凯特大声提倡', scene: '他们 advocate 健康生活' },
+  { en: 'approximate', ph: '/əˈprɑːksɪmət/', pos: 'adj.', cn: '近似的；大约', ex: 'The cost is approximately 100 yuan.', exCn: '花费大约是 100 元。', root: 'ap-（去）+ proxim（近）+ ate → 靠近 → 近似；proximity 接近。', phonetic: '阿普绕克西米特 → approximate 阿普绕克西米特靠近近似', scene: '花费大约（approximate）100 元' },
+  { en: 'assign', ph: '/əˈsaɪn/', pos: 'v.', cn: '分配；指派', ex: 'The teacher assigned us homework.', exCn: '老师给我们布置了作业。', root: 'as-（朝向）+ sign（标记）→ 做上标记分派 → 分配；signal 信号。', phonetic: '阿赛恩 → assign 阿赛恩做标记分派（分配）', scene: '老师 assign 作业' },
+  { en: 'assume', ph: '/əˈsuːm/', pos: 'v.', cn: '假定；承担', ex: 'We assume the plan will work.', exCn: '我们假定这个计划可行。', root: 'as-（朝向）+ sum（拿/承担）→ 承担起来 → 假定/担任；consume 消耗。', phonetic: '阿苏姆 → assume 阿苏姆承担假定', scene: '我们 assume 计划可行' },
+  { en: 'attribute', ph: '/əˈtrɪbjuːt/', pos: 'v.', cn: '归因于；特质', ex: 'She attributes her success to hard work.', exCn: '她把成功归因于努力。', root: 'at-（朝向）+ tribute（给予）→ 把…归于 → 归因；contribute 贡献。', phonetic: '阿吹比尤特 → attribute 阿吹比尤特把…归于（归因）', scene: '她 attribute 成功于努力' },
+  { en: 'automatic', ph: '/ˌɔːtəˈmætɪk/', pos: 'adj.', cn: '自动的', ex: 'The door opens in an automatic way.', exCn: '门自动打开。', root: 'auto-（自己）+ mat（动）+ ic → 自己动的 → 自动的；automobile 汽车。', phonetic: '奥特马提克 → automatic 奥特马提克自己动的（自动）', scene: '门 automatic 打开' },
   { en: 'awkward', ph: '/ˈɔːkwərd/', pos: 'adj.', cn: '尴尬的；笨拙的', ex: 'There was an awkward silence.', exCn: '出现了一阵尴尬的沉默。', root: '谐音「奥客的」→ awkward 难缠的奥客让人尴尬；场景：社交冷场。', phonetic: '奥客的', scene: '社交冷场' },
-  { en: 'brilliant', ph: '/ˈbrɪliənt/', pos: 'adj.', cn: '杰出的；明亮的', ex: 'She had a brilliant idea.', exCn: '她有一个绝妙的想法。', root: 'brill（发光）+ iant → 闪闪发光的 → 杰出的', phonetic: '', scene: '灵光一现' },
-  { en: 'colleague', ph: '/ˈkɑːliːɡ/', pos: 'n.', cn: '同事', ex: 'My colleague helped me finish the report.', exCn: '同事帮我完成了报告。', root: 'col-（共同）+ league（联盟）→ 同一阵营的人 → 同事；league 联盟。', phonetic: '', scene: '' },
-  { en: 'competent', ph: '/ˈkɑːmpɪtənt/', pos: 'adj.', cn: '胜任的；有能力的', ex: 'He is competent for the job.', exCn: '他能胜任这份工作。', root: 'com-（共同）+ pet（追求/能力）+ ent → 能比拼的 → 胜任的；compete 竞争。', phonetic: '', scene: '' },
-  { en: 'comprehensive', ph: '/ˌkɑːmprɪˈhensɪv/', pos: 'adj.', cn: '全面的；综合的', ex: 'We need a comprehensive plan.', exCn: '我们需要一个全面的计划。', root: 'com-（完全）+ prehens（抓住）+ ive → 全抓住的 → 全面的；comprehend 理解。', phonetic: '', scene: '' },
-  { en: 'conscious', ph: '/ˈkɑːnʃəs/', pos: 'adj.', cn: '有意识的；清醒的', ex: 'He is conscious of the risk.', exCn: '他意识到风险。', root: 'con-（共同）+ sci（知道）+ ous → 知道的 → 有意识的；science 科学（知）。', phonetic: '', scene: '' },
-  { en: 'consequence', ph: '/ˈkɑːnsɪkwens/', pos: 'n.', cn: '后果；结果', ex: 'Face the consequence of your choice.', exCn: '承担你选择的后果。', root: 'con-（跟着）+ sequ（跟随）+ ence → 随后而来的 → 后果；sequence 顺序。', phonetic: '', scene: '' },
-  { en: 'consistent', ph: '/kənˈsɪstənt/', pos: 'adj.', cn: '一致的；始终如一的', ex: 'His story is consistent with facts.', exCn: '他的说法与事实一致。', root: 'con-（共同）+ sist（站立）+ ent → 站在一起的 → 一致的；assist 协助。', phonetic: '', scene: '' },
-  { en: 'contemporary', ph: '/kənˈtempəreri/', pos: 'adj.', cn: '当代的；同时代的', ex: 'Contemporary art attracts young people.', exCn: '当代艺术吸引年轻人。', root: 'con-（共同）+ tempor（时间）+ ary → 同时期的 → 当代的；temporary 暂时的。', phonetic: '', scene: '' },
+  { en: 'brilliant', ph: '/ˈbrɪliənt/', pos: 'adj.', cn: '杰出的；明亮的', ex: 'She had a brilliant idea.', exCn: '她有一个绝妙的想法。', root: 'brill（发光）+ iant → 闪闪发光的 → 杰出的', phonetic: '布里连特 → brilliant 布里连特闪闪发光（杰出）', scene: '灵光一现' },
+  { en: 'colleague', ph: '/ˈkɑːliːɡ/', pos: 'n.', cn: '同事', ex: 'My colleague helped me finish the report.', exCn: '同事帮我完成了报告。', root: 'col-（共同）+ league（联盟）→ 同一阵营的人 → 同事；league 联盟。', phonetic: '卡利格 → colleague 卡利格同一阵营的同事', scene: '同事帮我完成报告' },
+  { en: 'competent', ph: '/ˈkɑːmpɪtənt/', pos: 'adj.', cn: '胜任的；有能力的', ex: 'He is competent for the job.', exCn: '他能胜任这份工作。', root: 'com-（共同）+ pet（追求/能力）+ ent → 能比拼的 → 胜任的；compete 竞争。', phonetic: '康皮特恩特 → competent 康皮特恩特能比拼（胜任）', scene: '他能胜任（competent）工作' },
+  { en: 'comprehensive', ph: '/ˌkɑːmprɪˈhensɪv/', pos: 'adj.', cn: '全面的；综合的', ex: 'We need a comprehensive plan.', exCn: '我们需要一个全面的计划。', root: 'com-（完全）+ prehens（抓住）+ ive → 全抓住的 → 全面的；comprehend 理解。', phonetic: '康普瑞恒西夫 → comprehensive 康普瑞恒西夫全抓住（全面）', scene: '需要 comprehensive 计划' },
+  { en: 'conscious', ph: '/ˈkɑːnʃəs/', pos: 'adj.', cn: '有意识的；清醒的', ex: 'He is conscious of the risk.', exCn: '他意识到风险。', root: 'con-（共同）+ sci（知道）+ ous → 知道的 → 有意识的；science 科学（知）。', phonetic: '康舍斯 → conscious 康舍斯知道的（有意识）', scene: '他意识到（conscious of）风险' },
+  { en: 'consequence', ph: '/ˈkɑːnsɪkwens/', pos: 'n.', cn: '后果；结果', ex: 'Face the consequence of your choice.', exCn: '承担你选择的后果。', root: 'con-（跟着）+ sequ（跟随）+ ence → 随后而来的 → 后果；sequence 顺序。', phonetic: '康西奎恩斯 → consequence 康西奎恩斯随后而来的后果', scene: '承担选择的 consequence' },
+  { en: 'consistent', ph: '/kənˈsɪstənt/', pos: 'adj.', cn: '一致的；始终如一的', ex: 'His story is consistent with facts.', exCn: '他的说法与事实一致。', root: 'con-（共同）+ sist（站立）+ ent → 站在一起的 → 一致的；assist 协助。', phonetic: '肯西斯腾特 → consistent 肯西斯腾特站在一起（一致）', scene: '说法与事实 consistent' },
+  { en: 'contemporary', ph: '/kənˈtempəreri/', pos: 'adj.', cn: '当代的；同时代的', ex: 'Contemporary art attracts young people.', exCn: '当代艺术吸引年轻人。', root: 'con-（共同）+ tempor（时间）+ ary → 同时期的 → 当代的；temporary 暂时的。', phonetic: '肯坦普若瑞 → contemporary 肯坦普若瑞同时期（当代）', scene: '当代（contemporary）艺术吸引年轻人' },
   { en: 'crisis', ph: '/ˈkraɪsɪs/', pos: 'n.', cn: '危机', ex: 'The company faces a financial crisis.', exCn: '公司面临财务危机。', root: '谐音「可来急死」→ crisis 危急时刻急死人；场景：突发状况。', phonetic: '可来急死', scene: '突发状况' },
-  { en: 'crucial', ph: '/ˈkruːʃl/', pos: 'adj.', cn: '关键的；至关重要的', ex: 'Timing is crucial to success.', exCn: '时机对成功至关重要。', root: 'cruc（十字）+ ial → 像十字路口一样关键 → 关键的；cross 十字。', phonetic: '', scene: '' },
-  { en: 'decline', ph: '/dɪˈklaɪn/', pos: 'v./n.', cn: '下降；拒绝', ex: 'Sales declined last month.', exCn: '上月销售额下降。', root: 'de-（向下）+ clin（倾斜）+ e → 向下倾 → 下降/拒绝；incline 倾斜。', phonetic: '', scene: '' },
-  { en: 'distinct', ph: '/dɪˈstɪŋkt/', pos: 'adj.', cn: '不同的；明显的', ex: 'There are two distinct cultures.', exCn: '有两种截然不同的文化。', root: 'di-（分开）+ sting（刺/戳）→ 分得清清楚楚 → 清楚的；distinguish 区分。', phonetic: '', scene: '' },
-  { en: 'diverse', ph: '/daɪˈvɜːrs/', pos: 'adj.', cn: '多样的；不同的', ex: 'The team is culturally diverse.', exCn: '这个团队文化多元。', root: 'di-（分开）+ vers（转）+ e → 转向各方 → 多样的；universe 宇宙（万转）。', phonetic: '', scene: '' },
-  { en: 'efficient', ph: '/ɪˈfɪʃnt/', pos: 'adj.', cn: '高效的；效率高的', ex: 'The new system is more efficient.', exCn: '新系统更高效。', root: 'ef-（出）+ fic（做）+ ient → 做得出的 → 高效的；deficient 不足的。', phonetic: '', scene: '' },
-  { en: 'eliminate', ph: '/ɪˈlɪmɪneɪt/', pos: 'v.', cn: '消除；淘汰', ex: 'We must eliminate errors.', exCn: '我们必须消除错误。', root: 'e-（出）+ limit（界限）+ ate → 赶出界限 → 淘汰/消除；limit 界限。', phonetic: '', scene: '' },
-  { en: 'emphasize', ph: '/ˈemfəsaɪz/', pos: 'v.', cn: '强调；着重', ex: 'She emphasized the importance of safety.', exCn: '她强调了安全的重要性。', root: 'em-（加强）+ phas（说/显示）+ ize → 着重说 → 强调；phase 阶段。', phonetic: '', scene: '' },
-  { en: 'enormous', ph: '/ɪˈnɔːrməs/', pos: 'adj.', cn: '巨大的；庞大的', ex: 'The project costs an enormous amount.', exCn: '这个项目耗资巨大。', root: 'e-（超出）+ norm（标准）+ ous → 超出标准 → 巨大的；normal 正常的。', phonetic: '', scene: '' },
-  { en: 'enthusiastic', ph: '/ɪnˌθuːziˈæstɪk/', pos: 'adj.', cn: '热情的；热心的', ex: 'He is enthusiastic about the plan.', exCn: '他对这个计划充满热情。', root: 'en-（入）+ thus（神）+ iastic → 神明附体般 → 狂热的/热情的；spontaneous 自发的。', phonetic: '', scene: '' },
+  { en: 'crucial', ph: '/ˈkruːʃl/', pos: 'adj.', cn: '关键的；至关重要的', ex: 'Timing is crucial to success.', exCn: '时机对成功至关重要。', root: 'cruc（十字）+ ial → 像十字路口一样关键 → 关键的；cross 十字。', phonetic: '克鲁邵 → crucial 克鲁邵像十字路口一样关键', scene: '时机对成功 crucial' },
+  { en: 'decline', ph: '/dɪˈklaɪn/', pos: 'v./n.', cn: '下降；拒绝', ex: 'Sales declined last month.', exCn: '上月销售额下降。', root: 'de-（向下）+ clin（倾斜）+ e → 向下倾 → 下降/拒绝；incline 倾斜。', phonetic: '迪克莱恩 → decline 迪克莱恩向下倾（下降/拒绝）', scene: '上月销售额 decline' },
+  { en: 'distinct', ph: '/dɪˈstɪŋkt/', pos: 'adj.', cn: '不同的；明显的', ex: 'There are two distinct cultures.', exCn: '有两种截然不同的文化。', root: 'di-（分开）+ sting（刺/戳）→ 分得清清楚楚 → 清楚的；distinguish 区分。', phonetic: '迪斯廷克特 → distinct 迪斯廷克特分清楚（不同/明显）', scene: '两种截然 distinct 的文化' },
+  { en: 'diverse', ph: '/daɪˈvɜːrs/', pos: 'adj.', cn: '多样的；不同的', ex: 'The team is culturally diverse.', exCn: '这个团队文化多元。', root: 'di-（分开）+ vers（转）+ e → 转向各方 → 多样的；universe 宇宙（万转）。', phonetic: '戴弗斯 → diverse 戴弗斯转向各方（多样）', scene: '团队文化 diverse' },
+  { en: 'efficient', ph: '/ɪˈfɪʃnt/', pos: 'adj.', cn: '高效的；效率高的', ex: 'The new system is more efficient.', exCn: '新系统更高效。', root: 'ef-（出）+ fic（做）+ ient → 做得出的 → 高效的；deficient 不足的。', phonetic: '伊费申特 → efficient 伊费申特做得出的高效', scene: '新系统更 efficient' },
+  { en: 'eliminate', ph: '/ɪˈlɪmɪneɪt/', pos: 'v.', cn: '消除；淘汰', ex: 'We must eliminate errors.', exCn: '我们必须消除错误。', root: 'e-（出）+ limit（界限）+ ate → 赶出界限 → 淘汰/消除；limit 界限。', phonetic: '伊利米内特 → eliminate 伊利米内特赶出界限（消除）', scene: '必须 eliminate 错误' },
+  { en: 'emphasize', ph: '/ˈemfəsaɪz/', pos: 'v.', cn: '强调；着重', ex: 'She emphasized the importance of safety.', exCn: '她强调了安全的重要性。', root: 'em-（加强）+ phas（说/显示）+ ize → 着重说 → 强调；phase 阶段。', phonetic: '埃姆弗赛兹 → emphasize 埃姆弗赛兹着重说（强调）', scene: '她 emphasize 安全重要' },
+  { en: 'enormous', ph: '/ɪˈnɔːrməs/', pos: 'adj.', cn: '巨大的；庞大的', ex: 'The project costs an enormous amount.', exCn: '这个项目耗资巨大。', root: 'e-（超出）+ norm（标准）+ ous → 超出标准 → 巨大的；normal 正常的。', phonetic: '伊诺马斯 → enormous 伊诺马斯超出标准的巨大', scene: '项目耗资 enormous' },
+  { en: 'enthusiastic', ph: '/ɪnˌθuːziˈæstɪk/', pos: 'adj.', cn: '热情的；热心的', ex: 'He is enthusiastic about the plan.', exCn: '他对这个计划充满热情。', root: 'en-（入）+ thus（神）+ iastic → 神明附体般 → 狂热的/热情的；spontaneous 自发的。', phonetic: '因苏贼斯提克 → enthusiastic 因苏贼斯提克神明附体般热情', scene: '他对计划 enthusiastic' },
   { en: 'fragile', ph: '/ˈfrædʒaɪl/', pos: 'adj.', cn: '易碎的；脆弱的', ex: 'Handle the package with care; it is fragile.', exCn: '这个包裹易碎，请小心搬运。', root: 'frag（打破，如 fraction 碎片）+ ile（易…的）→ 容易破碎的', phonetic: '谐音「服软就」→ fragile 一服软就碎', scene: '快递盒上印着「易碎品」的玻璃杯标志' },
   { en: 'generate', ph: '/ˈdʒenəreɪt/', pos: 'v.', cn: '产生；生成', ex: 'The new app can generate images from text.', exCn: '这款新应用能根据文字生成图片。', root: 'gen（生成，如 gene 基因）+ er + ate（动词后缀）→ 生成', phonetic: '谐音「粘连」→ generate 粘连出新的东西', scene: '用 AI 把一句话变成一幅画' },
   { en: 'inevitable', ph: '/ɪnˈevɪtəbl/', pos: 'adj.', cn: '不可避免的', ex: 'Change is inevitable in life.', exCn: '生活中的改变不可避免。', root: 'in-（不）+ evit（避免）+ able → 无法避免的', phonetic: '谐音「因歪头爆」→ inevitable 因歪头爆了避免不了', scene: '闹钟响了还赖床，迟到必然被说' },
   { en: 'negotiate', ph: '/nɪˈɡoʊʃieɪt/', pos: 'v.', cn: '谈判；协商', ex: 'They negotiated a better price for the deal.', exCn: '他们为这笔交易谈下了一个更好的价格。', root: 'neg（否定）+ oti（闲）+ ate → 不闲着谈 → 谈判', phonetic: '谐音「你勾协」→ negotiate 你勾肩搭背地协商', scene: '买东西时和老板砍价' },
   { en: 'phenomenal', ph: '/fəˈnɑːmɪnl/', pos: 'adj.', cn: '非凡的；惊人的', ex: 'Her progress this month was phenomenal.', exCn: '她这个月的进步令人惊叹。', root: 'phenom（现象，同 phenomenon）+ en + al → 像现象般惊人的', phonetic: '谐音「非闹米闹」→ phenomenal 非同小闹', scene: '考试前以为要挂，结果超常发挥' },
-  { en: 'sustainable', ph: '/səˈsteɪnəbl/', pos: 'adj.', cn: '可持续的', ex: 'We should choose sustainable products.', exCn: '我们应该选择可持续的产品。', root: 'sus-（下）+ tain（保持）+ able → 能维持下去的', phonetic: '谐音「撒斯坦」→ sustainable 撒斯坦说要维持', scene: '低碳环保、循环利用的绿色生活' },
+  { en: 'sustainable', ph: '/səˈsteɪnəbl/', pos: 'adj.', cn: '可持续的', ex: 'We should choose sustainable products.', exCn: '我们应该选择可持续的产品。', root: 'sus-（下）+ tain（保持）+ able → 能维持下去的', phonetic: '谐音「撒斯坦」→ sustainable 撒斯坦说要维持', scene: '低碳环保、循环利用的绿色生活' }
 ];
 let highFreqDayOffset = store.get('luo_highfreq_day', 0);
 function goHighFreqDay(delta) {
@@ -230,6 +230,30 @@ function highFreqDayLabel() {
   const ds = d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate();
   return '📅 ' + ds + (highFreqDayOffset < 0 ? '（过去）' : '（未来）') + ' · 第 ' + (day + 1) + '/' + n + ' 天';
 }
+
+// 统一的「三拆助记」渲染：词根拆解 / 谐音联想 / 场景画面感
+// kind='high' 走 HIGH_FREQ_WORDS 字段；kind='cet' 走 CET 词并可借助全局 cet4GenMnem / cet4Phonetic
+function renderWordMnem3(w, kind) {
+  let rootTxt, phonTxt, sceneTxt;
+  if (kind === 'cet') {
+    rootTxt = w.mnem || (window.cet4GenMnem ? window.cet4GenMnem(w.w, w.cn) : '') || ('联想：' + (w.cn || w.w));
+    if (window.cet4Phonetic && w.w && window.cet4Phonetic[w.w.toLowerCase()]) {
+      phonTxt = window.cet4Phonetic[w.w.toLowerCase()];
+    } else if (w.ph) {
+      phonTxt = '音标拼读 ' + w.ph;
+    }
+    sceneTxt = w.ex ? (w.exCn ? (w.ex + ' ' + w.exCn) : w.ex)
+                    : ('试着用「' + (w.cn || w.w) + '」造一个今天用得上的句子');
+  } else {
+    rootTxt = w.root || w.mnem || '';
+    phonTxt = w.phonetic || (w.ph ? ('音标拼读 ' + w.ph) : '');
+    sceneTxt = w.scene || (w.exCn ? ('想象「' + w.exCn + '」的画面') : (w.ex ? ('想象「' + w.ex + '」的画面') : ''));
+  }
+  const item = (ico, cls, label, txt) =>
+    txt ? "<div class=\"mnem3-item " + cls + "\" onclick=\"event.stopPropagation();this.classList.toggle('open')\"><span class=\"mnem-ico\">" + ico + "</span><span class=\"mnem-body\"><b>" + label + "：</b>" + esc(txt) + "</span></div>" : "";
+  return '<div class="mnem3">' + item('🧩','mnem-root','词根拆解',rootTxt) + item('🔊','mnem-phon','谐音联想',phonTxt) + item('🎬','mnem-scene','场景画面感',sceneTxt) + '</div>';
+}
+
 function highFreqWordsHtml() {
   const perDay = 10;
   const n = Math.ceil(HIGH_FREQ_WORDS.length / perDay);
@@ -251,11 +275,7 @@ function highFreqWordsHtml() {
           <div class="word-cn">${esc(w.cn)}</div>
           <div class="word-ex">📌 ${esc(w.ex)}</div>
           <div class="word-cn" style="color:#1565c0">↳ ${esc(w.exCn)}</div>
-          <div class="mnem3">
-            ${w.root ? `<div class="mnem3-item mnem-root" onclick="this.classList.toggle('open')"><span class="mnem-ico">🧩</span><span class="mnem-body"><b>词根拆解：</b>${esc(w.root)}</span></div>` : ''}
-            ${w.phonetic ? `<div class="mnem3-item mnem-phon" onclick="this.classList.toggle('open')"><span class="mnem-ico">🔊</span><span class="mnem-body"><b>谐音联想：</b>${esc(w.phonetic)}</span></div>` : ''}
-            ${w.scene ? `<div class="mnem3-item mnem-scene" onclick="this.classList.toggle('open')"><span class="mnem-ico">🎬</span><span class="mnem-body"><b>场景画面感：</b>${esc(w.scene)}</span></div>` : ''}
-          </div>
+          ${renderWordMnem3(w, 'high')}
         </div>`).join('')}
     </div>
     <div class="text-center mt-2">
@@ -299,10 +319,7 @@ function renderVocab() {
           <div class="word-ph">${w.ph || ''} <span class="text-muted">${w.pos || ''}</span></div>
           <div class="word-cn">${w.cn || '（查词典）'}</div>
           <div class="word-ex">${w.ex ? '📌 ' + w.ex : ''}</div>
-          <div class="word-mnem ${w.mnem ? '' : 'mnem-muted'}" onclick="event.stopPropagation();this.classList.toggle('open')">
-            <span class="mnem-ico">💡</span>
-            <span class="mnem-body">${w.mnem ? esc(w.mnem) : '🔗 联想记忆：' + esc(w.cn || '')}</span>
-          </div>
+          ${renderWordMnem3(w, 'cet')}
           <div class="word-done">${done ? '✓ 已背' : '点击标记'}</div>
         </div>`;
       }).join('')}
@@ -322,9 +339,53 @@ function vocabGrammar() {
     '③ 虚拟语气：If I were you, I would...（与现在事实相反用 were）。',
     '④ 被动语态：be + done，常用在科普/说明文——The plan was accomplished.',
     '⑤ 非谓语：doing 表主动进行，done 表被动完成——Given more time, we can do better.',
-    '⑥ 比较级：the + 比较级..., the + 比较级...——The more you read, the wiser you become.'
+    '⑥ 比较级：the + 比较级..., the + 比较级...——The more you read, the wiser you become.',
+    '⑦ 主谓一致：集体名词 audience/team 可单可复，看意义——The team are celebrating their victory.',
+    '⑧ 倒装句：否定词置于句首用部分倒装——Never have I seen such a beautiful sunset.',
+    '⑨ 强调句：It is/was + 被强调部分 + that——It was Tom who broke the window.',
+    '⑩ 名词性从句：what 在从句中作主语/宾语——What he said surprised everyone.',
+    '⑪ 状语从句：while 表对比或同时——While I like coffee, my sister prefers tea.',
+    '⑫ 介词搭配：be interested in / be good at / be afraid of——She is good at playing piano.',
+    '⑬ 情态动词表推测：must 一定，may 可能，can\'t 不可能——He must be tired after work.',
+    '⑭ 过去完成时：had done，表示「过去的过去」——By the time I arrived, the train had left.',
+    '⑮ 将来完成时：will have done，表示将来某时前完成——By next month, I will have finished the book.',
+    '⑯ 独立主格：with + 名词 + doing/done——With the work done, we went home.',
+    '⑰ 反意疑问句：前肯后否，前否后肯——You like English, don\'t you?',
+    '⑱ 感叹句：What + a/an + adj + n / How + adj/adv——What an interesting story!',
+    '⑲ 定冠词 the：特指、最高级、序数词前用——The sun rises in the east.',
+    '⑳ 零冠词：球类、三餐、学科前一般不用——I play basketball every day.',
+    '㉑ 形容词词序：限定-描绘-大小-形状-年龄-颜色-国籍-材料',
+    '㉒ 分词作状语：Seeing the dog, the child ran away.',
+    '㉓ 分词作定语：The broken window needs repairing.',
+    '㉔ 时态呼应：主句过去时，从句相应倒退——He said he was busy.',
+    '㉕ 条件句：真实条件用一般现在时表将来——If it rains tomorrow, I will stay home.',
+    '㉖ 并列连词：not only...but also...就近原则——Not only Tom but also his friends are coming.',
+    '㉗ 双重否定：not...without / not...until——You cannot succeed without effort.',
+    '㉘ 省略句：状语从句主谓与主句一致可省——While walking in the park, I met an old friend.',
+    '㉙ 替代词：one 泛指同类单数，that 特指同类不可数——The climate here is better than that in Beijing.',
+    '㉚ 倍数表达：A is three times as large as B.',
+    '㉛ 日期读法：May 1st 读作 May the first / May first.',
+    '㉜ 间接引语：现在时变过去时，人称、时间状语相应变化——He said he was reading then.',
+    '㉝ 被动特殊：see/hear/make 主动省略 to，被动还原——He was made to apologize.',
+    '㉞ would rather + 从句用虚拟：I\'d rather you came tomorrow.',
+    '㉟ wish/if only + 过去式：I wish I knew the answer.',
+    '㊱ It\'s time (that) + 过去式：It\'s time we went to bed.',
+    '㊲ as if / as though + 过去式/过去完成：He talks as if he knew everything.',
+    '㊳ while / whereas 表对比：Some people like coffee, whereas others prefer tea.',
+    '㊴ unless = if not：Unless you hurry, you will miss the bus.',
+    '㊵ because / because of：because 接从句，because of 接名词——He was late because of the rain.',
+    '㊶ although / though / even though 不与 but 连用——Although it rained, we went out.',
+    '㊷ so...that / such...that：so + adj/adv；such + n——He is so tall that he can reach the shelf.',
+    '㊸ enough / too...to：old enough to go；too young to go.',
+    '㊹ used to / be used to：used to do 过去常常；be used to doing 习惯于——I am used to getting up early.',
+    '㊺ have sth done：让别人做某事——I had my hair cut yesterday.',
+    '㊻ 使役动词：make/let/have + sb + do——Let me help you.',
+    '㊼ 感官动词：see/hear/watch + do/doing——I saw him crossing the street.',
+    '㊽ 动词后接动名词：enjoy/finish/mind/practice——I enjoy reading.',
+    '㊾ 动词后接不定式：want/hope/decide/plan——I plan to study abroad.',
+    '㊿ to 是介词：look forward to / be used to / devote...to 后接 doing.'
   ];
-  return seededShuffle(tips, 'grammar' + vocabState.batch).slice(0, 3).join('<br>');
+  return seededShuffle(tips, todayKey() + '_grammar').slice(0, 5).map(s => '· ' + s).join('<br>');
 }
 function vocabSpoken() {
   const sp = [
@@ -335,9 +396,51 @@ function vocabSpoken() {
     'That makes sense.（有道理 / 说得通。）',
     'I\'m running late.（我要迟到了。）',
     'Could you do me a favor?（能帮我个忙吗？）',
-    'It\'s on me this time.（这次我请客。）'
+    'It\'s on me this time.（这次我请客。）',
+    'I can\'t agree more.（我完全同意。）',
+    'Keep me posted.（有进展随时告诉我。）',
+    'Sounds like a plan.（就这么定了。）',
+    'I\'ll catch up with you later.（晚点再找你聊。）',
+    'I\'m on my way.（我在路上了。）',
+    'It\'s up to you.（你决定。）',
+    'I feel you.（我懂你。）',
+    'Let\'s play it by ear.（随机应变吧。）',
+    'I\'m kind of busy right now.（我现在有点忙。）',
+    'Don\'t mention it.（别客气。）',
+    'I\'m not feeling well.（我有点不舒服。）',
+    'What a coincidence!（真巧！）',
+    'Long time no see.（好久不见。）',
+    'Take it easy.（放轻松。）',
+    'I\'ve got your back.（我罩着你。）',
+    'That\'s not the point.（这不是重点。）',
+    'Easier said than done.（说起来容易做起来难。）',
+    'It is what it is.（事已至此，接受吧。）',
+    'You got this.（你可以的。）',
+    'I\'m down for it.（我乐意参加。）',
+    'Let\'s get the ball rolling.（我们开始吧。）',
+    'I\'m starving.（我快饿死了。）',
+    'My bad.（我的错。）',
+    'Fair enough.（有道理 / 算你有理。）',
+    'I\'m exhausted.（我累瘫了。）',
+    'That\'s hilarious.（太好笑了。）',
+    'I\'m so behind.（我落后太多了。）',
+    'Can we reschedule?（我们能改时间吗？）',
+    'I owe you one.（我欠你一个人情。）',
+    'Don\'t beat yourself up.（别自责了。）',
+    'Let\'s grab a bite.（我们去吃点东西吧。）',
+    'I\'m heading out.（我要出门了。）',
+    'Speak for yourself.（那是你自己的看法。）',
+    'I\'m all ears.（我洗耳恭听。）',
+    'It slipped my mind.（我给忘了。）',
+    'I\'m torn between A and B.（我在 A 和 B 之间纠结。）',
+    'That\'s a bummer.（真让人扫兴。）',
+    'I\'m pumped.（我超兴奋。）',
+    'Hit me up.（联系我。）',
+    'I\'m not buying it.（我不信。）',
+    'Let\'s wrap this up.（我们收尾吧。）',
+    'I\'m rooting for you.（我支持你。）'
   ];
-  return seededShuffle(sp, 'spoken' + vocabState.batch).slice(0, 4).map(s => '· ' + s).join('<br>');
+  return seededShuffle(sp, todayKey() + '_spoken').slice(0, 5).map(s => '· ' + s).join('<br>');
 }
 function toggleWordLearned(idx) {
   const i = vocabState.learned.indexOf(idx);
@@ -1272,7 +1375,7 @@ function renderGrammar() {
       <div>${GRAMMAR_TOPICS.map((g, i) => `<span class="gptag ${i === grammarIdx ? 'on' : ''}" onclick="grammarIdx=${i};renderGrammar()">${esc(g.title)}</span>`).join(' ')}</div>
     </div>
     <div class="card mt-2">
-      <div class="font-bold mb-2">📘 常考简单语法（每组轮换）</div>
+      <div class="font-bold mb-2">📘 常考简单语法（每日轮换 5 条 · 共 50 条）</div>
       <div class="text-sm text-muted">${vocabGrammar()}</div>
     </div>`;
 }
@@ -1297,7 +1400,7 @@ function renderSpeaking() {
       <div>${SPEAKING_TOPICS.map((g, i) => `<span class="gptag ${i === speakingIdx ? 'on' : ''}" onclick="speakingIdx=${i};renderSpeaking()">${esc(g.title)}</span>`).join(' ')}</div>
     </div>
     <div class="card mt-2">
-      <div class="font-bold mb-2">💬 实用口语（每组轮换）</div>
+      <div class="font-bold mb-2">💬 实用口语（每日轮换 5 条 · 共 50 条）</div>
       <div class="text-sm">${vocabSpoken()}</div>
     </div>`;
 }

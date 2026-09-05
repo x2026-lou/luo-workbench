@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>洛的工作台</title>
-  <link rel="stylesheet" href="style.css?v=21">
+  <link rel="stylesheet" href="style.css?v=22">
 </head>
 <body>
   <div id="app">
@@ -887,12 +887,12 @@
           <div id="dailyReviewWardrobePanel" style="display:none">
             <div class="card">
               <div class="font-bold mb-2">👕 我的电子衣柜</div>
-              <p class="text-sm text-muted mb-3">点击格子拍照上传单品（模拟），后续可查看搭配建议。</p>
+              <p class="text-sm text-muted mb-3">点击格子拍照上传单品，上传后为每件单品设置分类与季节；系统会根据季节和时尚搭配逻辑生成今日穿搭建议。</p>
               <div class="wardrobe-grid" id="wardrobeGrid"></div>
             </div>
             <div class="card mt-3">
               <div class="font-bold mb-2">👗 今日穿搭建议</div>
-              <p class="text-sm text-muted mb-2">基于你的衣柜单品随机生成一套搭配，每天生成后保留在历史中。</p>
+              <p class="text-sm text-muted mb-2">按季节从衣柜中自动组合上衣+裤子+鞋子，并随机加入包/帽配饰；可编辑备注、可删除。</p>
               <button class="btn btn-primary" style="width:100%" onclick="genOutfit()">生成今日穿搭</button>
               <div id="outfitToday" class="mt-2"></div>
             </div>
@@ -994,17 +994,17 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=21"></script>
-  <script src="cet4_core.js?v=21"></script>
-  <script src="cet4_full.js?v=21"></script>
-  <script src="cet4_enhance.js?v=21"></script>
+  <script src="app.js?v=22"></script>
+  <script src="cet4_core.js?v=22"></script>
+  <script src="cet4_full.js?v=22"></script>
+  <script src="cet4_enhance.js?v=22"></script>
 
-  <script src="gaokao_core.js?v=21"></script>
-  <script src="expansion.js?v=21"></script>
-  <script src="jjwxc_analysis.js?v=21"></script>
+  <script src="gaokao_core.js?v=22"></script>
+  <script src="expansion.js?v=22"></script>
+  <script src="jjwxc_analysis.js?v=22"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=21').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=22').then(reg => {
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
