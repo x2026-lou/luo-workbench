@@ -635,6 +635,23 @@ details[open] summary { margin-bottom:6px; }
 .word-mnem.open::after { content: '▴'; }
 .word-done { font-size: 11px; color: var(--green-main); margin-top: 4px; }
 
+/* 高频词三拆助记：词根拆解 / 谐音联想 / 场景画面感（可折叠） */
+.mnem3 { display: flex; flex-direction: column; gap: 5px; margin-top: 7px; }
+.mnem3-item {
+  display: flex; align-items: flex-start; gap: 6px; padding: 6px 9px; border-radius: 9px;
+  font-size: 11.5px; line-height: 1.5; cursor: pointer; position: relative;
+}
+.mnem3-item .mnem-ico { flex-shrink: 0; font-size: 13px; }
+.mnem3-item .mnem-body {
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
+.mnem3-item.open .mnem-body { display: block; -webkit-line-clamp: unset; }
+.mnem3-item::after { content: '▾'; position: absolute; right: 8px; top: 6px; font-size: 10px; opacity: .5; }
+.mnem3-item.open::after { content: '▴'; }
+.mnem-root { background: linear-gradient(135deg, #E3F2FD, #E1F5FE); color: #0d47a1; }
+.mnem-phon { background: linear-gradient(135deg, #FCE4EC, #F8BBD0); color: #880e4f; }
+.mnem-scene { background: linear-gradient(135deg, #E8F5E9, #DCEDC8); color: #1b5e20; }
+
 .quiz-q { margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed var(--line); }
 .quiz-word { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
 .quiz-opts { display: flex; flex-direction: column; gap: 8px; }

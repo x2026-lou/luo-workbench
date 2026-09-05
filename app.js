@@ -116,6 +116,8 @@ function goPage(id) {
 /* 富文本渲染：转义后仅放行 [[IMG:dataURL]] 图片标记，安全显示插图 */
 function renderRich(text) {
   let s = esc(text || '');
+  // 链接自动可点击：跳转到对应网页/视频（新标签打开）
+  s = s.replace(/(https?:\/\/[^\s<>"']+)/g, (m) => `<a href="${m}" target="_blank" rel="noopener noreferrer">${m}</a>`);
   s = s.replace(/\[\[IMG:([^\]]+)\]\]/g, (m, src) => `<img src="${src}" style="max-width:100%;border-radius:8px;margin:6px 0;display:block" loading="lazy">`);
   return s.replace(/\n/g, '<br>');
 }
@@ -639,6 +641,8 @@ function renderDailyReview() {
         <button class="btn btn-outline btn-small" onclick="deleteDailyReview('${r.date}')">删除</button>
       </div>
     </div>`).join('') : '<div class="list-empty">还没有复盘记录</div>';
+  renderWardrobe();
+  renderOutfit();
 }
 function saveDailyReview() {
   const text = document.getElementById('dailyReview').value.trim();
@@ -2226,7 +2230,6 @@ document.querySelectorAll('#imageTabs .tab').forEach(tab => {
     document.getElementById('imageMakeupPanel').style.display = mode === 'makeup' ? 'block' : 'none';
     document.getElementById('imageRetouchPanel').style.display = mode === 'retouch' ? 'block' : 'none';
     document.getElementById('imageOutfitPanel').style.display = mode === 'outfit' ? 'block' : 'none';
-    document.getElementById('imageWardrobePanel').style.display = mode === 'wardrobe' ? 'block' : 'none';
     document.getElementById('imageAdvicePanel').style.display = mode === 'advice' ? 'block' : 'none';
   };
 });
@@ -2236,6 +2239,15 @@ document.querySelectorAll('#photoTabs .tab').forEach(tab => {
     document.querySelectorAll('#photoTabs .tab').forEach(t => t.classList.remove('active')); tab.classList.add('active');
     document.getElementById('photoPosesPanel').style.display = which === 'poses' ? 'block' : 'none';
     document.getElementById('photoBasicsPanel').style.display = which === 'basics' ? 'block' : 'none';
+  };
+});
+document.querySelectorAll('#dailyReviewTabs .tab').forEach(tab => {
+  tab.onclick = () => {
+    const which = tab.dataset.drev;
+    document.querySelectorAll('#dailyReviewTabs .tab').forEach(t => t.classList.remove('active')); tab.classList.add('active');
+    document.getElementById('dailyReviewPanel').style.display = which === 'review' ? 'block' : 'none';
+    document.getElementById('dailyReviewWardrobePanel').style.display = which === 'wardrobe' ? 'block' : 'none';
+    if (which === 'wardrobe') { renderWardrobe(); renderOutfit(); }
   };
 });
 

@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>洛的工作台</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=21">
 </head>
 <body>
   <div id="app">
@@ -376,13 +376,12 @@
         <div class="page" id="page-image">
           <div class="section-title"><div class="icon">🪞</div>形象管理</div>
           <div class="section-sub">少年感中性风：妆容、穿搭、电子衣柜、改善建议</div>
-          <div class="tabs" id="imageTabs">
-            <div class="tab active" data-img="makeup">妆容教学</div>
-            <div class="tab" data-img="wardrobe">电子衣柜</div>
-            <div class="tab" data-img="retouch">后期p图</div>
-            <div class="tab" data-img="outfit">穿搭教学</div>
-            <div class="tab" data-img="advice">穿搭建议</div>
-          </div>
+      <div class="tabs" id="imageTabs">
+        <div class="tab active" data-img="makeup">妆容教学</div>
+        <div class="tab" data-img="retouch">后期p图</div>
+        <div class="tab" data-img="outfit">穿搭教学</div>
+        <div class="tab" data-img="advice">穿搭建议</div>
+      </div>
           <div id="imageMakeupPanel">
             <div id="makeupTeach"></div>
             <div id="makeupVideoList"></div>
@@ -412,20 +411,6 @@
               <div class="know-block"><div class="know-h">▶ 避雷单品</div><div class="know-b">避雷：大面积卡通印花、紧身破洞牛仔裤、亮片/铆钉过多、Logo 满身的大牌款、裤脚过长的拖地裤。这些容易显廉价或用力过猛。</div></div>
               <div class="know-block"><div class="know-h">▶ 按场合搭配</div><div class="know-b">上课：白 T + 牛仔裤 + 帆布鞋；约会：衬衫 + 直筒裤 + 小白鞋；面试：纯色衬衫 + 西裤/休闲裤 + 乐福鞋；运动：卫衣 + 运动裤 + 球鞋。同一件单品换配饰就能切换场景。</div></div>
             </div>
-          </div>
-          <div id="imageWardrobePanel" style="display:none">
-            <div class="card">
-              <div class="font-bold mb-2">👕 我的电子衣柜</div>
-              <p class="text-sm text-muted mb-3">点击格子拍照上传单品（模拟），后续可查看搭配建议。</p>
-              <div class="wardrobe-grid" id="wardrobeGrid"></div>
-            </div>
-            <div class="card mt-3">
-              <div class="font-bold mb-2">👗 今日穿搭建议</div>
-              <p class="text-sm text-muted mb-2">基于你的衣柜单品随机生成一套搭配，每天生成后保留在历史中。</p>
-              <button class="btn btn-primary" style="width:100%" onclick="genOutfit()">生成今日穿搭</button>
-              <div id="outfitToday" class="mt-2"></div>
-            </div>
-            <div id="outfitHistory" class="mt-3"></div>
           </div>
           <div id="imageAdvicePanel" style="display:none">
             <div class="card card-gradient-pink">
@@ -892,7 +877,27 @@
         <div class="page" id="page-dailyreview">
           <div class="section-title"><div class="icon">🔁</div>每日复盘</div>
           <div class="section-sub">按日期自动归档，长期保留</div>
-          <div id="dailyReviewBox"></div>
+          <div class="tabs" id="dailyReviewTabs">
+            <div class="tab active" data-drev="review">每日复盘</div>
+            <div class="tab" data-drev="wardrobe">电子衣柜</div>
+          </div>
+          <div id="dailyReviewPanel">
+            <div id="dailyReviewBox"></div>
+          </div>
+          <div id="dailyReviewWardrobePanel" style="display:none">
+            <div class="card">
+              <div class="font-bold mb-2">👕 我的电子衣柜</div>
+              <p class="text-sm text-muted mb-3">点击格子拍照上传单品（模拟），后续可查看搭配建议。</p>
+              <div class="wardrobe-grid" id="wardrobeGrid"></div>
+            </div>
+            <div class="card mt-3">
+              <div class="font-bold mb-2">👗 今日穿搭建议</div>
+              <p class="text-sm text-muted mb-2">基于你的衣柜单品随机生成一套搭配，每天生成后保留在历史中。</p>
+              <button class="btn btn-primary" style="width:100%" onclick="genOutfit()">生成今日穿搭</button>
+              <div id="outfitToday" class="mt-2"></div>
+            </div>
+            <div id="outfitHistory" class="mt-3"></div>
+          </div>
         </div>
 
         <!-- 书摘收藏 -->
@@ -989,17 +994,17 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=20"></script>
-  <script src="cet4_core.js?v=20"></script>
-  <script src="cet4_full.js?v=20"></script>
-  <script src="cet4_enhance.js?v=20"></script>
+  <script src="app.js?v=21"></script>
+  <script src="cet4_core.js?v=21"></script>
+  <script src="cet4_full.js?v=21"></script>
+  <script src="cet4_enhance.js?v=21"></script>
 
-  <script src="gaokao_core.js?v=20"></script>
-  <script src="expansion.js?v=20"></script>
-  <script src="jjwxc_analysis.js?v=20"></script>
+  <script src="gaokao_core.js?v=21"></script>
+  <script src="expansion.js?v=21"></script>
+  <script src="jjwxc_analysis.js?v=21"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=20').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=21').then(reg => {
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
