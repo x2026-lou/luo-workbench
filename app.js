@@ -416,6 +416,29 @@ function diagnoseNotes() {
   return { memCount, lsCount, backupMax };
 }
 
+function autoRecoverNotes() {
+  // 被动回捞：进入页面即把 IDB / 本地存储 / 自动备份快照里多出的笔记并回，无需用户手动操作
+  let recovered = 0;
+  const ids = new Set();
+  for (const k in _mem) if (k.indexOf('luo_notes_') === 0) ids.add(k.slice(8));
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) ids.add(k.slice(8)); }
+  ids.forEach(id => {
+    const key = 'luo_notes_' + id;
+    const cur = tryParseArray(_mem[key]);
+    const merged = mergeById(cur, tryParseArray(localStorage.getItem(key)));
+    if (merged.length > cur.length) { recovered += merged.length - cur.length; _mem[key] = JSON.stringify(merged); store.set(key, merged); }
+  });
+  [store.get('luo_auto_backup', null)].filter(Boolean).concat(store.get('luo_auto_backups', [])).forEach(rec => {
+    for (const k in rec.data) {
+      if (k.indexOf('luo_notes_') !== 0) continue;
+      const cur = tryParseArray(_mem[k]);
+      const merged = mergeById(cur, tryParseArray(rec.data[k]));
+      if (merged.length > cur.length) { recovered += merged.length - cur.length; _mem[k] = JSON.stringify(merged); store.set(k, merged); }
+    }
+  });
+  if (recovered > 0) { toast('已自动回捞 ' + recovered + ' 条历史笔记'); updateBackupUI(); }
+}
+
 async function _hydrate() {
   if (_hydrated || _hydrating) return;
   _hydrating = true;
@@ -4071,6 +4094,8 @@ async function init() {
   updateOnlineStatus();
   renderNav();
   renderTodos();
+  // 进入页面即被动回捞历史笔记（IDB / 本地存储 / 自动备份快照取并集），再渲染
+  try { autoRecoverNotes(); } catch (e) {}
   renderMyNotes('daily');
   // 记录版块（追星 / 爱读小说 / 嗑CP）渲染 + 各自笔记
   ['fandom','novelread','cp'].forEach(id => { renderRecords(id); renderMyNotes(id); });
