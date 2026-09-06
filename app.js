@@ -258,12 +258,14 @@ function saveMyNote(id) {
   const cancel = document.getElementById('noteCancel-' + id); if (cancel) cancel.style.display = 'none';
   const btn = document.getElementById('noteSaveBtn-' + id); if (btn) btn.textContent = '保存笔记';
   store.set('luo_notes_' + id, notes);
+  backupNotesSoon();
   renderMyNotes(id);
 }
 function deleteMyNote(id, i) {
   const notes = store.get('luo_notes_' + id, []);
   notes.splice(i, 1);
   store.set('luo_notes_' + id, notes);
+  backupNotesSoon();
   renderMyNotes(id);
 }
 function reviewMyNote(id, i) {
@@ -367,6 +369,12 @@ function mergeById(a, b) {
   a.forEach(push); b.forEach(push);
   return out;
 }
+// 标量键（如医学单条笔记 luo_med_note）合并：取「信息更多」的那一份（非空且更长者优先）
+function mergeScalar(idb, ls) {
+  const clean = (v) => { if (v == null) return ''; const s = String(v).trim(); if (s === 'null' || s === 'undefined') return ''; return s; };
+  const a = clean(idb), b = clean(ls);
+  return a.length >= b.length ? a : b;
+}
 function mergeNotesNow() {
   let recovered = 0;
   const ids = new Set();
@@ -382,38 +390,94 @@ function mergeNotesNow() {
     store.set(key, merged);
     try { renderMyNotes(id); } catch (e) {}
   });
+  // 医学单条笔记（luo_med_note 标量）也并入 IDB 与本地存储中更长的一份
+  try {
+    const k = 'luo_med_note';
+    const merged = mergeScalar(_mem[k] ? JSON.parse(_mem[k]) : _mem[k], localStorage.getItem(k));
+    const cur = _mem[k] ? (_mem[k] === 'null' ? '' : (typeof _mem[k] === 'string' ? JSON.parse(_mem[k]) : _mem[k])) : '';
+    if (String(merged || '').length > String(cur || '').length) { store.set(k, merged); recovered++; }
+  } catch (e) {}
   toast('已合并恢复笔记 ' + recovered + ' 条（IDB 与本地存储取并集）');
   updateBackupUI();
   return recovered;
 }
+// 从「全部」自动备份（最新 + 历史最多 3 份）逐键取并集，绝不只挑笔记最多的一份而漏掉医学等版块
 function recoverNotesFromBackups() {
   const recs = [store.get('luo_auto_backup', null)].filter(Boolean).concat(store.get('luo_auto_backups', []));
   if (!recs.length) return toast('没有可用的自动备份');
-  let best = null, bestCount = -1;
-  recs.forEach(rec => { let c = 0; for (const k in rec.data) if (k.indexOf('luo_notes_') === 0) c += tryParseArray(rec.data[k]).length; if (c > bestCount) { bestCount = c; best = rec; } });
-  if (!best || bestCount <= 0) return toast('备份中无笔记数据');
   let recovered = 0;
-  for (const k in best.data) {
-    if (k.indexOf('luo_notes_') !== 0) continue;
-    const id = k.slice(8);
-    const curArr = tryParseArray(_mem[k]);
-    const snapArr = tryParseArray(best.data[k]);
-    const merged = mergeById(curArr, snapArr);
-    if (merged.length > curArr.length) recovered += merged.length - curArr.length;
-    _mem[k] = JSON.stringify(merged);
-    store.set(k, merged);
-    try { renderMyNotes(id); } catch (e) {}
-  }
-  toast('已从自动备份（' + best.time + '，' + bestCount + ' 条笔记）合并恢复 ' + recovered + ' 条');
+  recs.forEach(rec => {
+    if (!rec || !rec.data) return;
+    for (const k in rec.data) {
+      if (k.indexOf('luo_notes_') === 0) {
+        const id = k.slice(8);
+        const curArr = tryParseArray(_mem[k]);
+        const snapArr = tryParseArray(rec.data[k]);
+        const merged = mergeById(curArr, snapArr);
+        if (merged.length > curArr.length) { recovered += merged.length - curArr.length; _mem[k] = JSON.stringify(merged); store.set(k, merged); }
+      } else if (k === 'luo_med_note') {
+        const cur = _mem[k] ? JSON.parse(_mem[k]) : '';
+        const snap = tryParse(rec.data[k]);
+        const merged = mergeScalar(cur, snap);
+        if (String(merged || '').length > String(cur || '').length) { store.set(k, merged); recovered++; }
+      }
+    }
+  });
+  ['daily','medical','fandom','novelread','cp'].forEach(id => { try { renderMyNotes(id); } catch (e) {} });
+  toast('已从全部自动备份合并恢复 ' + recovered + ' 条笔记');
   updateBackupUI();
 }
+// 一键找回：IDB + 本地存储 + 全部自动备份 三层并集，覆盖所有 luo_notes_* 与医学单条笔记，最后重渲染所有笔记页
+function recoverAllNotes() {
+  let total = 0;
+  const ids = new Set();
+  for (const k in _mem) if (k.indexOf('luo_notes_') === 0) ids.add(k.slice(8));
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) ids.add(k.slice(8)); }
+  ids.forEach(id => {
+    const key = 'luo_notes_' + id;
+    const cur = tryParseArray(_mem[key]);
+    const merged = mergeById(cur, tryParseArray(localStorage.getItem(key)));
+    if (merged.length > 0) { _mem[key] = JSON.stringify(merged); store.set(key, merged); total += merged.length; }
+  });
+  [store.get('luo_auto_backup', null)].filter(Boolean).concat(store.get('luo_auto_backups', [])).forEach(rec => {
+    if (!rec || !rec.data) return;
+    for (const k in rec.data) {
+      if (k.indexOf('luo_notes_') === 0) {
+        const curArr = tryParseArray(_mem[k]);
+        const snapArr = tryParseArray(rec.data[k]);
+        const merged = mergeById(curArr, snapArr);
+        if (merged.length > curArr.length) { _mem[k] = JSON.stringify(merged); store.set(k, merged); total += merged.length - curArr.length; }
+      } else if (k === 'luo_med_note') {
+        const cur = _mem[k] ? JSON.parse(_mem[k]) : '';
+        const merged = mergeScalar(cur, tryParse(rec.data[k]));
+        if (String(merged || '').length > String(cur || '').length) { store.set(k, merged); total++; }
+      }
+    }
+  });
+  // 医学单条笔记标量：IDB 与本地存储取更长者
+  try {
+    const k = 'luo_med_note';
+    const merged = mergeScalar(_mem[k] ? JSON.parse(_mem[k]) : _mem[k], localStorage.getItem(k));
+    const cur = _mem[k] ? JSON.parse(_mem[k]) : '';
+    if (String(merged || '').length > String(cur || '').length) { store.set(k, merged); total++; }
+  } catch (e) {}
+  ['daily','medical','fandom','novelread','cp'].forEach(id => { try { renderMyNotes(id); } catch (e) {} });
+  updateBackupUI();
+  const d = diagnoseNotes();
+  toast('已尽力找回：当前共 ' + d.memCount + ' 条（本地残留 ' + d.lsCount + ' · 备份最多 ' + d.backupMax + '）。如仍少于预期，可用「导入恢复」选择旧备份文件。');
+}
 function diagnoseNotes() {
-  let memCount = 0, lsCount = 0;
-  for (const k in _mem) if (k.indexOf('luo_notes_') === 0) memCount += tryParseArray(_mem[k]).length;
+  let memCount = 0, lsCount = 0; const pages = {};
+  for (const k in _mem) if (k.indexOf('luo_notes_') === 0) { const n = tryParseArray(_mem[k]).length; memCount += n; pages[k.slice(8)] = n; }
   for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) lsCount += tryParseArray(localStorage.getItem(k)).length; }
-  let backupMax = 0;
-  [store.get('luo_auto_backup', null)].filter(Boolean).concat(store.get('luo_auto_backups', [])).forEach(rec => { let c = 0; for (const k in rec.data) if (k.indexOf('luo_notes_') === 0) c += tryParseArray(rec.data[k]).length; if (c > backupMax) backupMax = c; });
-  return { memCount, lsCount, backupMax };
+  let backupMax = 0, medBackup = 0;
+  [store.get('luo_auto_backup', null)].filter(Boolean).concat(store.get('luo_auto_backups', [])).forEach(rec => {
+    if (!rec || !rec.data) return;
+    let c = 0; for (const k in rec.data) if (k.indexOf('luo_notes_') === 0) c += tryParseArray(rec.data[k]).length;
+    if (rec.data['luo_med_note']) medBackup += 1;
+    if (c > backupMax) backupMax = c;
+  });
+  return { memCount, lsCount, backupMax, medBackup, pages };
 }
 
 function autoRecoverNotes() {
@@ -429,13 +493,26 @@ function autoRecoverNotes() {
     if (merged.length > cur.length) { recovered += merged.length - cur.length; _mem[key] = JSON.stringify(merged); store.set(key, merged); }
   });
   [store.get('luo_auto_backup', null)].filter(Boolean).concat(store.get('luo_auto_backups', [])).forEach(rec => {
+    if (!rec || !rec.data) return;
     for (const k in rec.data) {
-      if (k.indexOf('luo_notes_') !== 0) continue;
-      const cur = tryParseArray(_mem[k]);
-      const merged = mergeById(cur, tryParseArray(rec.data[k]));
-      if (merged.length > cur.length) { recovered += merged.length - cur.length; _mem[k] = JSON.stringify(merged); store.set(k, merged); }
+      if (k.indexOf('luo_notes_') === 0) {
+        const cur = tryParseArray(_mem[k]);
+        const merged = mergeById(cur, tryParseArray(rec.data[k]));
+        if (merged.length > cur.length) { recovered += merged.length - cur.length; _mem[k] = JSON.stringify(merged); store.set(k, merged); }
+      } else if (k === 'luo_med_note') {
+        const cur = _mem[k] ? JSON.parse(_mem[k]) : '';
+        const merged = mergeScalar(cur, tryParse(rec.data[k]));
+        if (String(merged || '').length > String(cur || '').length) { store.set(k, merged); recovered++; }
+      }
     }
   });
+  // 医学单条笔记（标量）被动回捞：IDB 与本地存储取更长者
+  try {
+    const k = 'luo_med_note';
+    const cur = _mem[k] ? JSON.parse(_mem[k]) : '';
+    const merged = mergeScalar(cur, localStorage.getItem(k));
+    if (String(merged || '').length > String(cur || '').length) { store.set(k, merged); recovered++; }
+  } catch (e) {}
   if (recovered > 0) { toast('已自动回捞 ' + recovered + ' 条历史笔记'); updateBackupUI(); }
 }
 
@@ -485,6 +562,12 @@ const store = {
 };
 
 /* ================= Helpers ================= */
+// 笔记类操作后立即打点快照，避免「刚保存就关页面」导致 5 分钟定时备份来不及触发而丢失
+let _noteBackupTimer = null;
+function backupNotesSoon() {
+  if (_noteBackupTimer) return;
+  _noteBackupTimer = setTimeout(() => { _noteBackupTimer = null; try { autoBackupNow(); } catch (e) {} }, 1200);
+}
 function fmtDate(d = new Date()) { return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`; }
 function fmtDateOffset(offset) { const d = new Date(); d.setDate(d.getDate() + offset); return fmtDate(d); }
 function todayKey() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
@@ -1957,8 +2040,35 @@ function renderMedical() {
       </div>`).join('')}
   `;
   document.getElementById('medNote').value = store.get('luo_med_note', '');
+  // 把旧的「单条医学笔记」(luo_med_note) 一次性迁移进受保护的 luo_notes_medical 数组体系，避免两套存储各自丢失
+  try {
+    const oldText = (store.get('luo_med_note', '') || '').trim();
+    const arr = store.get('luo_notes_medical', []);
+    if (oldText && (!arr || !arr.length)) {
+      arr.unshift({ id: 'n' + Date.now().toString(36) + 'mig', title: '迁移自旧版单条笔记', content: oldText, date: fmtDate(), reviewed: false, migrated: true });
+      store.set('luo_notes_medical', arr);
+    }
+  } catch (e) {}
+  // 挂载受保护的标准笔记区（与全站统一的 luo_notes_medical 体系，享受自动回捞/导出/备份）
+  try { renderMyNotes('medical'); } catch (e) {}
 }
-function saveMedicalNote() { store.set('luo_med_note', document.getElementById('medNote').value); toast('笔记已保存'); }
+function saveMedicalNote() {
+  const v = document.getElementById('medNote').value;
+  store.set('luo_med_note', v);
+  // 同步写入受保护的笔记数组体系（若为空则自动生成一条，保证「单条速记」与「笔记列表」不丢）
+  try {
+    const arr = store.get('luo_notes_medical', []);
+    const t = (v || '').trim();
+    if (t) {
+      const hit = arr.find(n => n.migrated);
+      if (hit) { hit.content = t; hit.title = '医学速记'; }
+      else arr.unshift({ id: 'n' + Date.now().toString(36) + 'mg', title: '医学速记', content: t, date: fmtDate(), reviewed: false, migrated: true });
+      store.set('luo_notes_medical', arr);
+    }
+  } catch (e) {}
+  backupNotesSoon();
+  toast('笔记已保存');
+}
 
 /* ================= Inspiration ================= */
 const inspirationPool = [
@@ -3376,6 +3486,20 @@ function exportData() {
   if (msg) msg.innerHTML = '<span style="color:#1565c0">✅ 已导出 ' + Object.keys(data).length + ' 项数据，请保存到手机/云盘。</span>';
   toast('备份已导出');
 }
+// 仅导出笔记（全部版块 luo_notes_* + 医学单条），便于单独留存与恢复
+function exportNotes() {
+  const data = {};
+  for (const k in _mem) if (k.indexOf('luo_notes_') === 0) data[k] = _mem[k];
+  if (_mem['luo_med_note']) data['luo_med_note'] = _mem['luo_med_note'];
+  if (!Object.keys(data).length) return toast('当前没有任何笔记可导出');
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'luo_notes_' + todayKey() + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('笔记已导出（' + Object.keys(data).length + ' 个版块，建议存到云盘）');
+}
 function importData(input) {
   const f = input.files && input.files[0];
   if (!f) return;
@@ -3445,7 +3569,10 @@ function updateBackupUI() {
   if (el) el.textContent = last ? ('最近备份：' + last.time) : '尚未自动备份';
   const d = diagnoseNotes();
   const dEl = document.getElementById('noteDiag');
-  if (dEl) dEl.innerHTML = '📝 笔记诊断：当前 <b>' + d.memCount + '</b> 条 · 本地残留 <b>' + d.lsCount + '</b> 条 · 自动备份最多 <b>' + d.backupMax + '</b> 条。若当前少于历史，点上方按钮合并恢复。';
+  if (dEl) {
+    const pageList = Object.keys(d.pages).length ? Object.keys(d.pages).map(p => p + ' ' + d.pages[p]).join(' · ') : '（暂无）';
+    dEl.innerHTML = '📝 笔记诊断：当前 <b>' + d.memCount + '</b> 条（' + pageList + '）· 本地残留 <b>' + d.lsCount + '</b> · 自动备份最多 <b>' + d.backupMax + '</b>' + (d.medBackup ? '（含旧版医学单条 ' + d.medBackup + '）' : '') + '。<br>若当前少于历史，先点「🔄 一键找回我的全部笔记」，仍有缺失用「⬆️ 导入恢复」选旧备份文件。';
+  }
 }
 
 /* ---- 收藏（核心金句 / 好评 / 雷点） ---- */
@@ -4094,9 +4221,10 @@ async function init() {
   updateOnlineStatus();
   renderNav();
   renderTodos();
-  // 进入页面即被动回捞历史笔记（IDB / 本地存储 / 自动备份快照取并集），再渲染
+  // 进入页面即被动回捞历史笔记（IDB / 本地存储 / 自动备份快照取并集，覆盖所有 luo_notes_* 与医学单条笔记），再渲染
   try { autoRecoverNotes(); } catch (e) {}
   renderMyNotes('daily');
+  renderMyNotes('medical');
   // 记录版块（追星 / 爱读小说 / 嗑CP）渲染 + 各自笔记
   ['fandom','novelread','cp'].forEach(id => { renderRecords(id); renderMyNotes(id); });
   updateBackupUI();

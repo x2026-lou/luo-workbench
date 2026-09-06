@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>洛的工作台</title>
-  <link rel="stylesheet" href="style.css?v=27">
+  <link rel="stylesheet" href="style.css?v=28">
 </head>
 <body>
   <div id="app">
@@ -100,8 +100,12 @@
                   <button class="btn btn-small btn-outline" onclick="restoreAutoBackup()">恢复自动备份</button>
                 </div>
                 <div class="mt-2" style="display:flex;gap:6px;flex-wrap:wrap">
-                  <button class="btn btn-small btn-primary" onclick="mergeNotesNow()">🔄 合并恢复笔记</button>
-                  <button class="btn btn-small btn-outline" onclick="recoverNotesFromBackups()">📦 自动备份回捞</button>
+                  <button class="btn btn-small btn-primary" onclick="recoverAllNotes()">🔄 一键找回我的全部笔记</button>
+                  <button class="btn btn-small btn-outline" onclick="exportNotes()">📝 导出笔记</button>
+                </div>
+                <div class="mt-2" style="display:flex;gap:6px;flex-wrap:wrap">
+                  <button class="btn btn-small" onclick="mergeNotesNow()">合并恢复笔记</button>
+                  <button class="btn btn-small" onclick="recoverNotesFromBackups()">📦 自动备份回捞</button>
                 </div>
                 <div class="text-sm mt-1" id="noteDiag"></div>
                 <div class="text-sm text-muted mt-1" id="autoBackupLast">尚未自动备份</div>
@@ -243,6 +247,15 @@
           <div class="section-sub">本科全日制医学学位 · 专业课程、笔记与打卡</div>
           <div id="medicalVideoList"></div>
           <div id="medReview" class="mt-3"></div>
+          <div class="card mt-3" style="background:var(--bg-soft)">
+            <div class="font-bold mb-2">🩺 医学笔记 · 防丢失工具</div>
+            <div class="text-sm text-muted mb-2">医学笔记已并入受保护的「我的笔记」体系（自动回捞 + 三重备份）。若发现笔记变少：</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn btn-small btn-primary" onclick="recoverAllNotes()">🔄 一键找回</button>
+              <button class="btn btn-small btn-outline" onclick="exportNotes()">📝 导出我的笔记</button>
+              <button class="btn btn-small" onclick="document.getElementById('importFile').click()">⬆️ 导入旧备份</button>
+            </div>
+          </div>
           <div class="card">
             <div class="font-bold mb-2">📝 学习笔记</div>
             <textarea class="form-textarea" id="medNote" placeholder="记录今日医学学习要点"></textarea>
@@ -1032,17 +1045,17 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=27"></script>
-  <script src="cet4_core.js?v=27"></script>
-  <script src="cet4_full.js?v=27"></script>
-  <script src="cet4_enhance.js?v=27"></script>
+  <script src="app.js?v=28"></script>
+  <script src="cet4_core.js?v=28"></script>
+  <script src="cet4_full.js?v=28"></script>
+  <script src="cet4_enhance.js?v=28"></script>
 
-  <script src="gaokao_core.js?v=27"></script>
-  <script src="expansion.js?v=27"></script>
-  <script src="jjwxc_analysis.js?v=27"></script>
+  <script src="gaokao_core.js?v=28"></script>
+  <script src="expansion.js?v=28"></script>
+  <script src="jjwxc_analysis.js?v=28"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=27').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=28').then(reg => {
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
