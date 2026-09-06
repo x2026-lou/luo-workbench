@@ -190,6 +190,15 @@ body {
 .outfit-advice .oa-ul li { margin-bottom: 2px; }
 .outfit-advice .oa-ref { font-size: 11px; margin-top: 4px; padding-top: 5px; border-top: 1px solid var(--blue-soft); }
 .outfit-advice .oa-ref a { color: #1565c0; font-weight: 600; }
+.record-card { border: 1px solid var(--border-light); background: var(--surface); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 8px; }
+.record-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 4px; }
+.record-title { font-weight: 700; font-size: 13px; color: var(--text-main); word-break: break-word; }
+.record-actions { display: flex; gap: 4px; flex: 0 0 auto; }
+.record-fields { font-size: 11px; color: var(--text-main); line-height: 1.6; }
+.record-field { display: flex; gap: 4px; }
+.record-field .rf-k { color: var(--text-muted); flex: 0 0 auto; }
+.record-field .rf-v { flex: 1; word-break: break-word; }
+.record-note { font-size: 11px; color: var(--text-main); margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--border-light); line-height: 1.5; }
 
 .todo-item {
   display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--surface);

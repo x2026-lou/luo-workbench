@@ -39,6 +39,9 @@ const navItems = [
   { id: 'kitchen', icon: '🍳', label: '厨房小白/烹饪', group: '技能与兴趣' },
   { id: 'office', icon: '💻', label: '办公技能学习', group: '技能与兴趣' },
   { id: 'photography', icon: '📷', label: '摄影姿势与技巧', group: '技能与兴趣', new: true },
+  { id: 'fandom', icon: '⭐', label: '追星记录', group: '技能与兴趣', new: true },
+  { id: 'novelread', icon: '📚', label: '爱读小说记录', group: '技能与兴趣', new: true },
+  { id: 'cp', icon: '💞', label: '嗑CP记录', group: '技能与兴趣', new: true },
   // 7. 自媒体与剪辑
   { id: 'edit', icon: '🎬', label: '拍摄剪辑学习', group: '自媒体与剪辑' },
   { id: 'editcheck', icon: '✂️', label: '剪辑打卡', group: '自媒体与剪辑' },
@@ -163,6 +166,77 @@ function renderMyNotes(id) {
         <button class="note-btn del" onclick="deleteMyNote('${id}',${i})">删除</button>
       </div>
     </div>`).join('') : '<div class="list-empty">还没有笔记，记一条吧 ✍️</div>';
+}
+/* ================= 记录版块（追星 / 爱读小说 / 嗑CP） ================= */
+const RECORD_SCHEMAS = {
+  fandom: { title: '追星记录', fields: [{k:'who',l:'对象(明星/角色)'},{k:'type',l:'类型(演员/歌手/虚拟)'},{k:'reason',l:'喜欢的点'},{k:'link',l:'相关链接'}] },
+  novelread: { title: '爱读小说记录', fields: [{k:'name',l:'书名'},{k:'author',l:'作者'},{k:'genre',l:'类型'},{k:'progress',l:'进度'},{k:'rate',l:'评分'}] },
+  cp: { title: '嗑CP记录', fields: [{k:'work',l:'作品'},{k:'cp',l:'CP名'},{k:'chars',l:'角色'},{k:'sugar',l:'糖点'},{k:'output',l:'产粮链接'}] }
+};
+const _recEdit = {};
+function renderRecords(id) {
+  const schema = RECORD_SCHEMAS[id];
+  const box = document.getElementById('records-' + id);
+  if (!box || !schema) return;
+  const recs = store.get('luo_records_' + id, []);
+  let html = `<button class="btn btn-primary btn-sm" onclick="toggleRecordForm('${id}')">➕ 添加${schema.title.replace('记录','')}</button>
+    <div id="recordForm-${id}" class="card mt-2" style="display:none">
+      <div class="font-bold mb-2">添加${schema.title}</div>
+      ${schema.fields.map(f => `<div class="mb-2"><label class="text-sm" style="display:block">${f.l}</label><input type="text" class="form-input" id="rf-${id}-${f.k}" placeholder="${f.l}"></div>`).join('')}
+      <div class="mb-2"><label class="text-sm" style="display:block">备注 / 感想 / 链接</label><textarea class="form-textarea" id="rf-${id}-note" placeholder="想记的话、产出链接、灵感…"></textarea></div>
+      <div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="saveRecord('${id}')">保存</button><button class="btn btn-outline btn-sm" onclick="toggleRecordForm('${id}')">取消</button></div>
+    </div>
+    <div id="recordList-${id}" class="mt-2">${recs.length ? recs.map(r => renderRecordCard(id, r)).join('') : '<div class="list-empty">还没有记录，点上方添加 ✨</div>'}</div>`;
+  box.innerHTML = html;
+}
+function renderRecordCard(id, r) {
+  const schema = RECORD_SCHEMAS[id];
+  const title = r.title || (schema.fields[0] ? (r.vals[schema.fields[0].k] || '未命名') : '记录');
+  return `<div class="record-card">
+    <div class="record-head"><span class="record-title">${esc(title)}</span>
+      <span class="record-actions">
+        <button class="note-btn" onclick="editRecord('${id}','${r.id}')">编辑</button>
+        <button class="note-btn del" onclick="deleteRecord('${id}','${r.id}')">删除</button>
+      </span></div>
+    <div class="record-fields">${schema.fields.map(f => r.vals[f.k] ? `<div class="record-field"><span class="rf-k">${f.l}：</span><span class="rf-v">${esc(r.vals[f.k])}</span></div>` : '').join('')}</div>
+    ${r.note ? `<div class="record-note">${renderRich(r.note)}</div>` : ''}
+  </div>`;
+}
+function toggleRecordForm(id) {
+  const f = document.getElementById('recordForm-' + id);
+  if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+function saveRecord(id) {
+  const schema = RECORD_SCHEMAS[id];
+  const vals = {};
+  schema.fields.forEach(f => { const v = document.getElementById('rf-' + id + '-' + f.k).value.trim(); if (v) vals[f.k] = v; });
+  const note = document.getElementById('rf-' + id + '-note').value.trim();
+  let recs = store.get('luo_records_' + id, []);
+  if (_recEdit[id]) {
+    const r = recs.find(x => x.id === _recEdit[id]); if (r) { r.vals = vals; r.note = note; }
+    _recEdit[id] = null;
+  } else {
+    const title = vals[schema.fields[0].k] || '未命名';
+    recs.unshift({ id: 'rec' + Date.now().toString(36) + Math.random().toString(36).slice(2,5), title, vals, note, date: fmtDate() });
+  }
+  store.set('luo_records_' + id, recs);
+  renderRecords(id);
+  toast('已保存');
+}
+function deleteRecord(id, rid) {
+  let recs = store.get('luo_records_' + id, []);
+  recs = recs.filter(x => x.id !== rid);
+  store.set('luo_records_' + id, recs);
+  renderRecords(id);
+}
+function editRecord(id, rid) {
+  const schema = RECORD_SCHEMAS[id];
+  const r = store.get('luo_records_' + id, []).find(x => x.id === rid); if (!r) return;
+  _recEdit[id] = rid;
+  const f = document.getElementById('recordForm-' + id); if (f) f.style.display = 'block';
+  schema.fields.forEach(fld => { const el = document.getElementById('rf-' + id + '-' + fld.k); if (el) el.value = r.vals[fld.k] || ''; });
+  const n = document.getElementById('rf-' + id + '-note'); if (n) n.value = r.note || '';
+  toast('已载入编辑，修改后点保存');
 }
 function saveMyNote(id) {
   const t = document.getElementById('noteTitle-' + id);
@@ -2461,10 +2535,10 @@ document.querySelectorAll('#imageTabs .tab').forEach(tab => {
   tab.onclick = () => {
     const mode = tab.dataset.img;
     document.querySelectorAll('#imageTabs .tab').forEach(t => t.classList.remove('active')); tab.classList.add('active');
-    document.getElementById('imageMakeupPanel').style.display = mode === 'makeup' ? 'block' : 'none';
-    document.getElementById('imageRetouchPanel').style.display = mode === 'retouch' ? 'block' : 'none';
-    document.getElementById('imageOutfitPanel').style.display = mode === 'outfit' ? 'block' : 'none';
-    document.getElementById('imageAdvicePanel').style.display = mode === 'advice' ? 'block' : 'none';
+    ['makeup','retouch','outfit','advice','cos'].forEach(m => {
+      const p = document.getElementById('image' + m.charAt(0).toUpperCase() + m.slice(1) + 'Panel');
+      if (p) p.style.display = (m === mode) ? 'block' : 'none';
+    });
   };
 });
 document.querySelectorAll('#photoTabs .tab').forEach(tab => {
@@ -3934,6 +4008,8 @@ async function init() {
   renderNav();
   renderTodos();
   renderMyNotes('daily');
+  // 记录版块（追星 / 爱读小说 / 嗑CP）渲染 + 各自笔记
+  ['fandom','novelread','cp'].forEach(id => { renderRecords(id); renderMyNotes(id); });
   updateBackupUI();
   // 每日 7:30 单词定时推荐：进入即检查是否到点需要生成
   try { checkDailyRecommend(); } catch (e) {}
