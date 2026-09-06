@@ -2108,6 +2108,7 @@ const outfitVideos = makeSearchItems([
   { icon: '🎒', title: '配饰点缀公式', desc: '帽子/包/银饰的少年感搭配', tags: ['配饰','搭配'] }
 ], v => v.title);
 let wardrobe = store.get('luo_wardrobe', []);
+let lastWardrobeCategory = store.get('luo_wardrobe_last_cat', '短袖'); // 新上传单品默认归类
 const makeupTeachData = [
   { k: '🧴 底妆（干净＞白）', items: [
     '妆前：保湿+控油妆前乳，T区重点控油，打造哑光干净底。',
@@ -2290,34 +2291,50 @@ function deleteOutfitSuggestion(id) {
 function renderWardrobe() {
   const grid = document.getElementById('wardrobeGrid');
   wardrobe.forEach(normalizeWardrobeItem);
-  let html = wardrobe.map((item, i) => `
-    <div class="wardrobe-item">
-      <div class="wardrobe-img"><img src="${item.img}" alt="${esc(item.name)}"></div>
-      <div class="wardrobe-info">
-        <div class="wardrobe-toolbar">
-          <select class="wardrobe-cat" onchange="updateWardrobeItem(${i}, 'category', this.value)">${WARDROBE_CATEGORIES.map(c => `<option value="${c.k}" ${item.category === c.k ? 'selected' : ''}>${c.k}</option>`).join('')}</select>
-          <select class="wardrobe-season" onchange="updateWardrobeItem(${i}, 'season', this.value)">${WARDROBE_SEASONS.map(s => `<option value="${s}" ${item.season === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
-          <span class="wardrobe-fav">${gstar('wd-' + item.id, '电子衣橱', item.name, '')}</span>
-          <button class="wardrobe-del" onclick="deleteWardrobe(${i})">×</button>
+  // 按衣物类型分组排序（短袖→…→帽子），同组按名称
+  const order = WARDROBE_CATEGORIES.map(c => c.k);
+  const sorted = wardrobe.slice().sort((a, b) => {
+    const ia = order.indexOf(a.category), ib = order.indexOf(b.category);
+    if (ia !== ib) return ia - ib;
+    return (a.name || '').toString().localeCompare((b.name || '').toString());
+  });
+  let html = `
+    <div class="wardrobe-head">
+      <span class="text-sm">共 <b>${wardrobe.length}</b> 件单品</span>
+      <span class="text-sm text-muted">新上传默认：
+        <select class="wardrobe-cat" onchange="lastWardrobeCategory=this.value;store.set('luo_wardrobe_last_cat',this.value);renderWardrobe()">${WARDROBE_CATEGORIES.map(c => `<option value="${c.k}" ${lastWardrobeCategory === c.k ? 'selected' : ''}>${c.k}</option>`).join('')}</select>
+      </span>
+    </div>`;
+  let currentCat = null;
+  sorted.forEach(item => {
+    if (item.category !== currentCat) { currentCat = item.category; html += `<div class="wardrobe-group-title">${esc(item.category)}</div>`; }
+    html += `
+      <div class="wardrobe-item">
+        <div class="wardrobe-img"><img src="${item.img}" alt="${esc(item.name)}"></div>
+        <div class="wardrobe-info">
+          <div class="wardrobe-toolbar">
+            <select class="wardrobe-cat" onchange="updateWardrobeItem(${item.id}, 'category', this.value)">${WARDROBE_CATEGORIES.map(c => `<option value="${c.k}" ${item.category === c.k ? 'selected' : ''}>${c.k}</option>`).join('')}</select>
+            <select class="wardrobe-season" onchange="updateWardrobeItem(${item.id}, 'season', this.value)">${WARDROBE_SEASONS.map(s => `<option value="${s}" ${item.season === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+            <span class="wardrobe-fav">${gstar('wd-' + item.id, '电子衣橱', item.name, '')}</span>
+            <button class="wardrobe-del" onclick="deleteWardrobe(${item.id})">×</button>
+          </div>
+          <div class="wardrobe-name">${esc(item.name)}</div>
         </div>
-        <div class="wardrobe-name">${esc(item.name)}</div>
-        <div class="wardrobe-tags"><span class="wardrobe-tag">${esc(item.category)}</span><span class="wardrobe-tag">${esc(item.season)}</span></div>
-      </div>
-    </div>
-  `).join('');
-  // 始终保留上传入口，不再限制 9 件
+      </div>`;
+  });
+  // 始终保留上传入口，不再限制件数
   html += `
     <label class="wardrobe-item wardrobe-add">
       <div class="wardrobe-img" style="display:flex;align-items:center;justify-content:center"><span style="font-size:26px">📷</span></div>
       <div class="wardrobe-info"><div class="wardrobe-name">拍照/多选</div></div>
       <input type="file" accept="image/*" multiple style="display:none" onchange="uploadWardrobe(this)">
-    </label>
-  `;
+    </label>`;
   grid.innerHTML = html;
 }
-function updateWardrobeItem(i, key, value) {
-  wardrobe[i][key] = value;
-  normalizeWardrobeItem(wardrobe[i]);
+function updateWardrobeItem(id, key, value) {
+  const it = wardrobe.find(x => x.id === id); if (!it) return;
+  it[key] = value;
+  normalizeWardrobeItem(it);
   saveWardrobe();
   renderWardrobe();
   toast('已保存');
@@ -2340,9 +2357,10 @@ function uploadWardrobe(input) {
         canvas.getContext('2d').drawImage(img, 0, 0, width, height);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
         cnt++;
-        wardrobe.push({ id: Date.now() + Math.floor(Math.random() * 1000), name: '单品 ' + cnt, img: dataUrl, category: '', season: '' });
+        // 自动归类：新单品默认使用「新上传默认」分类
+        wardrobe.push({ id: Date.now() + Math.floor(Math.random() * 1000), name: '单品 ' + cnt, img: dataUrl, category: lastWardrobeCategory, season: '' });
         done++;
-        if (done + errs === pending) { saveWardrobe(); renderWardrobe(); toast('已添加 ' + done + ' 件单品，请设置分类和季节'); }
+        if (done + errs === pending) { saveWardrobe(); renderWardrobe(); toast('已添加 ' + done + ' 件单品（默认分类：' + lastWardrobeCategory + '）'); }
       };
       img.onerror = () => { errs++; if (done + errs === pending) { saveWardrobe(); renderWardrobe(); toast('有 ' + errs + ' 张图片读取失败'); } };
       img.src = e.target.result;
@@ -2351,7 +2369,7 @@ function uploadWardrobe(input) {
   });
   input.value = '';
 }
-function deleteWardrobe(i) { wardrobe.splice(i, 1); saveWardrobe(); renderWardrobe(); }
+function deleteWardrobe(id) { wardrobe = wardrobe.filter(x => x.id !== id); saveWardrobe(); renderWardrobe(); }
 document.querySelectorAll('#imageTabs .tab').forEach(tab => {
   tab.onclick = () => {
     const mode = tab.dataset.img;
@@ -3800,6 +3818,7 @@ function loadPersistedState() {
   scripts = store.get('luo_scripts', scripts);
   wardrobe = store.get('luo_wardrobe', wardrobe);
   wardrobe.forEach(normalizeWardrobeItem);
+  lastWardrobeCategory = store.get('luo_wardrobe_last_cat', lastWardrobeCategory);
   outfitHistory = store.get('luo_outfit_history', outfitHistory);
   outfitSuggestions = store.get('luo_outfit_suggestions', outfitSuggestions);
   outfitDayOffset = store.get('luo_outfit_day', outfitDayOffset);
