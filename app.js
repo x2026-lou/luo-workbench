@@ -358,25 +358,86 @@ function _idbGetAll() {
     } catch (e) { resolve(out); }
   });
 }
+/* ================= 笔记恢复（防丢失：并集合并 + 自动备份回捞） ================= */
+function tryParse(s) { try { return JSON.parse(s); } catch (e) { return null; } }
+function tryParseArray(s) { const v = tryParse(s); return Array.isArray(v) ? v : []; }
+function mergeById(a, b) {
+  const seen = new Set(); const out = [];
+  const push = (x) => { const key = x && x.id ? ('id:' + x.id) : ('fp:' + JSON.stringify(x)); if (seen.has(key)) return; seen.add(key); out.push(x); };
+  a.forEach(push); b.forEach(push);
+  return out;
+}
+function mergeNotesNow() {
+  let recovered = 0;
+  const ids = new Set();
+  for (const k in _mem) if (k.indexOf('luo_notes_') === 0) ids.add(k.slice(8));
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) ids.add(k.slice(8)); }
+  ids.forEach(id => {
+    const key = 'luo_notes_' + id;
+    const cur = tryParseArray(_mem[key]);
+    const ls = tryParseArray(localStorage.getItem(key));
+    const merged = mergeById(cur, ls);
+    if (merged.length > cur.length) recovered += merged.length - cur.length;
+    _mem[key] = JSON.stringify(merged);
+    store.set(key, merged);
+    try { renderMyNotes(id); } catch (e) {}
+  });
+  toast('已合并恢复笔记 ' + recovered + ' 条（IDB 与本地存储取并集）');
+  updateBackupUI();
+  return recovered;
+}
+function recoverNotesFromBackups() {
+  const recs = [store.get('luo_auto_backup', null)].filter(Boolean).concat(store.get('luo_auto_backups', []));
+  if (!recs.length) return toast('没有可用的自动备份');
+  let best = null, bestCount = -1;
+  recs.forEach(rec => { let c = 0; for (const k in rec.data) if (k.indexOf('luo_notes_') === 0) c += tryParseArray(rec.data[k]).length; if (c > bestCount) { bestCount = c; best = rec; } });
+  if (!best || bestCount <= 0) return toast('备份中无笔记数据');
+  let recovered = 0;
+  for (const k in best.data) {
+    if (k.indexOf('luo_notes_') !== 0) continue;
+    const id = k.slice(8);
+    const curArr = tryParseArray(_mem[k]);
+    const snapArr = tryParseArray(best.data[k]);
+    const merged = mergeById(curArr, snapArr);
+    if (merged.length > curArr.length) recovered += merged.length - curArr.length;
+    _mem[k] = JSON.stringify(merged);
+    store.set(k, merged);
+    try { renderMyNotes(id); } catch (e) {}
+  }
+  toast('已从自动备份（' + best.time + '，' + bestCount + ' 条笔记）合并恢复 ' + recovered + ' 条');
+  updateBackupUI();
+}
+function diagnoseNotes() {
+  let memCount = 0, lsCount = 0;
+  for (const k in _mem) if (k.indexOf('luo_notes_') === 0) memCount += tryParseArray(_mem[k]).length;
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) lsCount += tryParseArray(localStorage.getItem(k)).length; }
+  let backupMax = 0;
+  [store.get('luo_auto_backup', null)].filter(Boolean).concat(store.get('luo_auto_backups', [])).forEach(rec => { let c = 0; for (const k in rec.data) if (k.indexOf('luo_notes_') === 0) c += tryParseArray(rec.data[k]).length; if (c > backupMax) backupMax = c; });
+  return { memCount, lsCount, backupMax };
+}
+
 async function _hydrate() {
   if (_hydrated || _hydrating) return;
   _hydrating = true;
   try {
     _idb = await _openDB();
     const fromIdb = await _idbGetAll();
-    // 合并策略：IDB 优先；若 IDB 中某键缺失或为空，则用 localStorage 历史数据补齐（绝不丢数据）
-    let migrated = 0;
+    // 合并策略：数组类键（笔记/列表）取 IDB 与 localStorage 的并集去重，绝不丢历史数据；标量键 IDB 优先、空则补 localStorage
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (!k || k.indexOf('luo_') !== 0) continue;
-      const raw = localStorage.getItem(k);
-      const inIdb = (k in fromIdb);
-      let idbEmpty = false;
-      if (inIdb) { try { const v = fromIdb[k]; idbEmpty = (v == null) || v === '[]' || v === '{}' || v === ''; } catch (e) {} }
-      if (!inIdb || idbEmpty) { fromIdb[k] = raw; migrated++; }
+      const lsRaw = localStorage.getItem(k);
+      const idbRaw = (k in fromIdb) ? fromIdb[k] : null;
+      const idbArr = tryParseArray(idbRaw);
+      const lsArr = tryParseArray(lsRaw);
+      if (idbArr.length || lsArr.length) {
+        fromIdb[k] = JSON.stringify(mergeById(idbArr, lsArr));
+      } else if (idbRaw == null || idbRaw === '' || idbRaw === '[]' || idbRaw === '{}') {
+        fromIdb[k] = lsRaw;
+      }
     }
     for (const k in fromIdb) _mem[k] = fromIdb[k];
-    if (migrated) { for (const k in _mem) _idbPut(k, _mem[k]); if (typeof toast === 'function') toast('📦 已将数据迁移到更大容量的存储空间'); }
+    for (const k in _mem) _idbPut(k, _mem[k]);
   } catch (e) {
     // 无 IDB 时回退 localStorage
     for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_') === 0) _mem[k] = localStorage.getItem(k); }
@@ -3359,6 +3420,9 @@ function updateBackupUI() {
   const last = store.get('luo_auto_backup', null);
   const el = document.getElementById('autoBackupLast');
   if (el) el.textContent = last ? ('最近备份：' + last.time) : '尚未自动备份';
+  const d = diagnoseNotes();
+  const dEl = document.getElementById('noteDiag');
+  if (dEl) dEl.innerHTML = '📝 笔记诊断：当前 <b>' + d.memCount + '</b> 条 · 本地残留 <b>' + d.lsCount + '</b> 条 · 自动备份最多 <b>' + d.backupMax + '</b> 条。若当前少于历史，点上方按钮合并恢复。';
 }
 
 /* ---- 收藏（核心金句 / 好评 / 雷点） ---- */
