@@ -290,13 +290,16 @@ async function _hydrate() {
   try {
     _idb = await _openDB();
     const fromIdb = await _idbGetAll();
-    // IDB 为空时，从旧 localStorage 迁移（兼容历史数据）
+    // 合并策略：IDB 优先；若 IDB 中某键缺失或为空，则用 localStorage 历史数据补齐（绝不丢数据）
     let migrated = 0;
-    if (Object.keys(fromIdb).length === 0) {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.indexOf('luo_') === 0) { fromIdb[k] = localStorage.getItem(k); migrated++; }
-      }
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || k.indexOf('luo_') !== 0) continue;
+      const raw = localStorage.getItem(k);
+      const inIdb = (k in fromIdb);
+      let idbEmpty = false;
+      if (inIdb) { try { const v = fromIdb[k]; idbEmpty = (v == null) || v === '[]' || v === '{}' || v === ''; } catch (e) {} }
+      if (!inIdb || idbEmpty) { fromIdb[k] = raw; migrated++; }
     }
     for (const k in fromIdb) _mem[k] = fromIdb[k];
     if (migrated) { for (const k in _mem) _idbPut(k, _mem[k]); if (typeof toast === 'function') toast('📦 已将数据迁移到更大容量的存储空间'); }
@@ -317,7 +320,8 @@ const store = {
     const raw = (typeof v === 'string') ? v : JSON.stringify(v);
     _mem[k] = raw;
     if (_idb) _idbPut(k, raw);
-    else { try { localStorage.setItem(k, raw); } catch (e) { if (typeof toast === 'function') toast('⚠️ 本地存储空间不足，请删除一些带照片的笔记/菜谱后再试'); } }
+    // 同步兜底写 localStorage：即使 IDB 异步事务在页面卸载竞态中失败，本地仍有最新副本，绝不丢数据
+    try { localStorage.setItem(k, raw); } catch (e) {}
     return true;
   }
 };
@@ -2172,6 +2176,8 @@ function currentSeason() {
 function normalizeWardrobeItem(item) {
   if (!item.category || !WARDROBE_CATEGORIES.some(c => c.k === item.category)) item.category = '其他';
   if (!item.season || !WARDROBE_SEASONS.includes(item.season)) item.season = '四季';
+  if (item.color == null) item.color = '';
+  if (item.style == null) item.style = '';
   return item;
 }
 function saveWardrobe() { wardrobe.forEach(normalizeWardrobeItem); store.set('luo_wardrobe', wardrobe); }
@@ -2191,6 +2197,65 @@ function goOutfitDay(delta) {
   outfitDayOffset = delta;
   store.set('luo_outfit_day', outfitDayOffset);
   renderOutfit();
+}
+const OUTFIT_REF = 'https://v.douyin.com/yFsI6PF5lKo/';
+function colorFamily(c) {
+  const s = (c || '').toLowerCase();
+  if (/(黑|白|灰|米|卡其|驼|beige|cream|navy|藏青|牛仔)/.test(s)) return '中性色';
+  if (/(蓝|青|绿|紫|blue|green)/.test(s)) return '冷色';
+  if (/(红|粉|橙|黄|棕)/.test(s)) return '暖亮色';
+  return '';
+}
+function buildOutfitAdvice(items, season, anchor) {
+  const TOP_CATS = ['短袖','背心','长袖','衬衣','外套','西装','马甲','毛衣','大衣'];
+  const tops = items.filter(it => TOP_CATS.includes(it.category));
+  const bottom = items.find(it => it.category === '裤子');
+  const shoe = items.find(it => it.category === '鞋子');
+  const out = items.find(it => ['外套','西装','大衣'].includes(it.category));
+  const cap = items.find(it => it.category === '帽子');
+  const bag = items.find(it => it.category === '包');
+  // 配色
+  const colors = items.map(it => (it.color || '').trim()).filter(Boolean);
+  let color;
+  if (colors.length) {
+    const fams = colors.map(colorFamily).filter(Boolean);
+    if (new Set(fams).size <= 1) color = '本套以「' + [...new Set(colors)].slice(0,3).join('/') + '」为主，同色系顺延最显高显利落；可用' + (out ? '外套的明度差' : '配饰的一点撞色') + '拉开层次。';
+    else color = '上下装用到 ' + [...new Set(colors)].slice(0,3).join('/') + '，建议"中性色压阵 + 1 件彩色提亮"，干净不杂乱，少年感最稳。';
+  } else {
+    color = '建议用「中性色（黑/白/灰/卡其/藏青）为主 + 1 件彩色提亮」的配色法：基础款不挑人，少年感也更干净。';
+  }
+  // 版形
+  const silhouette = (out ? '廓形/直筒外套敞开穿，内搭合身不臃肿，' : '上装合身有型，') + '上装与下装做"松紧对比"——' + (bottom ? '裤子选直筒或微收，' : '') + '避免上下都宽松显拖沓。';
+  // 面料
+  const fabric = season === '夏' ? '夏季优先棉、麻、天丝等透气面料，内搭选轻薄，避免闷热。'
+    : season === '冬' ? '冬季用羊毛、呢料、加绒等保暖面料，外套要够厚才有廓形与气场。'
+    : '春秋过渡季，薄针织 / 风衣 / 衬衫的叠穿最合适，面料要有层次对比。';
+  // 风格
+  const styles = items.map(it => (it.style||'').trim()).filter(Boolean);
+  const style = (styles[0] ? '以「' + [...new Set(styles)].slice(0,2).join('/') + '」为基调，' : '') + '整体偏少年感：基础款、清爽、有精神气，不化妆也站得住。';
+  // 场合
+  const isSuit = items.some(it => it.category === '西装');
+  const isSneaker = shoe && /运动|板鞋|小白|休闲鞋|sneaker/i.test((shoe.name||'') + (shoe.style||''));
+  const occasion = isSuit ? '通勤 / 轻正式（西装外套内搭白T或衬衫，解一颗扣子更松弛）。' : (isSneaker ? '校园 / 日常通勤 / 周末出街，休闲少年感拉满。' : '日常休闲 / 轻通勤，舒适好动。');
+  // 叠穿审美
+  let layering;
+  if (out) layering = (tops.length > 1 ? '内搭+外套形成两层，领口/下摆露出内搭边制造层次；' : '单穿外套略单薄，可内搭一件短袖/长袖打底增加层次。') + '敞开外套比扣上更显随性少年感。';
+  else if (items.some(it => ['马甲','毛衣'].includes(it.category)) && season !== '夏') layering = '马甲/毛衣作为中间层，外可加外套、内可配衬衫，是少年感叠穿的灵魂。';
+  else layering = season === '夏' ? '夏装单穿为主，靠配色与版形出彩，避免过度叠穿闷热。' : '可在内搭外加一件薄外套/马甲做层次，叠穿是少年感审美核心。';
+  // 身材优化（显高/显瘦/显白）
+  const body = [];
+  body.push(bottom ? '把上装前摆塞进裤子（或半塞），拉高腰线≈显高 5cm。' : '高腰下装+上装塞角，是显高最快方式。');
+  body.push('同色系上下顺延（藏青+黑、米白+卡其）纵向拉长，显瘦显高。');
+  body.push('外套/大衣敞开穿，纵向开口形成"隐形分割线"，比扣上更显瘦。');
+  if (cap) body.push('帽子抬高视觉重心，配合高腰线双重显高。');
+  body.push('亮色/浅色靠近面部（内搭或领口）提气色显白；深色留给下装压重心。');
+  // 技巧
+  const tips = [];
+  if (shoe) tips.push('鞋子选干净的小白鞋/板鞋，是少年感最稳的收尾。');
+  if (bag) tips.push('一只简约包做点缀即可，别堆太多配饰。');
+  if (out) tips.push('外套只扣中间一颗扣或全敞开，少年感的"不经意"来自不刻意。');
+  tips.push('整体留白：基础款之间留 1 件"主角单品"，其余做陪衬。');
+  return { color, silhouette, fabric, style, occasion, layering, body, tips, reference: OUTFIT_REF };
 }
 function genOutfit() {
   if (wardrobe.length === 0) return toast('请先在衣柜上传单品');
@@ -2239,7 +2304,7 @@ function genOutfit() {
     // 去重（同一单品不重复出现）
     const seen = new Set();
     const finalItems = items.filter(it => it && !seen.has(it.id) ? (seen.add(it.id), true) : false);
-    gen.push({ id: Date.now() + i, date: targetDate, season, items: finalItems.map(it => ({ id: it.id, name: it.name, img: it.img, category: it.category })), note: '' });
+    gen.push({ id: Date.now() + i, date: targetDate, season, items: finalItems.map(it => ({ id: it.id, name: it.name, img: it.img, category: it.category, color: it.color || '', style: it.style || '' })), note: '', advice: buildOutfitAdvice(finalItems, season, anchor) });
   }
   // 替换目标日期已有的建议，避免重复堆积
   outfitSuggestions = outfitSuggestions.filter(o => o.date !== targetDate).concat(gen);
@@ -2248,6 +2313,22 @@ function genOutfit() {
   toast('已生成 ' + gen.length + ' 套「' + season + '」穿搭' + (outfitDayOffset ? '（' + outfitDayLabel() + '）' : ''));
 }
 function seedShuffleMore(arr, seed) { const s = seededShuffle(arr, seed); return s[0]; }
+function renderOutfitAdvice(a) {
+  if (!a) return '';
+  return `
+    <div class="outfit-advice">
+      <div class="oa-head">💡 穿搭建议与技巧 · 少年感思路</div>
+      ${a.color ? `<div class="oa-row"><span class="oa-k">🎨 色彩配色</span><span class="oa-v">${esc(a.color)}</span></div>` : ''}
+      ${a.silhouette ? `<div class="oa-row"><span class="oa-k">📐 版形</span><span class="oa-v">${esc(a.silhouette)}</span></div>` : ''}
+      ${a.fabric ? `<div class="oa-row"><span class="oa-k">🧵 面料</span><span class="oa-v">${esc(a.fabric)}</span></div>` : ''}
+      ${a.style ? `<div class="oa-row"><span class="oa-k">✨ 风格</span><span class="oa-v">${esc(a.style)}</span></div>` : ''}
+      ${a.occasion ? `<div class="oa-row"><span class="oa-k">🎯 场合</span><span class="oa-v">${esc(a.occasion)}</span></div>` : ''}
+      ${a.layering ? `<div class="oa-row"><span class="oa-k">🧥 叠穿审美</span><span class="oa-v">${esc(a.layering)}</span></div>` : ''}
+      ${a.body && a.body.length ? `<div class="oa-row oa-block"><span class="oa-k">📏 身材优化<br><span class="oa-sub">显高/显瘦/显白</span></span><span class="oa-v"><ul class="oa-ul">${a.body.map(b => `<li>${esc(b)}</li>`).join('')}</ul></span></div>` : ''}
+      ${a.tips && a.tips.length ? `<div class="oa-row oa-block"><span class="oa-k">🛠️ 穿搭技巧</span><span class="oa-v"><ul class="oa-ul">${a.tips.map(b => `<li>${esc(b)}</li>`).join('')}</ul></span></div>` : ''}
+      <div class="oa-ref">参考博主：<a href="${a.reference}" target="_blank" rel="noopener noreferrer">抖音【黄昭昭】少年感穿搭思路 ›</a></div>
+    </div>`;
+}
 function renderOutfit() {
   const today = document.getElementById('outfitToday'); if (!today) return;
   const target = outfitTargetDate();
@@ -2263,6 +2344,7 @@ function renderOutfit() {
       <div class="flex-between mb-2"><span class="font-bold">${esc(t.season)} 穿搭 ${idx + 1}</span><span class="text-sm text-muted">${esc(t.date)}</span></div>
       <div class="outfit-items">${t.items.map(it => `<img src="${it.img}" class="outfit-thumb" alt="${esc(it.name)}">`).join('')}</div>
       <div class="text-sm mt-2">组合：<b>${t.items.map(it => it.name).join(' + ')}</b></div>
+      ${renderOutfitAdvice(t.advice)}
       <div class="mt-2" style="display:flex;gap:6px;flex-wrap:wrap">
         <input type="text" class="form-input flex-1" id="outfitNote-${t.id}" value="${esc(t.note)}" placeholder="给这套穿搭写个备注">
         <button class="btn btn-primary btn-sm" onclick="saveOutfitNote(${t.id})">保存备注</button>
@@ -2275,6 +2357,7 @@ function renderOutfit() {
       <div class="flex-between mb-2"><span class="text-sm text-muted">${esc(o.date)} · ${esc(o.season)}</span><button class="wardrobe-del" style="position:static" onclick="deleteOutfitSuggestion(${o.id})">×</button></div>
       <div class="outfit-items">${o.items.map(it => `<img src="${it.img}" class="outfit-thumb" alt="${esc(it.name)}">`).join('')}</div>
       <div class="text-sm mt-1"><b>${o.items.map(it => it.name).join(' + ')}</b></div>
+      ${renderOutfitAdvice(o.advice)}
       ${o.note ? `<div class="text-sm text-muted mt-1">备注：${esc(o.note)}</div>` : ''}
     </div>`).join('') : '';
 }
@@ -2319,6 +2402,10 @@ function renderWardrobe() {
             <button class="wardrobe-del" onclick="deleteWardrobe(${item.id})">×</button>
           </div>
           <div class="wardrobe-name">${esc(item.name)}</div>
+          <div class="wardrobe-attrs">
+            <input type="text" class="wardrobe-attr color" placeholder="颜色" value="${esc(item.color||'')}" onchange="updateWardrobeItem(${item.id},'color',this.value)">
+            <select class="wardrobe-attr style" onchange="updateWardrobeItem(${item.id},'style',this.value)">${['','少年感','简约','复古','通勤','运动','街头','其他'].map(s => `<option value="${s}" ${item.style===s?'selected':''}>${s||'风格'}</option>`).join('')}</select>
+          </div>
         </div>
       </div>`;
   });
@@ -2358,7 +2445,7 @@ function uploadWardrobe(input) {
         const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
         cnt++;
         // 自动归类：新单品默认使用「新上传默认」分类
-        wardrobe.push({ id: Date.now() + Math.floor(Math.random() * 1000), name: '单品 ' + cnt, img: dataUrl, category: lastWardrobeCategory, season: '' });
+        wardrobe.push({ id: Date.now() + Math.floor(Math.random() * 1000), name: '单品 ' + cnt, img: dataUrl, category: lastWardrobeCategory, season: '', color: '', style: '' });
         done++;
         if (done + errs === pending) { saveWardrobe(); renderWardrobe(); toast('已添加 ' + done + ' 件单品（默认分类：' + lastWardrobeCategory + '）'); }
       };
