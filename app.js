@@ -568,6 +568,26 @@ function backupNotesSoon() {
   if (_noteBackupTimer) return;
   _noteBackupTimer = setTimeout(() => { _noteBackupTimer = null; try { autoBackupNow(); } catch (e) {} }, 1200);
 }
+// 关键数据跨存储一致性自检/修复：hydrate 已把 IDB/本地存储合并进 _mem（最全集），此处把每个 luo_ 键重新三写，
+// 确保 IDB 与本地存储都同步为最新，杜绝“某一存储失效/竞态导致数据看起来消失”的情况（积分/笔记/衣柜通用）
+function reconcileAll() {
+  let n = 0;
+  for (const k in _mem) {
+    if (k.indexOf('luo_') !== 0) continue;
+    try { store.set(k, JSON.parse(_mem[k])); n++; } catch (e) {}
+  }
+  return n;
+}
+// 手动触发自检：三写同步 + 即时备份，并汇报积分/笔记/衣柜当前状态，让用户“看得到数据正常”
+function reconcileAndReport() {
+  const n = reconcileAll();
+  try { autoBackupNow(); } catch (e) {}
+  updateBackupUI();
+  const pts = store.get('luo_total_points', 0);
+  const notes = (function(){ let c=0; for (const k in _mem) if (k.indexOf('luo_notes_')===0) c += tryParseArray(_mem[k]).length; let med=(_mem['luo_med_note']?JSON.parse(_mem['luo_med_note']):'')||''; return c + (med?1:0); })();
+  const wd = (store.get('luo_wardrobe', []) || []).length;
+  toast('已自检并修复 ' + n + ' 项 · 积分 ' + pts + ' · 笔记 ' + notes + ' 条 · 衣柜 ' + wd + ' 件（均已三写备份）');
+}
 function fmtDate(d = new Date()) { return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`; }
 function fmtDateOffset(offset) { const d = new Date(); d.setDate(d.getDate() + offset); return fmtDate(d); }
 function todayKey() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
@@ -2450,6 +2470,8 @@ function normalizeWardrobeItem(item) {
 }
 function saveWardrobe() { wardrobe.forEach(normalizeWardrobeItem); store.set('luo_wardrobe', wardrobe); }
 function wardrobeTypeOf(cat) { const c = WARDROBE_CATEGORIES.find(x => x.k === cat); return c ? c.type : 'other'; }
+let wardrobeSortMode = store.get('luo_wardrobe_sort', 'type'); // 'type' 按衣物类型分组排序 | 'added' 按添加顺序
+function setWardrobeSort(mode) { wardrobeSortMode = mode; store.set('luo_wardrobe_sort', mode); renderWardrobe(); }
 let outfitHistory = store.get('luo_outfit_history', []);
 let outfitSuggestions = store.get('luo_outfit_suggestions', []);
 let outfitDayOffset = 0; // 在 loadPersistedState 中从 store 加载，避免 hydration 时序 bug
@@ -2482,15 +2504,19 @@ function buildOutfitAdvice(items, season, anchor) {
   const out = items.find(it => ['外套','西装','大衣'].includes(it.category));
   const cap = items.find(it => it.category === '帽子');
   const bag = items.find(it => it.category === '包');
+  const label = (it) => ((it.color || '').trim() ? it.color.trim() + ' ' : '') + it.category;
+  const names = items.map(label).join(' + ');
+  // 少年感总思路（参考黄昭昭：素颜不化妆、不换头、基础款简单搭配也能变高级——显高、显瘦、显白）
+  const concept = '少年感思路（参考抖音@黄昭昭：素颜不化妆、不换头，用基础款简单搭配也能让普通衣服变高级——显高、显瘦、显白）：以你这套「' + names + '」为例，核心是“干净+有精神气”，少印花、低饱和、留白，靠版形与比例出彩，不靠妆容和夸张单品。';
   // 配色
   const colors = items.map(it => (it.color || '').trim()).filter(Boolean);
   let color;
   if (colors.length) {
     const fams = colors.map(colorFamily).filter(Boolean);
-    if (new Set(fams).size <= 1) color = '本套以「' + [...new Set(colors)].slice(0,3).join('/') + '」为主，同色系顺延最显高显利落；可用' + (out ? '外套的明度差' : '配饰的一点撞色') + '拉开层次。';
-    else color = '上下装用到 ' + [...new Set(colors)].slice(0,3).join('/') + '，建议"中性色压阵 + 1 件彩色提亮"，干净不杂乱，少年感最稳。';
+    if (new Set(fams).size <= 1) color = '配色以你的「' + [...new Set(colors)].slice(0,3).join('/') + '」为主，同色系顺延最显高显利落；可用' + (out ? '外套的明度差' : '配饰的一点撞色') + '拉开层次。';
+    else color = '你用到了 ' + [...new Set(colors)].slice(0,3).join('/') + '，建议“中性色压阵 + 1 件彩色提亮”，干净不杂乱，少年感最稳。';
   } else {
-    color = '建议用「中性色（黑/白/灰/卡其/藏青）为主 + 1 件彩色提亮」的配色法：基础款不挑人，少年感也更干净。';
+    color = '你这套目前没填颜色，建议用「中性色（黑/白/灰/卡其/藏青）为主 + 1 件彩色提亮」：基础款不挑人，少年感也更干净。';
   }
   // 版形
   const silhouette = (out ? '廓形/直筒外套敞开穿，内搭合身不臃肿，' : '上装合身有型，') + '上装与下装做"松紧对比"——' + (bottom ? '裤子选直筒或微收，' : '') + '避免上下都宽松显拖沓。';
@@ -2512,10 +2538,11 @@ function buildOutfitAdvice(items, season, anchor) {
   else layering = season === '夏' ? '夏装单穿为主，靠配色与版形出彩，避免过度叠穿闷热。' : '可在内搭外加一件薄外套/马甲做层次，叠穿是少年感审美核心。';
   // 身材优化（显高/显瘦/显白）
   const body = [];
-  body.push(bottom ? '把上装前摆塞进裤子（或半塞），拉高腰线≈显高 5cm。' : '高腰下装+上装塞角，是显高最快方式。');
+  const topLabel = tops[0] || items[0];
+  body.push(bottom ? ('把「' + label(topLabel) + '」前摆塞进「' + bottom.category + '」（或半塞），拉高腰线≈显高 5cm。') : '高腰下装+上装塞角，是显高最快方式。');
   body.push('同色系上下顺延（藏青+黑、米白+卡其）纵向拉长，显瘦显高。');
-  body.push('外套/大衣敞开穿，纵向开口形成"隐形分割线"，比扣上更显瘦。');
-  if (cap) body.push('帽子抬高视觉重心，配合高腰线双重显高。');
+  body.push(out ? ('「' + label(out) + '」敞开穿，纵向开口形成“隐形分割线”，比扣上更显瘦。') : '外套敞开穿能形成纵向分割线，更显瘦。');
+  if (cap) body.push('「帽子」抬高视觉重心，配合高腰线双重显高。');
   body.push('亮色/浅色靠近面部（内搭或领口）提气色显白；深色留给下装压重心。');
   // 技巧
   const tips = [];
@@ -2523,7 +2550,7 @@ function buildOutfitAdvice(items, season, anchor) {
   if (bag) tips.push('一只简约包做点缀即可，别堆太多配饰。');
   if (out) tips.push('外套只扣中间一颗扣或全敞开，少年感的"不经意"来自不刻意。');
   tips.push('整体留白：基础款之间留 1 件"主角单品"，其余做陪衬。');
-  return { color, silhouette, fabric, style, occasion, layering, body, tips, reference: OUTFIT_REF };
+  return { concept, color, silhouette, fabric, style, occasion, layering, body, tips, reference: OUTFIT_REF };
 }
 function genOutfit() {
   if (wardrobe.length === 0) return toast('请先在衣柜上传单品');
@@ -2584,8 +2611,9 @@ function seedShuffleMore(arr, seed) { const s = seededShuffle(arr, seed); return
 function renderOutfitAdvice(a) {
   if (!a) return '';
   return `
-    <div class="outfit-advice">
+      <div class="outfit-advice">
       <div class="oa-head">💡 穿搭建议与技巧 · 少年感思路</div>
+      ${a.concept ? `<div class="oa-row oa-block"><span class="oa-k">🧒 少年感总思路</span><span class="oa-v">${esc(a.concept)}</span></div>` : ''}
       ${a.color ? `<div class="oa-row"><span class="oa-k">🎨 色彩配色</span><span class="oa-v">${esc(a.color)}</span></div>` : ''}
       ${a.silhouette ? `<div class="oa-row"><span class="oa-k">📐 版形</span><span class="oa-v">${esc(a.silhouette)}</span></div>` : ''}
       ${a.fabric ? `<div class="oa-row"><span class="oa-k">🧵 面料</span><span class="oa-v">${esc(a.fabric)}</span></div>` : ''}
@@ -2642,9 +2670,10 @@ function deleteOutfitSuggestion(id) {
 function renderWardrobe() {
   const grid = document.getElementById('wardrobeGrid');
   wardrobe.forEach(normalizeWardrobeItem);
-  // 按衣物类型分组排序（短袖→…→帽子），同组按名称
+  // 排序：按类型分组（短袖→…→帽子） / 或按添加顺序（数组序即添加序）
   const order = WARDROBE_CATEGORIES.map(c => c.k);
-  const sorted = wardrobe.slice().sort((a, b) => {
+  const sorted = wardrobe.slice();
+  if (wardrobeSortMode === 'type') sorted.sort((a, b) => {
     const ia = order.indexOf(a.category), ib = order.indexOf(b.category);
     if (ia !== ib) return ia - ib;
     return (a.name || '').toString().localeCompare((b.name || '').toString());
@@ -2652,6 +2681,10 @@ function renderWardrobe() {
   let html = `
     <div class="wardrobe-head">
       <span class="text-sm">共 <b>${wardrobe.length}</b> 件单品</span>
+      <span class="wardrobe-sort">
+        <button class="btn btn-xs ${wardrobeSortMode==='type'?'on':''}" onclick="setWardrobeSort('type')">按类型</button>
+        <button class="btn btn-xs ${wardrobeSortMode==='added'?'on':''}" onclick="setWardrobeSort('added')">按添加顺序</button>
+      </span>
       <span class="text-sm text-muted">新上传默认：
         <select class="wardrobe-cat" onchange="lastWardrobeCategory=this.value;store.set('luo_wardrobe_last_cat',this.value);renderWardrobe()">${WARDROBE_CATEGORIES.map(c => `<option value="${c.k}" ${lastWardrobeCategory === c.k ? 'selected' : ''}>${c.k}</option>`).join('')}</select>
       </span>
@@ -3573,6 +3606,15 @@ function updateBackupUI() {
     const pageList = Object.keys(d.pages).length ? Object.keys(d.pages).map(p => p + ' ' + d.pages[p]).join(' · ') : '（暂无）';
     dEl.innerHTML = '📝 笔记诊断：当前 <b>' + d.memCount + '</b> 条（' + pageList + '）· 本地残留 <b>' + d.lsCount + '</b> · 自动备份最多 <b>' + d.backupMax + '</b>' + (d.medBackup ? '（含旧版医学单条 ' + d.medBackup + '）' : '') + '。<br>若当前少于历史，先点「🔄 一键找回我的全部笔记」，仍有缺失用「⬆️ 导入恢复」选旧备份文件。';
   }
+  const hEl = document.getElementById('dataHealth');
+  if (hEl) {
+    const pts = store.get('luo_total_points', 0);
+    const wd = (store.get('luo_wardrobe', []) || []).length;
+    const med = (_mem['luo_med_note'] ? JSON.parse(_mem['luo_med_note']) : '') || '';
+    let noteTotal = d.memCount + (med ? 1 : 0);
+    const last = store.get('luo_auto_backup', null);
+    hEl.innerHTML = '💾 数据健康：积分 <b>' + pts + '</b> · 笔记 <b>' + noteTotal + '</b> 条 · 衣柜 <b>' + wd + '</b> 件 · 已自动备份' + (last ? '（' + last.time + '）' : '（暂无）') + '。三重存储（内存/IndexedDB/本地）已同步。';
+  }
 }
 
 /* ---- 收藏（核心金句 / 好评 / 雷点） ---- */
@@ -4211,6 +4253,8 @@ function loadPersistedState() {
 async function init() {
   await _hydrate();
   loadPersistedState();
+  // 数据自检：把 hydrate 合并后的最全集三写回 IDB/本地存储，保证积分/笔记/衣柜等跨存储一致、绝不凭空消失
+  try { reconcileAll(); } catch (e) {}
   const d = new Date();
   const weeks = ['周日','周一','周二','周三','周四','周五','周六'];
   document.getElementById('topDate').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
