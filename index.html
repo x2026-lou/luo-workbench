@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>洛的工作台</title>
-  <link rel="stylesheet" href="style.css?v=29">
+  <link rel="stylesheet" href="style.css?v=30">
 </head>
 <body>
   <div id="app">
@@ -112,6 +112,8 @@
                 </div>
                 <div class="text-sm mt-1" id="dataHealth"></div>
                 <div class="text-sm mt-1" id="noteDiag"></div>
+                <div class="mt-2"><button class="btn btn-small btn-outline" onclick="browseBackups()">📂 浏览备份里能找回的笔记</button></div>
+                <div id="backupBrowser" class="mt-2"></div>
                 <div class="text-sm text-muted mt-1" id="autoBackupLast">尚未自动备份</div>
                 <div class="text-sm mt-1" style="color:#1565c0">💾 数据已使用 IndexedDB 持久化，容量远超普通本地存储（约 50~250MB），笔记/复盘/书摘/拉片/旅行/好物/电子衣橱/电子菜谱可放心积累。</div>
               </div>
@@ -262,8 +264,9 @@
           </div>
           <div class="card">
             <div class="font-bold mb-2">📝 学习笔记</div>
-            <textarea class="form-textarea" id="medNote" placeholder="记录今日医学学习要点"></textarea>
+            <textarea class="form-textarea" id="medNote" placeholder="记录今日医学学习要点" oninput="saveMedicalNoteLive()"></textarea>
             <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="saveMedicalNote()">保存笔记</button>
+            <div id="medLiveTag" class="text-sm text-muted mt-1" style="opacity:0;transition:opacity .4s">已自动保存</div>
           </div>
         </div>
 
@@ -446,17 +449,23 @@
                 5. 配色多用白/灰/藏蓝/卡其，低饱和更耐看。
               </div>
             </div>
-            <div id="imageCosPanel" style="display:none">
-              <div class="card mt-2">
-                <div class="know-title">🎭 Cos 干货 · 假发 / 妆容 / 服装 / 拍摄动作 / 打光 / 角度 / 后期</div>
-                <div class="know-block"><div class="know-h">▶ 假发：选发 / 修剪 / 佩戴 / 造型</div><div class="know-b">选发按角色发色长度选<b>高温丝</b>(可造型、性价比高)或<b>全真发</b>(自然但贵)。修剪前先戴在头模上比划，刘海/鬓角用牙剪打薄，宁长勿短。佩戴时把真发盘进<b>发网</b>包紧，从后往前扣，用发际线粉补额角碎发。造型用卷发棒低温+定型喷雾，喷少量水可临时压毛躁。</div></div>
-                <div class="know-block"><div class="know-h">▶ 妆容：放大五官 / 强化轮廓 / 角色还原</div><div class="know-b">Cos 妆比日常更浓、更上镜。重点是<b>眉眼放大+轮廓清晰</b>：底妆厚一档遮自身特征并牢牢定妆；美目贴调眼型、<b>假睫毛选浓密款</b>(上镜才显)、下至/卧蚕增幼态；鼻影加深、修容强调颧骨下颌(男生加重下颌线显硬朗)；唇色按角色(元气亮色/反派暗色)。</div></div>
-                <div class="know-block"><div class="know-h">▶ 服装：考据 / 版型 / 还原</div><div class="know-b">先找<b>官方立绘/动画截图</b>确认颜色、剪裁、配饰细节(纽扣/徽章/拉链)，别凭印象。预算足找<b>定制</b>按图做，通用款买现货改制；复杂铠甲/礼服必定制。注意肩线腰线裤长<b>合身</b>，里衬走线影响质感；武器道具找道具师/3D打印，小配饰自己配齐。内搭舒适、备别针针线应急。</div></div>
-                <div class="know-block"><div class="know-h">▶ 拍摄动作：情绪 / 姿态 / 动态</div><div class="know-b">先想角色"此刻在干嘛、什么心情"再设计动作，避免僵硬。特写<b>眼神是灵魂</b>：看镜头/看远方/低头/回头连拍抓自然瞬间，手指轻触脸/发/道具增故事感。全身重心放一条腿、另一腿微曲，手插兜/扶道具自然；动态(走/跳/甩发)连拍选最舒展帧。双人 CP 要有<b>视线交流或肢体接触</b>(搭肩/牵手/对视)，糖感来自自然互动。</div></div>
-                <div class="know-block"><div class="know-h">▶ 拍摄打光：自然光 / 补光 / 三点布光</div><div class="know-b"><b>黄金时刻</b>(日出后/日落前1h)最柔美，阴天漫射光显肤好，避开正午顶光。逆光拍发丝光/轮廓光，人脸暗处用<b>反光板/补光</b>补亮。室内三点布光：主光(明暗)+辅光(柔阴影)+轮廓光(勾边)，新手先用主光+反光板。反光板金面暖/银面亮/白面柔；室内白炽灯偏黄要调白平衡。</div></div>
-                <div class="know-block"><div class="know-h">▶ 角度：显高 / 显脸小 / 构图</div><div class="know-b"><b>仰拍</b>(镜头低于胸口朝上15–30°)显腿长气场，适合全身/气场 pose；<b>俯拍</b>(高于头20–40°)显脸小可爱，适合坐姿/特写；平视最日常。构图用三分法放主体，<b>脚贴底、头留空</b>显高；中心构图+留白显情绪。全身2–3m 用 2x/3x 长焦避免畸变，脸别用 0.5x 超广角(拉宽五官)。</div></div>
-                <div class="know-block"><div class="know-h">▶ 后期P图：磨皮 / 液化 / 统一色调</div><div class="know-b">磨皮≤30% 保留皮肤纹理；液化瘦脸≤5%、收下颌腰线轻微，<b>保留原骨相</b>别拉成锥子。调色先曝光→对比度→色温→HSL 单独调肤色/天空/绿植，一组照片用同滤镜保持统一。最后轻微锐化五官边缘。角色还原：冷感角色压暖、热血角色提饱和；光效/粒子后期加，别过度。</div></div>
-              </div>
+            <div class="card mt-3">
+              <div class="font-bold mb-2">🎯 用我的单品生成穿搭建议（少年感）</div>
+              <p class="text-sm text-muted mb-2">从你上传的<b>上衣/裤子/鞋子/包/帽</b>中，按当前季节自动组合最优搭配，并给出显高/显瘦/显白与黄昭昭少年感思路。先去「电子衣柜」上传单品。</p>
+              <button class="btn btn-primary" onclick="genOutfitHere()">🎯 生成我的穿搭建议</button>
+              <div id="imageOutfitResult" class="mt-2"></div>
+            </div>
+          </div>
+          <div id="imageCosPanel" style="display:none">
+            <div class="card mt-2">
+              <div class="know-title">🎭 Cos 干货 · 假发 / 妆容 / 服装 / 拍摄动作 / 打光 / 角度 / 后期</div>
+              <div class="know-block"><div class="know-h">▶ 假发：选发 / 修剪 / 佩戴 / 造型</div><div class="know-b">选发按角色发色长度选<b>高温丝</b>(可造型、性价比高)或<b>全真发</b>(自然但贵)。修剪前先戴在头模上比划，刘海/鬓角用牙剪打薄，宁长勿短。佩戴时把真发盘进<b>发网</b>包紧，从后往前扣，用发际线粉补额角碎发。造型用卷发棒低温+定型喷雾，喷少量水可临时压毛躁。</div></div>
+              <div class="know-block"><div class="know-h">▶ 妆容：放大五官 / 强化轮廓 / 角色还原</div><div class="know-b">Cos 妆比日常更浓、更上镜。重点是<b>眉眼放大+轮廓清晰</b>：底妆厚一档遮自身特征并牢牢定妆；美目贴调眼型、<b>假睫毛选浓密款</b>(上镜才显)、下至/卧蚕增幼态；鼻影加深、修容强调颧骨下颌(男生加重下颌线显硬朗)；唇色按角色(元气亮色/反派暗色)。</div></div>
+              <div class="know-block"><div class="know-h">▶ 服装：考据 / 版型 / 还原</div><div class="know-b">先找<b>官方立绘/动画截图</b>确认颜色、剪裁、配饰细节(纽扣/徽章/拉链)，别凭印象。预算足找<b>定制</b>按图做，通用款买现货改制；复杂铠甲/礼服必定制。注意肩线腰线裤长<b>合身</b>，里衬走线影响质感；武器道具找道具师/3D打印，小配饰自己配齐。内搭舒适、备别针针线应急。</div></div>
+              <div class="know-block"><div class="know-h">▶ 拍摄动作：情绪 / 姿态 / 动态</div><div class="know-b">先想角色"此刻在干嘛、什么心情"再设计动作，避免僵硬。特写<b>眼神是灵魂</b>：看镜头/看远方/低头/回头连拍抓自然瞬间，手指轻触脸/发/道具增故事感。全身重心放一条腿、另一腿微曲，手插兜/扶道具自然；动态(走/跳/甩发)连拍选最舒展帧。双人 CP 要有<b>视线交流或肢体接触</b>(搭肩/牵手/对视)，糖感来自自然互动。</div></div>
+              <div class="know-block"><div class="know-h">▶ 拍摄打光：自然光 / 补光 / 三点布光</div><div class="know-b"><b>黄金时刻</b>(日出后/日落前1h)最柔美，阴天漫射光显肤好，避开正午顶光。逆光拍发丝光/轮廓光，人脸暗处用<b>反光板/补光</b>补亮。室内三点布光：主光(明暗)+辅光(柔阴影)+轮廓光(勾边)，新手先用主光+反光板。反光板金面暖/银面亮/白面柔；室内白炽灯偏黄要调白平衡。</div></div>
+              <div class="know-block"><div class="know-h">▶ 角度：显高 / 显脸小 / 构图</div><div class="know-b"><b>仰拍</b>(镜头低于胸口朝上15–30°)显腿长气场，适合全身/气场 pose；<b>俯拍</b>(高于头20–40°)显脸小可爱，适合坐姿/特写；平视最日常。构图用三分法放主体，<b>脚贴底、头留空</b>显高；中心构图+留白显情绪。全身2–3m 用 2x/3x 长焦避免畸变，脸别用 0.5x 超广角(拉宽五官)。</div></div>
+              <div class="know-block"><div class="know-h">▶ 后期P图：磨皮 / 液化 / 统一色调</div><div class="know-b">磨皮≤30% 保留皮肤纹理；液化瘦脸≤5%、收下颌腰线轻微，<b>保留原骨相</b>别拉成锥子。调色先曝光→对比度→色温→HSL 单独调肤色/天空/绿植，一组照片用同滤镜保持统一。最后轻微锐化五官边缘。角色还原：冷感角色压暖、热血角色提饱和；光效/粒子后期加，别过度。</div></div>
             </div>
           </div>
         </div>
@@ -1049,17 +1058,17 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=29"></script>
-  <script src="cet4_core.js?v=29"></script>
-  <script src="cet4_full.js?v=29"></script>
-  <script src="cet4_enhance.js?v=29"></script>
+  <script src="app.js?v=30"></script>
+  <script src="cet4_core.js?v=30"></script>
+  <script src="cet4_full.js?v=30"></script>
+  <script src="cet4_enhance.js?v=30"></script>
 
-  <script src="gaokao_core.js?v=29"></script>
-  <script src="expansion.js?v=29"></script>
-  <script src="jjwxc_analysis.js?v=29"></script>
+  <script src="gaokao_core.js?v=30"></script>
+  <script src="expansion.js?v=30"></script>
+  <script src="jjwxc_analysis.js?v=30"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=29').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=30').then(reg => {
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;

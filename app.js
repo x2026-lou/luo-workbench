@@ -2089,6 +2089,29 @@ function saveMedicalNote() {
   backupNotesSoon();
   toast('笔记已保存');
 }
+// 实时防丢：边打字边存（防「写了没点保存就关页面」），用防抖避免每键一次写盘；不打扰式提示
+let _medLiveTimer = null;
+function saveMedicalNoteLive() {
+  const el = document.getElementById('medNote'); if (!el) return;
+  if (_medLiveTimer) clearTimeout(_medLiveTimer);
+  _medLiveTimer = setTimeout(() => {
+    try {
+      const v = el.value;
+      store.set('luo_med_note', v);
+      const arr = store.get('luo_notes_medical', []);
+      const t = (v || '').trim();
+      if (t) {
+        const hit = arr.find(n => n.migrated);
+        if (hit) { hit.content = t; hit.title = '医学速记'; }
+        else arr.unshift({ id: 'n' + Date.now().toString(36) + 'mg', title: '医学速记', content: t, date: fmtDate(), reviewed: false, migrated: true });
+        store.set('luo_notes_medical', arr);
+      }
+      backupNotesSoon();
+      const tag = document.getElementById('medLiveTag');
+      if (tag) { tag.textContent = '已自动保存 ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); tag.style.opacity = '1'; }
+    } catch (e) {}
+  }, 600);
+}
 
 /* ================= Inspiration ================= */
 const inspirationPool = [
@@ -2624,6 +2647,144 @@ function renderOutfitAdvice(a) {
       ${a.tips && a.tips.length ? `<div class="oa-row oa-block"><span class="oa-k">🛠️ 穿搭技巧</span><span class="oa-v"><ul class="oa-ul">${a.tips.map(b => `<li>${esc(b)}</li>`).join('')}</ul></span></div>` : ''}
       <div class="oa-ref">参考博主：<a href="${a.reference}" target="_blank" rel="noopener noreferrer">抖音【黄昭昭】少年感穿搭思路 ›</a></div>
     </div>`;
+}
+// 在「形象管理 · 穿搭建议」页内直接生成并展示少年感穿搭（复用主生成流程，结果写入 #imageOutfitResult）
+function genOutfitHere() {
+  const out = document.getElementById('imageOutfitResult');
+  if (!out) return;
+  if (typeof wardrobe === 'undefined' || wardrobe.length === 0) {
+    out.innerHTML = '<div class="text-sm text-muted">请先在「电子衣柜 / 形象管理」上传单品（上衣 / 裤子 / 鞋子 / 包 / 帽），再点生成。</div>';
+    return;
+  }
+  try {
+    genOutfit(); // 复用：按季节叠穿 + 少年感建议，结果已存入 luo_outfit_suggestions
+  } catch (e) {
+    out.innerHTML = '<div class="text-sm text-danger">生成出错：' + esc(String(e)) + '</div>';
+    return;
+  }
+  const target = outfitTargetDate();
+  const list = (outfitSuggestions || []).filter(o => o.date === target);
+  if (!list.length) {
+    out.innerHTML = '<div class="text-sm text-muted">当前季节单品不足，请多上传，或把单品「季节」设为「四季」后重试。</div>';
+    return;
+  }
+  out.innerHTML = '<div class="font-bold mb-2 text-sm">🎯 用我的单品生成的穿搭建议（少年感 · 显高显瘦显白）</div>' + list.map((t, idx) => `
+    <div class="card mt-2">
+      <div class="flex-between mb-2"><span class="font-bold">${esc(t.season)} 穿搭 ${idx + 1}</span><span class="text-sm text-muted">${esc(t.date)}</span></div>
+      <div class="outfit-items">${t.items.map(it => `<img src="${it.img}" class="outfit-thumb" alt="${esc(it.name)}">`).join('')}</div>
+      <div class="text-sm mt-2">组合：<b>${t.items.map(it => it.name).join(' + ')}</b></div>
+      ${renderOutfitAdvice(t.advice)}
+    </div>`).join('');
+}
+// 浏览自动备份：列出每份快照的时间与「各版块笔记条数（含医学单条）」，可一键恢复该份；并提供深度扫描与外部找回指引
+let __backupRecData = [];
+function browseBackups() {
+  const box = document.getElementById('backupBrowser');
+  if (!box) return;
+  const single = store.get('luo_auto_backup', null);
+  const arr = store.get('luo_auto_backups', []) || [];
+  const recs = [];
+  if (single && single.data) recs.push({ label: '最新自动备份', rec: single, fresh: true });
+  arr.forEach((r, i) => { if (r && r.data) recs.push({ label: '历史备份 #' + (i + 1), rec: r }); });
+  __backupRecData = recs.map(r => r.rec.data);
+  const sectionCount = (data) => {
+    const out = {}; let total = 0;
+    for (const k in data) {
+      if (k.indexOf('luo_notes_') === 0) { const n = tryParseArray(data[k]).length; if (n) { out[k.slice(8)] = n; total += n; } }
+      else if (k === 'luo_med_note') { const s = (typeof data[k] === 'string' ? data[k] : (data[k] ? JSON.stringify(data[k]) : '')); if (s && s.trim() && s !== 'null') { out['医学单条'] = (out['医学单条'] || 0) + 1; total += 1; } }
+    }
+    return { out, total };
+  };
+  let html = '<div class="font-bold mb-1 text-sm">📂 自动备份里能找回的笔记</div>';
+  if (!recs.length) {
+    html += '<div class="text-sm text-muted">当前浏览器内没有任何自动备份快照。常见原因：① 你换过手机 / 重装过 PWA / 清过站点数据（localStorage 已清空）；② 之前从未开启自动备份。<br>→ 若你<b>曾经导出过备份文件</b>，请用备份面板的「⬆️ 导入恢复」选那个文件找回。</div>';
+  } else {
+    html += recs.map(r => {
+      const c = sectionCount(r.rec.data);
+      const detail = c.total ? Object.keys(c.out).map(k => k + ' ' + c.out[k]).join(' · ') : '（该份无笔记内容）';
+      return `<div class="card-flat mt-2" style="padding:10px">
+        <div class="flex-between"><span class="text-sm font-bold">${esc(r.label)}</span><span class="text-sm text-muted">${esc(r.rec.time || '')}</span></div>
+        <div class="text-sm mt-1">含笔记：<b>${c.total}</b> 条 — ${esc(detail)}</div>
+        <div class="mt-2"><button class="btn btn-small btn-primary" onclick="restoreBackupData(__backupRecData[${recs.indexOf(r)}], '${esc(r.label)}')">↩️ 恢复这一份</button></div>
+      </div>`;
+    }).join('');
+  }
+  // 当前浏览器内残留
+  const d = diagnoseNotes();
+  html += '<div class="text-sm mt-2">🔎 当前本机残留：共 <b>' + d.memCount + '</b> 条（本地存储 ' + d.lsCount + ' · 自动备份最多 ' + d.backupMax + (d.medBackup ? ' · 含旧版医学单条 ' + d.medBackup : '') + '）。</div>';
+  // 深度扫描：扫描整个浏览器里可能藏着笔记的键（含非标准键名）
+  html += '<div class="mt-2"><button class="btn btn-small btn-outline" onclick="deepScanStorage()">🔬 深度扫描整个浏览器（找藏在奇怪键名下的旧笔记）</button></div>';
+  html += '<div id="deepScanResult" class="mt-2"></div>';
+  // 外部找回指引
+  html += '<div class="text-sm text-muted mt-2" style="background:var(--bg-soft);padding:8px;border-radius:8px">💡 应用内找不到时，还有两条外部路：<br>① 浏览器开发者工具 → Application → IndexedDB「luoWorkbench」/ Local Storage → 找到 <code>luo_med_note</code> / <code>luo_notes_medical</code> 复制内容找回；<br>② 用你之前「⬇️ 导出备份」保存过的 .json 文件，点「⬆️ 导入恢复」。</div>';
+  box.innerHTML = html;
+}
+// 恢复某一指定备份快照的数据（与该份取并集，不丢已有内容）
+function restoreBackupData(data, label) {
+  if (!data) return;
+  if (!confirm('将从「' + (label || '该备份') + '」合并恢复数据，当前未备份的改动会被该份覆盖，确定继续？')) return;
+  let n = 0;
+  for (const k in data) {
+    if (k.indexOf('luo_') !== 0) continue;
+    try {
+      if (k.indexOf('luo_notes_') === 0) {
+        const cur = tryParseArray(_mem[k]); const snap = tryParseArray(data[k]);
+        const merged = mergeById(cur, snap);
+        store.set(k, merged); n++;
+      } else if (k === 'luo_med_note') {
+        const snapVal = tryParse(data[k]); const snap = (snapVal === null ? data[k] : snapVal);
+        const cur = _mem[k] ? (tryParse(_mem[k]) ?? _mem[k]) : '';
+        const merged = mergeScalar(cur, snap);
+        store.set(k, merged); n++;
+      } else { store.set(k, JSON.parse(data[k])); n++; }
+    } catch (e) { try { store.set(k, data[k]); n++; } catch (e2) {} }
+  }
+  try { renderMyNotes('medical'); } catch (e) {}
+  try { renderMedical(); } catch (e) {}
+  updateBackupUI();
+  toast('已从「' + (label || '该备份') + '」合并恢复 ' + n + ' 项，请刷新查看');
+}
+// 深度扫描：列出浏览器内所有 localStorage 与内存中疑似「笔记/文本」内容的键，便于找回藏在奇怪键名下的旧数据
+function deepScanStorage() {
+  const box = document.getElementById('deepScanResult');
+  if (!box) return;
+  const found = [];
+  const suspect = (k, raw) => {
+    if (!raw) return false;
+    try {
+      const v = JSON.parse(raw);
+      if (Array.isArray(v)) return v.some(x => x && (x.title || x.content || x.name));
+      if (v && typeof v === 'object') return Object.keys(v).some(kk => /note|med|医学|笔记|content|title/i.test(kk));
+      if (typeof v === 'string') return v.length > 30 && /[\u4e00-\u9fa5]/.test(v);
+    } catch { return typeof raw === 'string' && raw.length > 30 && /[\u4e00-\u9fa5]/.test(raw); }
+    return false;
+  };
+  const scan = (k, raw) => { if (/luo_|note|med|医学|笔记/i.test(k) && suspect(k, raw)) found.push({ k, raw }); };
+  for (const k in _mem) scan(k, _mem[k]);
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k) scan(k, localStorage.getItem(k)); }
+  if (!found.length) {
+    box.innerHTML = '<div class="text-sm text-muted">深度扫描未发现任何疑似旧笔记的残留键。若你曾在别的设备 / 浏览器写过，需回到那台设备导出，或导入之前的备份文件。</div>';
+    return;
+  }
+  box.innerHTML = '<div class="text-sm font-bold mb-1">🔬 发现以下疑似含笔记的键：</div>' + found.map(f => {
+    let preview = f.raw; try { const p = JSON.parse(f.raw); preview = JSON.stringify(p).slice(0, 120); } catch {}
+    return `<div class="card-flat mt-1" style="padding:8px"><div class="text-sm"><b>${esc(f.k)}</b></div><div class="text-sm text-muted" style="word-break:break-all">${esc(preview)}…</div><button class="btn btn-small btn-outline mt-1" onclick="restoreKey('${esc(f.k)}')">↩️ 恢复此键为笔记</button></div>`;
+  }).join('');
+}
+function restoreKey(k) {
+  if (!confirm('将把键「' + k + '」的内容合并回笔记体系（医学类写入医学笔记），确定？')) return;
+  const raw = (_mem[k] !== undefined ? _mem[k] : localStorage.getItem(k)) || '';
+  try {
+    const v = JSON.parse(raw);
+    if (typeof v === 'string') { store.set('luo_med_note', v); }
+    else if (Array.isArray(v)) { const cur = store.get('luo_notes_medical', []); store.set('luo_notes_medical', mergeById(cur, v)); }
+    else if (v && v.content) { const cur = store.get('luo_notes_medical', []); cur.unshift(Object.assign({ id: 'n' + Date.now().toString(36), title: '深度扫描找回', date: fmtDate() }, v)); store.set('luo_notes_medical', cur); }
+    else if (/med/i.test(k)) { store.set('luo_med_note', JSON.stringify(v)); }
+    else { store.set('luo_notes_medical', mergeById(store.get('luo_notes_medical', []), [v])); }
+  } catch { store.set('luo_med_note', raw); }
+  try { renderMyNotes('medical'); renderMedical(); } catch (e) {}
+  updateBackupUI();
+  toast('已从「' + k + '」合并恢复，请刷新查看');
 }
 function renderOutfit() {
   const today = document.getElementById('outfitToday'); if (!today) return;
