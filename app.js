@@ -3727,6 +3727,30 @@ function exportData() {
   if (msg) msg.innerHTML = '<span style="color:#1565c0">✅ 已导出 ' + Object.keys(data).length + ' 项数据，请保存到手机/云盘。</span>';
   toast('备份已导出');
 }
+// 每日自动导出整份数据到「下载」：最后一道防线，即使浏览器存储全清，本地也有文件可导入恢复
+function autoExportNow() {
+  try {
+    const data = {};
+    _allLuoKeys().forEach(k => { if (k in _mem) data[k] = _mem[k]; });
+    if (!Object.keys(data).length) return;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'luo_auto_backup_' + todayKey() + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    store.set('luo_auto_export_last', todayKey());
+  } catch (e) {}
+}
+function toggleAutoExport() {
+  const on = !store.get('luo_auto_export_on', true);
+  store.set('luo_auto_export_on', on);
+  const tgl = document.getElementById('autoExportToggle');
+  if (tgl) { tgl.textContent = on ? '📤 每日自动导出：开' : '📤 每日自动导出：关'; tgl.classList.toggle('on', on); }
+  toast(on ? '已开启每日自动导出（每天首次打开时存一份到下载）' : '已关闭每日自动导出');
+  if (on) autoExportNow();
+  updateBackupUI();
+}
 // 仅导出笔记（全部版块 luo_notes_* + 医学单条），便于单独留存与恢复
 function exportNotes() {
   const data = {};
@@ -3805,6 +3829,9 @@ function updateBackupUI() {
   const on = store.get('luo_auto_backup_on', true);
   const tgl = document.getElementById('autoBackupToggle');
   if (tgl) { tgl.textContent = on ? '🔁 自动备份：开' : '🔁 自动备份：关'; tgl.classList.toggle('on', on); }
+  const aon = store.get('luo_auto_export_on', true);
+  const atgl = document.getElementById('autoExportToggle');
+  if (atgl) { atgl.textContent = aon ? '📤 每日自动导出：开' : '📤 每日自动导出：关'; atgl.classList.toggle('on', aon); }
   const last = store.get('luo_auto_backup', null);
   const el = document.getElementById('autoBackupLast');
   if (el) el.textContent = last ? ('最近备份：' + last.time) : '尚未自动备份';
@@ -4498,6 +4525,16 @@ async function init() {
     autoBackupNow();
     if (!_autoBackupTimer) _autoBackupTimer = setInterval(autoBackupNow, 5 * 60 * 1000);
     if (!_unloadBound) { window.addEventListener('beforeunload', autoBackupNow); _unloadBound = true; }
+  }
+  // 每日自动导出整份数据到「下载」：最后防线。用首次用户交互触发下载（可靠的浏览器手势），每天仅一次
+  if (store.get('luo_auto_export_on', true) && store.get('luo_auto_export_last', '') !== todayKey()) {
+    const doOnce = () => {
+      autoExportNow();
+      window.removeEventListener('click', doOnce); window.removeEventListener('keydown', doOnce); window.removeEventListener('touchstart', doOnce);
+    };
+    window.addEventListener('click', doOnce, { once: true });
+    window.addEventListener('keydown', doOnce, { once: true });
+    window.addEventListener('touchstart', doOnce, { once: true });
   }
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
