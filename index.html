@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>洛的工作台</title>
-  <link rel="stylesheet" href="style.css?v=30">
+  <link rel="stylesheet" href="style.css?v=31">
 </head>
 <body>
   <div id="app">
@@ -255,12 +255,18 @@
           <div id="medReview" class="mt-3"></div>
           <div class="card mt-3" style="background:var(--bg-soft)">
             <div class="font-bold mb-2">🩺 医学笔记 · 防丢失工具</div>
-            <div class="text-sm text-muted mb-2">医学笔记已并入受保护的「我的笔记」体系（自动回捞 + 三重备份）。若发现笔记变少：</div>
+            <div class="text-sm text-muted mb-2">自动备份就存在<b>本机浏览器</b>（IndexedDB / 本地存储），<b>不是磁盘上的文件</b>，换手机 / 重装 PWA / 清缓存都会一起清空。若发现笔记变少：</div>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <button class="btn btn-small btn-primary" onclick="recoverAllNotes()">🔄 一键找回</button>
+              <button class="btn btn-small btn-outline" onclick="browseBackups()">📂 浏览备份</button>
+              <button class="btn btn-small btn-outline" onclick="diagnoseStorage()">🔍 全面诊断</button>
               <button class="btn btn-small btn-outline" onclick="exportNotes()">📝 导出我的笔记</button>
               <button class="btn btn-small" onclick="document.getElementById('importFile').click()">⬆️ 导入旧备份</button>
             </div>
+            <div id="medDiagBox" class="mt-2"></div>
+            <div class="text-sm text-muted mt-2">如在别处（旧手机 / 备忘录 / 微信）还留着笔记文字，粘进来即可存回：</div>
+            <textarea class="form-textarea" id="pasteNoteInput" placeholder="把笔记文字粘贴到这里…" style="margin-top:6px"></textarea>
+            <button class="btn btn-small btn-primary mt-2" onclick="pasteRecoverNote()">📋 粘贴并保存为医学笔记</button>
           </div>
           <div class="card">
             <div class="font-bold mb-2">📝 学习笔记</div>
@@ -1058,17 +1064,17 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=30"></script>
-  <script src="cet4_core.js?v=30"></script>
-  <script src="cet4_full.js?v=30"></script>
-  <script src="cet4_enhance.js?v=30"></script>
+  <script src="app.js?v=31"></script>
+  <script src="cet4_core.js?v=31"></script>
+  <script src="cet4_full.js?v=31"></script>
+  <script src="cet4_enhance.js?v=31"></script>
 
-  <script src="gaokao_core.js?v=30"></script>
-  <script src="expansion.js?v=30"></script>
-  <script src="jjwxc_analysis.js?v=30"></script>
+  <script src="gaokao_core.js?v=31"></script>
+  <script src="expansion.js?v=31"></script>
+  <script src="jjwxc_analysis.js?v=31"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=30').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=31').then(reg => {
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;

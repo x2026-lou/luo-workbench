@@ -338,6 +338,7 @@ function toggleSidebar(force) {
 /* ================= Storage（IndexedDB 持久化，突破 localStorage 5MB 上限） ================= */
 const _DB_NAME = 'luoWorkbench', _DB_STORE = 'kv', _DB_VER = 1;
 let _idb = null, _mem = Object.create(null), _hydrated = false, _hydrating = false;
+let _quotaHit = false; // 标记本地存储是否曾因配额被拒绝写入（提示已改用 IDB 兜底）
 function _openDB() {
   return new Promise((resolve, reject) => {
     if (typeof indexedDB === 'undefined') { reject(new Error('no-idb')); return; }
@@ -555,8 +556,13 @@ const store = {
     const raw = (typeof v === 'string') ? v : JSON.stringify(v);
     _mem[k] = raw;
     if (_idb) _idbPut(k, raw);
-    // 同步兜底写 localStorage：即使 IDB 异步事务在页面卸载竞态中失败，本地仍有最新副本，绝不丢数据
-    try { localStorage.setItem(k, raw); } catch (e) {}
+    // 大体积数据（如衣柜 base64 图片）跳过 localStorage：localStorage 仅 ~5MB 配额，一旦被图片撑满，
+    // 笔记/备份的写入会被静默拒绝而丢失。改用容量大得多的 IndexedDB 兜底，绝不顶掉关键数据。
+    if (raw.length <= 950000) {
+      try { localStorage.setItem(k, raw); } catch (e) { _quotaHit = true; }
+    } else {
+      if (!_idb) { try { localStorage.setItem(k, raw); } catch (e) { _quotaHit = true; } } // 无 IDB 时仍尽力写本地
+    }
     return true;
   }
 };
@@ -2745,8 +2751,8 @@ function restoreBackupData(data, label) {
   toast('已从「' + (label || '该备份') + '」合并恢复 ' + n + ' 项，请刷新查看');
 }
 // 深度扫描：列出浏览器内所有 localStorage 与内存中疑似「笔记/文本」内容的键，便于找回藏在奇怪键名下的旧数据
-function deepScanStorage() {
-  const box = document.getElementById('deepScanResult');
+function deepScanStorage(targetId) {
+  const box = document.getElementById(targetId || 'deepScanResult');
   if (!box) return;
   const found = [];
   const suspect = (k, raw) => {
@@ -2785,6 +2791,47 @@ function restoreKey(k) {
   try { renderMyNotes('medical'); renderMedical(); } catch (e) {}
   updateBackupUI();
   toast('已从「' + k + '」合并恢复，请刷新查看');
+}
+// 全面诊断本机数据状态：本地存储占用 / IndexedDB / 自动备份份数 —— 让用户看清「数据到底还在不在」
+function diagnoseStorage() {
+  const box = document.getElementById('medDiagBox'); if (!box) return;
+  let lsUsed = 0, lsCount = 0;
+  try {
+    for (let i = 0; i < localStorage.length; i++) { const v = localStorage.getItem(localStorage.key(i)); if (v) { lsUsed += v.length; lsCount++; } }
+  } catch (e) {}
+  const estQuota = 5 * 1024 * 1024;
+  const pct = Math.min(100, Math.round(lsUsed / estQuota * 100));
+  const single = store.get('luo_auto_backup', null);
+  const arr = store.get('luo_auto_backups', []) || [];
+  const backupCount = (single ? 1 : 0) + arr.length;
+  const idbOk = !!_idb;
+  const d = diagnoseNotes();
+  let html = '<div class="text-sm mt-1" style="background:var(--bg-soft);padding:8px;border-radius:8px">';
+  html += '🔎 <b>本机数据诊断</b><br>';
+  html += '· 本地存储：约 <b>' + (lsUsed / 1024).toFixed(0) + ' KB</b>（估算上限 ~5120 KB），占用 <b>' + pct + '%</b>' + (pct > 80 ? ' <span style="color:#c62828">⚠️ 已接近上限，大文件写入可能失败</span>' : '') + '<br>';
+  html += '· IndexedDB：' + (idbOk ? '已启用（大容量，笔记主存储）' : '<span style="color:#c62828">不可用（仅本地存储兜底）</span>') + '<br>';
+  html += '· 自动备份份数：<b>' + backupCount + '</b>' + (backupCount === 0 ? '（为 0 → 说明存储曾被清空，或自动备份从未成功写入）' : '') + '<br>';
+  html += '· 当前可见笔记：<b>' + d.memCount + '</b> 条<br>';
+  if (_quotaHit) html += '· <span style="color:#c62828">⚠️ 检测到本地存储写入曾被配额拒绝，已自动改用 IndexedDB 兜底。</span><br>';
+  html += '</div>';
+  html += '<div class="mt-2"><button class="btn btn-small btn-outline" onclick="deepScanStorage(\'medDeepScan\')">🔬 深度扫描残留笔记</button></div>';
+  html += '<div id="medDeepScan" class="mt-2"></div>';
+  box.innerHTML = html;
+}
+// 粘贴文本恢复：若你在别处（旧手机 / 备忘录 / 微信）还留着笔记文字，粘进来即可存回医学笔记
+function pasteRecoverNote() {
+  const ta = document.getElementById('pasteNoteInput'); if (!ta) return;
+  const v = ta.value.trim();
+  if (!v) return toast('请先把笔记内容粘贴到上方文本框');
+  store.set('luo_med_note', v);
+  const arr = store.get('luo_notes_medical', []);
+  arr.unshift({ id: 'n' + Date.now().toString(36) + 'pk', title: '粘贴恢复 ' + fmtDate(), content: v, date: fmtDate(), reviewed: false });
+  store.set('luo_notes_medical', arr);
+  backupNotesSoon();
+  try { renderMyNotes('medical'); renderMedical(); } catch (e) {}
+  updateBackupUI();
+  ta.value = '';
+  toast('已把粘贴内容存为医学笔记 —— 请立刻点「📝 导出我的笔记」留存到云盘');
 }
 function renderOutfit() {
   const today = document.getElementById('outfitToday'); if (!today) return;
@@ -4413,6 +4460,16 @@ function loadPersistedState() {
 /* ================= Init ================= */
 async function init() {
   await _hydrate();
+  // 释放被大体积键（如衣柜 base64 图片）占满的 localStorage 配额：IDB/_mem 已有完整副本，删除 localStorage 中超大的 luo_ 键，
+  // 避免其继续占用 ~5MB 配额、把笔记/备份的写入顶掉（这是「笔记与备份反复莫名消失」的主要根因）
+  try {
+    const big = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('luo_') === 0 && (k in _mem) && (localStorage.getItem(k) || '').length > 950000) big.push(k);
+    }
+    big.forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+  } catch (e) {}
   loadPersistedState();
   // 数据自检：把 hydrate 合并后的最全集三写回 IDB/本地存储，保证积分/笔记/衣柜等跨存储一致、绝不凭空消失
   try { reconcileAll(); } catch (e) {}
