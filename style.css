@@ -249,8 +249,10 @@ body {
 }
 .btn {
   padding: 12px 18px; border-radius: 14px; border: none; font-size: 14px; font-weight: 700;
-  cursor: pointer; white-space: nowrap;
+  cursor: pointer; white-space: nowrap; transition: transform .12s ease, opacity .12s ease;
 }
+.btn.pressed { animation: btnPress .26s ease; }
+@keyframes btnPress { 0% { transform: scale(1); } 35% { transform: scale(.92); } 100% { transform: scale(1); } }
 .btn-primary {
   background: linear-gradient(135deg, var(--blue-soft), var(--blue-main)); color: #fff;
   box-shadow: 0 4px 12px rgba(108, 157, 255, 0.25);

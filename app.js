@@ -579,12 +579,14 @@ const store = {
     if (isNoteKey(k) && _mem[k] && _mem[k] !== raw) recordNoteHistory(k, _mem[k]);
     _mem[k] = raw;
     if (_idb) _idbPut(k, raw);
-    // 大体积数据（如衣柜 base64 图片）跳过 localStorage：localStorage 仅 ~5MB 配额，一旦被图片撑满，
-    // 笔记/备份的写入会被静默拒绝而丢失。改用容量大得多的 IndexedDB 兜底，绝不顶掉关键数据。
-    if (raw.length <= 950000) {
+    // 笔记类数据只写 IndexedDB（容量数十 MB 起，远超 localStorage 的 ~5MB），绝不占用其配额，
+    // 因此新笔记 / 图片绝不可能把旧笔记「挤掉」。仅当无 IDB 时才兜底写回 localStorage。
+    if (isNoteKey(k)) {
+      if (!_idb) { try { localStorage.setItem(k, raw); } catch (e) { _quotaHit = true; } }
+    } else if (raw.length <= 950000) {
       try { localStorage.setItem(k, raw); } catch (e) { _quotaHit = true; }
     } else {
-      if (!_idb) { try { localStorage.setItem(k, raw); } catch (e) { _quotaHit = true; } } // 无 IDB 时仍尽力写本地
+      if (!_idb) { try { localStorage.setItem(k, raw); } catch (e) { _quotaHit = true; } }
     }
     return true;
   }
@@ -2856,6 +2858,37 @@ function restoreNoteVersion(key, idx, mode) {
   backupNotesSoon(); updateBackupUI();
   toast('已' + (mode === 'merge' ? '合并' : '恢复') + '「' + id + '」到该历史版本');
 }
+// 查看全部原始键（含非标准/隐藏键）—— 若笔记被藏在奇怪键名下，这里能一眼看到
+function dumpAllKeys() {
+  const box = document.getElementById('backupBrowser'); if (!box) return;
+  const keys = {};
+  for (const k in _mem) keys[k] = _mem[k];
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && !(k in keys)) keys[k] = localStorage.getItem(k); }
+  const rows = Object.keys(keys).sort().map(k => {
+    const v = keys[k] || ''; const size = v.length;
+    let preview = v; try { preview = JSON.stringify(JSON.parse(v)).slice(0, 90); } catch {}
+    const isNote = isNoteKey(k);
+    const cnt = isNote ? (' · ' + (tryParseArray(v).length) + ' 条') : '';
+    return `<div class="card-flat mt-1" style="padding:6px">
+      <div class="text-sm"><b>${esc(k)}</b>${isNote ? ' <span style="color:#1565c0">[笔记]</span>' : ''} <span class="text-muted">(${size} 字符${cnt})</span></div>
+      <div class="text-sm text-muted" style="word-break:break-all">${esc(preview)}…</div>
+    </div>`;
+  }).join('');
+  box.innerHTML = '<div class="font-bold mb-1 text-sm">🔬 全部原始键（共 ' + Object.keys(keys).length + ' 个，含隐藏键）：</div>' + (rows || '<div class="text-sm text-muted">无</div>');
+}
+// 导出全部原始数据（所有键，含非标准键）—— 无需 DevTools 即可完整备份/排查，存到云盘可随时「导入恢复」
+function exportRaw() {
+  try {
+    const data = {};
+    for (const k in _mem) data[k] = _mem[k];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && !(k in data)) data[k] = localStorage.getItem(k); }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'luo_raw_all_' + todayKey() + '.json';
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    toast('已导出全部 ' + Object.keys(data).length + ' 个原始键（含所有笔记与设置），请存到云盘');
+  } catch (e) { toast('导出失败：' + e.message); }
+}
 // 全面诊断本机数据状态：本地存储占用 / IndexedDB / 自动备份份数 —— 让用户看清「数据到底还在不在」
 function diagnoseStorage() {
   const box = document.getElementById('medDiagBox'); if (!box) return;
@@ -4614,6 +4647,12 @@ async function init() {
     window.addEventListener('keydown', doOnce, { once: true });
     window.addEventListener('touchstart', doOnce, { once: true });
   }
+  // 全局按钮点击反馈：任何 .btn 被点都加 .pressed 触发缩放动画，方便确认「点到了」
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('.btn');
+    if (!b || b.disabled) return;
+    b.classList.remove('pressed'); void b.offsetWidth; b.classList.add('pressed');
+  });
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
