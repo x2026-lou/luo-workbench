@@ -385,6 +385,21 @@ function mergeNoteArrays(curRaw, snapRaw) {
   const cur = tryParseArray(curRaw); const snap = tryParseArray(snapRaw);
   return mergeById(cur, snap); // 有 id 按 id 去重并集，无 id 按内容指纹去重，绝不丢
 }
+// 记录笔记历史版本：每次覆盖笔记数组前保存上一版，保留最近 30 版，支持事后回滚到任意时刻
+function recordNoteHistory(key, oldRaw) {
+  try {
+    if (!oldRaw) return;
+    const arr = tryParseArray(oldRaw); if (!arr.length) return;
+    const histKey = 'luo_history_' + key;
+    let hist = store.get(histKey, []) || [];
+    // 若与最新一版完全相同则不重复记录
+    if (hist.length && hist[0].data === oldRaw) return;
+    const t = new Date();
+    hist.unshift({ time: t.toLocaleString('zh-CN'), iso: t.toISOString(), count: arr.length, data: oldRaw });
+    if (hist.length > 30) hist = hist.slice(0, 30);
+    store.set(histKey, hist);
+  } catch (e) {}
+}
 function mergeNotesNow() {
   let recovered = 0;
   const ids = new Set();
@@ -560,6 +575,8 @@ const store = {
   },
   set(k, v) {
     const raw = (typeof v === 'string') ? v : JSON.stringify(v);
+    // 在覆盖笔记数组前，把上一版完整数组记进历史版本（防误删/防写入失败，30 版滚动保留）
+    if (isNoteKey(k) && _mem[k] && _mem[k] !== raw) recordNoteHistory(k, _mem[k]);
     _mem[k] = raw;
     if (_idb) _idbPut(k, raw);
     // 大体积数据（如衣柜 base64 图片）跳过 localStorage：localStorage 仅 ~5MB 配额，一旦被图片撑满，
@@ -2797,6 +2814,47 @@ function restoreKey(k) {
   try { renderMyNotes('medical'); renderMedical(); } catch (e) {}
   updateBackupUI();
   toast('已从「' + k + '」合并恢复，请刷新查看');
+}
+// 浏览并恢复笔记历史版本（每次保存前自动存的上一版快照）
+function browseNoteHistory() {
+  const box = document.getElementById('backupBrowser'); if (!box) return;
+  const keys = [];
+  for (const k in _mem) if (k.indexOf('luo_history_') === 0) keys.push(k);
+  if (!keys.length) { box.innerHTML = '<div class="text-sm text-muted">暂无笔记历史版本。历史版本从本次更新后开始记录，每次保存笔记前会自动保留上一版。</div>'; return; }
+  keys.sort();
+  const html = keys.map(key => {
+    const noteKey = key.slice(12);
+    const hist = store.get(key, []) || [];
+    if (!hist.length) return '';
+    const name = noteKey.indexOf('luo_notes_') === 0 ? noteKey.slice(10) : noteKey;
+    return `<details class="card-flat mt-2" style="padding:10px">
+      <summary class="font-bold text-sm">📜 ${esc(name)} · 历史版本（${hist.length} 份）</summary>
+      ${hist.map((h, idx) => `<div class="mt-2 p-2" style="background:var(--bg-soft);border-radius:8px">
+        <div class="flex-between text-sm"><span><b>${esc(h.time)}</b></span><span class="text-muted">${h.count} 条</span></div>
+        <div class="mt-1" style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-small btn-primary" onclick="restoreNoteVersion('${esc(noteKey)}', ${idx}, 'replace')">恢复此版本（替换）</button>
+          <button class="btn btn-small btn-outline" onclick="restoreNoteVersion('${esc(noteKey)}', ${idx}, 'merge')">合并到当前</button>
+        </div>
+      </div>`).join('')}
+    </details>`;
+  }).filter(Boolean).join('');
+  box.innerHTML = '<div class="font-bold mb-1 text-sm">📜 笔记历史版本（每次保存前自动保留上一版，最多 30 版）</div>' + (html || '<div class="text-sm text-muted">暂无历史版本记录。</div>');
+}
+function restoreNoteVersion(key, idx, mode) {
+  const histKey = 'luo_history_' + key;
+  const hist = store.get(histKey, []) || [];
+  if (!hist[idx]) return;
+  const target = hist[idx].data;
+  const cur = _mem[key] || '[]';
+  let next;
+  if (mode === 'merge') { next = JSON.stringify(mergeNoteArrays(cur, target)); }
+  else { next = target; }
+  store.set(key, JSON.parse(next));
+  const id = key.indexOf('luo_notes_') === 0 ? key.slice(10) : key;
+  try { if (key.indexOf('luo_notes_') === 0) renderMyNotes(id); } catch (e) {}
+  if (key === 'luo_notes_medical') try { renderMedical(); } catch (e) {}
+  backupNotesSoon(); updateBackupUI();
+  toast('已' + (mode === 'merge' ? '合并' : '恢复') + '「' + id + '」到该历史版本');
 }
 // 全面诊断本机数据状态：本地存储占用 / IndexedDB / 自动备份份数 —— 让用户看清「数据到底还在不在」
 function diagnoseStorage() {
