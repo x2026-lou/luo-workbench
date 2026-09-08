@@ -376,20 +376,29 @@ function mergeScalar(idb, ls) {
   const a = clean(idb), b = clean(ls);
   return a.length >= b.length ? a : b;
 }
+// 笔记类数组键全集：标准 luo_notes_* + 其它已知笔记/收藏/书摘/复盘数组。
+// 书摘 luo_booknotes、摘录 luo_excerpts、收藏 luo_golden、复盘 luo_reviews 不在 luo_notes_* 体系，
+// 恢复 / 诊断 / 导出必须一并覆盖，否则这些版块丢的笔记永远找不回。
+const _EXTRA_NOTE_KEYS = ['luo_booknotes', 'luo_excerpts', 'luo_golden', 'luo_reviews'];
+function isNoteKey(k) { return typeof k === 'string' && (k.indexOf('luo_notes_') === 0 || _EXTRA_NOTE_KEYS.includes(k)); }
+function mergeNoteArrays(curRaw, snapRaw) {
+  const cur = tryParseArray(curRaw); const snap = tryParseArray(snapRaw);
+  return mergeById(cur, snap); // 有 id 按 id 去重并集，无 id 按内容指纹去重，绝不丢
+}
 function mergeNotesNow() {
   let recovered = 0;
   const ids = new Set();
-  for (const k in _mem) if (k.indexOf('luo_notes_') === 0) ids.add(k.slice(8));
-  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) ids.add(k.slice(8)); }
-  ids.forEach(id => {
-    const key = 'luo_notes_' + id;
+  for (const k in _mem) if (isNoteKey(k)) ids.add(k);
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && isNoteKey(k)) ids.add(k); }
+  ids.forEach(key => {
     const cur = tryParseArray(_mem[key]);
     const ls = tryParseArray(localStorage.getItem(key));
-    const merged = mergeById(cur, ls);
+    const merged = mergeNoteArrays(cur, ls);
+    const id = key.indexOf('luo_notes_') === 0 ? key.slice(8) : key;
     if (merged.length > cur.length) recovered += merged.length - cur.length;
     _mem[key] = JSON.stringify(merged);
     store.set(key, merged);
-    try { renderMyNotes(id); } catch (e) {}
+    try { if (key.indexOf('luo_notes_') === 0) renderMyNotes(id); } catch (e) {}
   });
   // 医学单条笔记（luo_med_note 标量）也并入 IDB 与本地存储中更长的一份
   try {
@@ -410,11 +419,10 @@ function recoverNotesFromBackups() {
   recs.forEach(rec => {
     if (!rec || !rec.data) return;
     for (const k in rec.data) {
-      if (k.indexOf('luo_notes_') === 0) {
-        const id = k.slice(8);
+      if (isNoteKey(k)) {
         const curArr = tryParseArray(_mem[k]);
         const snapArr = tryParseArray(rec.data[k]);
-        const merged = mergeById(curArr, snapArr);
+        const merged = mergeNoteArrays(curArr, snapArr);
         if (merged.length > curArr.length) { recovered += merged.length - curArr.length; _mem[k] = JSON.stringify(merged); store.set(k, merged); }
       } else if (k === 'luo_med_note') {
         const cur = _mem[k] ? JSON.parse(_mem[k]) : '';
@@ -432,21 +440,20 @@ function recoverNotesFromBackups() {
 function recoverAllNotes() {
   let total = 0;
   const ids = new Set();
-  for (const k in _mem) if (k.indexOf('luo_notes_') === 0) ids.add(k.slice(8));
-  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) ids.add(k.slice(8)); }
-  ids.forEach(id => {
-    const key = 'luo_notes_' + id;
+  for (const k in _mem) if (isNoteKey(k)) ids.add(k);
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && isNoteKey(k)) ids.add(k); }
+  ids.forEach(key => {
     const cur = tryParseArray(_mem[key]);
-    const merged = mergeById(cur, tryParseArray(localStorage.getItem(key)));
+    const merged = mergeNoteArrays(cur, tryParseArray(localStorage.getItem(key)));
     if (merged.length > 0) { _mem[key] = JSON.stringify(merged); store.set(key, merged); total += merged.length; }
   });
   [store.get('luo_auto_backup', null)].filter(Boolean).concat(store.get('luo_auto_backups', [])).forEach(rec => {
     if (!rec || !rec.data) return;
     for (const k in rec.data) {
-      if (k.indexOf('luo_notes_') === 0) {
+      if (isNoteKey(k)) {
         const curArr = tryParseArray(_mem[k]);
         const snapArr = tryParseArray(rec.data[k]);
-        const merged = mergeById(curArr, snapArr);
+        const merged = mergeNoteArrays(curArr, snapArr);
         if (merged.length > curArr.length) { _mem[k] = JSON.stringify(merged); store.set(k, merged); total += merged.length - curArr.length; }
       } else if (k === 'luo_med_note') {
         const cur = _mem[k] ? JSON.parse(_mem[k]) : '';
@@ -469,12 +476,12 @@ function recoverAllNotes() {
 }
 function diagnoseNotes() {
   let memCount = 0, lsCount = 0; const pages = {};
-  for (const k in _mem) if (k.indexOf('luo_notes_') === 0) { const n = tryParseArray(_mem[k]).length; memCount += n; pages[k.slice(8)] = n; }
-  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) lsCount += tryParseArray(localStorage.getItem(k)).length; }
+  for (const k in _mem) if (isNoteKey(k)) { const n = tryParseArray(_mem[k]).length; memCount += n; pages[k.indexOf('luo_notes_') === 0 ? k.slice(8) : k] = n; }
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && isNoteKey(k)) lsCount += tryParseArray(localStorage.getItem(k)).length; }
   let backupMax = 0, medBackup = 0;
   [store.get('luo_auto_backup', null)].filter(Boolean).concat(store.get('luo_auto_backups', [])).forEach(rec => {
     if (!rec || !rec.data) return;
-    let c = 0; for (const k in rec.data) if (k.indexOf('luo_notes_') === 0) c += tryParseArray(rec.data[k]).length;
+    let c = 0; for (const k in rec.data) if (isNoteKey(k)) c += tryParseArray(rec.data[k]).length;
     if (rec.data['luo_med_note']) medBackup += 1;
     if (c > backupMax) backupMax = c;
   });
@@ -485,20 +492,19 @@ function autoRecoverNotes() {
   // 被动回捞：进入页面即把 IDB / 本地存储 / 自动备份快照里多出的笔记并回，无需用户手动操作
   let recovered = 0;
   const ids = new Set();
-  for (const k in _mem) if (k.indexOf('luo_notes_') === 0) ids.add(k.slice(8));
-  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('luo_notes_') === 0) ids.add(k.slice(8)); }
-  ids.forEach(id => {
-    const key = 'luo_notes_' + id;
+  for (const k in _mem) if (isNoteKey(k)) ids.add(k);
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && isNoteKey(k)) ids.add(k); }
+  ids.forEach(key => {
     const cur = tryParseArray(_mem[key]);
-    const merged = mergeById(cur, tryParseArray(localStorage.getItem(key)));
+    const merged = mergeNoteArrays(cur, tryParseArray(localStorage.getItem(key)));
     if (merged.length > cur.length) { recovered += merged.length - cur.length; _mem[key] = JSON.stringify(merged); store.set(key, merged); }
   });
   [store.get('luo_auto_backup', null)].filter(Boolean).concat(store.get('luo_auto_backups', [])).forEach(rec => {
     if (!rec || !rec.data) return;
     for (const k in rec.data) {
-      if (k.indexOf('luo_notes_') === 0) {
+      if (isNoteKey(k)) {
         const cur = tryParseArray(_mem[k]);
-        const merged = mergeById(cur, tryParseArray(rec.data[k]));
+        const merged = mergeNoteArrays(cur, tryParseArray(rec.data[k]));
         if (merged.length > cur.length) { recovered += merged.length - cur.length; _mem[k] = JSON.stringify(merged); store.set(k, merged); }
       } else if (k === 'luo_med_note') {
         const cur = _mem[k] ? JSON.parse(_mem[k]) : '';
@@ -2696,7 +2702,7 @@ function browseBackups() {
   const sectionCount = (data) => {
     const out = {}; let total = 0;
     for (const k in data) {
-      if (k.indexOf('luo_notes_') === 0) { const n = tryParseArray(data[k]).length; if (n) { out[k.slice(8)] = n; total += n; } }
+      if (isNoteKey(k)) { const n = tryParseArray(data[k]).length; if (n) { out[k.indexOf('luo_notes_') === 0 ? k.slice(8) : k] = n; total += n; } }
       else if (k === 'luo_med_note') { const s = (typeof data[k] === 'string' ? data[k] : (data[k] ? JSON.stringify(data[k]) : '')); if (s && s.trim() && s !== 'null') { out['医学单条'] = (out['医学单条'] || 0) + 1; total += 1; } }
     }
     return { out, total };
@@ -2733,9 +2739,9 @@ function restoreBackupData(data, label) {
   for (const k in data) {
     if (k.indexOf('luo_') !== 0) continue;
     try {
-      if (k.indexOf('luo_notes_') === 0) {
+      if (isNoteKey(k)) {
         const cur = tryParseArray(_mem[k]); const snap = tryParseArray(data[k]);
-        const merged = mergeById(cur, snap);
+        const merged = mergeNoteArrays(cur, snap);
         store.set(k, merged); n++;
       } else if (k === 'luo_med_note') {
         const snapVal = tryParse(data[k]); const snap = (snapVal === null ? data[k] : snapVal);
@@ -3754,7 +3760,7 @@ function toggleAutoExport() {
 // 仅导出笔记（全部版块 luo_notes_* + 医学单条），便于单独留存与恢复
 function exportNotes() {
   const data = {};
-  for (const k in _mem) if (k.indexOf('luo_notes_') === 0) data[k] = _mem[k];
+  for (const k in _mem) if (isNoteKey(k)) data[k] = _mem[k];
   if (_mem['luo_med_note']) data['luo_med_note'] = _mem['luo_med_note'];
   if (!Object.keys(data).length) return toast('当前没有任何笔记可导出');
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -3805,10 +3811,24 @@ function autoBackupNow() {
 function restoreAutoBackup() {
   const rec = store.get('luo_auto_backup', null);
   if (!rec) return toast('暂无自动备份');
-  if (!confirm('将从自动备份（' + rec.time + '）恢复数据，当前未备份的改动会被覆盖，确定继续？')) return;
-  for (const k in rec.data) { try { store.set(k, JSON.parse(rec.data[k])); } catch (e) { store.set(k, rec.data[k]); } }
-  toast('已从自动备份恢复，即将刷新');
-  setTimeout(() => location.reload(), 800);
+  if (!confirm('将从自动备份（' + rec.time + '）合并恢复笔记数据（与当前内容取并集，不会覆盖你已有的笔记），确定继续？')) return;
+  for (const k in rec.data) {
+    try {
+      if (isNoteKey(k)) { // 笔记数组：与当前取并集，绝不丢现有笔记
+        const merged = mergeNoteArrays(tryParseArray(_mem[k]), tryParseArray(rec.data[k]));
+        store.set(k, merged);
+      } else if (k === 'luo_med_note') {
+        const cur = _mem[k] ? (tryParse(_mem[k]) ?? _mem[k]) : '';
+        const snap = tryParse(rec.data[k]); const snapVal = snap === null ? rec.data[k] : snap;
+        store.set(k, mergeScalar(cur, snapVal));
+      } else if (!(k in _mem)) { // 非笔记且当前缺失的键才补回，避免覆盖现有设置
+        store.set(k, JSON.parse(rec.data[k]));
+      }
+    } catch (e) { try { store.set(k, rec.data[k]); } catch (e2) {} }
+  }
+  try { ['daily','medical','fandom','novelread','cp'].forEach(id => renderMyNotes(id)); renderMedical(); } catch (e) {}
+  updateBackupUI();
+  toast('已从自动备份合并恢复（与现有笔记取并集），请刷新查看');
 }
 let _autoBackupTimer = null, _unloadBound = false;
 function toggleAutoBackup() {
