@@ -117,12 +117,35 @@ function goPage(id) {
 
 /* ================= Section Notes (custom per section) ================= */
 /* 富文本渲染：转义后仅放行 [[IMG:dataURL]] 图片标记，安全显示插图 */
-function renderRich(text) {
+function renderRich(text, delCtx) {
   let s = esc(text || '');
   // 链接自动可点击：跳转到对应网页/视频（新标签打开）
   s = s.replace(/(https?:\/\/[^\s<>"']+)/g, (m) => `<a href="${m}" target="_blank" rel="noopener noreferrer">${m}</a>`);
-  s = s.replace(/\[\[IMG:([^\]]+)\]\]/g, (m, src) => `<img src="${src}" class="zoomable" style="max-width:100%;border-radius:8px;margin:6px 0;display:block;cursor:zoom-in" loading="lazy">`);
+  // 笔记图片：点击放大（zoomable）；传入 delCtx（页id|笔记id）时额外渲染单张删除按钮
+  let _imgN = 0;
+  s = s.replace(/\[\[IMG:([^\]]+)\]\]/g, (m, src) => {
+    const i = _imgN++;
+    const imgTag = `<img src="${src}" class="zoomable" style="max-width:100%;border-radius:8px;margin:6px 0;display:block;cursor:zoom-in" loading="lazy">`;
+    if (!delCtx) return imgTag;
+    return `<div class="note-img-wrap">${imgTag}<button class="note-img-del" onclick="removeNoteImage('${delCtx}',${i})" title="删除这张图">×</button></div>`;
+  });
   return s.replace(/\n/g, '<br>');
+}
+// 删除笔记中的某一张图片：按出现顺序定位 [[IMG:...]] 标记并移除（历史版本机制自动留底，可回滚）
+function removeNoteImage(ctx, idx) {
+  const sep = ctx.indexOf('|');
+  const pageId = ctx.slice(0, sep), noteId = ctx.slice(sep + 1);
+  const notes = store.get('luo_notes_' + pageId, []);
+  const n = notes.find(x => x.id === noteId);
+  if (!n) return toast('未找到该笔记');
+  const re = /\[\[IMG:[^\]]+\]\]/g;
+  const ms = (n.content || '').match(re) || [];
+  if (idx >= ms.length) return toast('图片不存在或已被删除');
+  n.content = (n.content || '').replace(ms[idx], '');
+  store.set('luo_notes_' + pageId, notes);
+  backupNotesSoon();
+  renderMyNotes(pageId);
+  toast('已删除该图片（可在「笔记历史版本」找回）');
 }
 let editingNote = { id: null };
 function renderMyNotes(id) {
@@ -156,7 +179,7 @@ function renderMyNotes(id) {
     <div class="note-item">
       <div class="note-body">
         ${n.title ? `<div class="note-title">${esc(n.title)}</div>` : ''}
-        <div class="note-text">${renderRich(n.content)}</div>
+        <div class="note-text">${renderRich(n.content, id + '|' + n.id)}</div>
         <div class="note-date">${n.date || ''}</div>
       </div>
       <div class="note-actions">
@@ -1318,8 +1341,10 @@ document.querySelectorAll('#engTabs .tab').forEach(tab => {
     document.getElementById('engQuizPanel').style.display = mode === 'quiz' ? 'block' : 'none';
     document.getElementById('engVideoPanel').style.display = mode === 'videos' ? 'block' : 'none';
     document.getElementById('engPrepPanel').style.display = mode === 'prep' ? 'block' : 'none';
+    const rp = document.getElementById('engRealPanel'); if (rp) rp.style.display = mode === 'real' ? 'block' : 'none';
     if (mode === 'quiz') openQuiz();
     if (mode === 'prep') renderCetPrep();
+    if (mode === 'real') renderCet4Real();
   };
 });
 
@@ -1605,8 +1630,13 @@ const examShizhengData = [
 ];
 function renderExam() {
   const vEl = document.getElementById('examVideoList'); if (vEl) vEl.innerHTML = videoList('exam', examVideos);
-  const xEl = document.getElementById('examXingce'); if (xEl) xEl.innerHTML = examXingceData.map(d => `
-    <div class="card"><div class="font-bold mb-1">📐 ${esc(d.mod)}</div><div class="text-sm text-muted">${esc(d.tip)}</div></div>`).join('');
+  const xEl = document.getElementById('examXingce'); if (xEl) xEl.innerHTML = `
+    <div class="card mb-2"><div class="font-bold mb-1">📚 六大学习模块（点击卡片查看要点）</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">${XC_SIX.map(x => `<div onclick="setExamXcFilter('${x.k}')" style="background:var(--bg-soft);border-radius:10px;padding:8px;cursor:pointer;${examXcFilter === x.k ? 'outline:2px solid #1565c0' : ''}"><div class="text-sm" style="font-weight:800">${x.icon} ${x.k}</div><div class="text-sm text-muted" style="font-size:12px;margin-top:2px">${esc(x.tip)}</div></div>`).join('')}</div>
+      ${examXcFilter !== '全部' ? `<button class="btn btn-xs mt-2" onclick="setExamXcFilter('全部')">↩ 显示全部知识卡</button>` : ''}
+    </div>
+    ${examXingceData.filter(d => xcMatch(d.mod, examXcFilter)).map(d => `
+    <div class="card"><div class="font-bold mb-1">📐 ${esc(d.mod)}</div><div class="text-sm text-muted">${esc(d.tip)}</div></div>`).join('')}`;
   const sEl = document.getElementById('examShenlun'); if (sEl) sEl.innerHTML = examShenlunData.map(d => `
     <div class="card"><div class="font-bold mb-1">✍️ ${esc(d.k)}</div><div class="text-sm text-muted">${esc(d.v)}</div></div>`).join('');
   const dailySZ = seededShuffle(examShizhengData, todayKey()).slice(0, 5);
@@ -1645,14 +1675,221 @@ function renderExam() {
     tab.onclick = () => {
       const w = tab.dataset.exam;
       document.querySelectorAll('#examTabs .tab').forEach(t => t.classList.remove('active')); tab.classList.add('active');
-      const map = { video: 'examVideoPanel', xingce: 'examXingcePanel', shenlun: 'examShenlunPanel', shizheng: 'examShizhengPanel', quiz: 'examQuizPanel', jobs: 'examJobsPanel' };
+      const map = { video: 'examVideoPanel', xingce: 'examXingcePanel', shenlun: 'examShenlunPanel', shizheng: 'examShizhengPanel', quiz: 'examQuizPanel', plan: 'examPlanPanel', checkin: 'examCheckinPanel', time: 'examTimePanel', paper: 'examPaperPanel', jobs: 'examJobsPanel' };
       Object.values(map).forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
       const tgt = document.getElementById(map[w]); if (tgt) tgt.style.display = '';
+      if (w === 'plan') renderExamPlan();
+      if (w === 'checkin') renderExamCheckin();
+      if (w === 'time') renderExamTime();
+      if (w === 'paper') renderExamPaper();
     };
   });
 }
 function answerExam(i) { if (eqAnswered) return; eqAnswered = true; const q = examQuizData[eqIdx]; const opts = document.querySelectorAll('#examQuiz .quiz-opt'); opts[i].classList.add(i === q.a ? 'correct' : 'wrong'); if (i !== q.a) opts[q.a].classList.add('correct'); document.getElementById('examQuizResult').textContent = i === q.a ? '✅ 正确' : '❌ 正确答案：' + q.opts[q.a]; }
 function nextExamQuiz() { eqIdx = (eqIdx + 1) % examQuizData.length; renderExam(); }
+
+/* ================= 考公 · 六大学习模块速览 + 每日计划 / 打卡日历 / 时长统计 / 试卷分析 ================= */
+let examXcFilter = '全部';
+const XC_SIX = [
+  { k: '政治理论', icon: '🧭', tip: '常识判断的核心：时政 + 法律 + 马原。考前集中刷当年政府工作报告、重要会议文件。' },
+  { k: '言语理解', icon: '💬', tip: '逻辑填空看搭配与语境；片段阅读抓主旨句（转折/因果/结论词后往往是重点）。' },
+  { k: '图形推理', icon: '🔷', tip: '位置→样式→属性→数量四步走；国考爱考一笔画、对称性、黑白运算。' },
+  { k: '逻辑判断', icon: '🧩', tip: '翻译推理背公式（如果A则B…），论证题找前提与结论的论证链条。' },
+  { k: '数量关系', icon: '🔢', tip: '代入法、赋值法、数字特性破题；难题战略放弃，保住资料与言语。' },
+  { k: '资料分析', icon: '📊', tip: '提分高地：截位直除 + 百化分速算，目标 90% 正确率。' }
+];
+function xcMatch(modName, f) {
+  if (f === '全部') return true;
+  if (f === '政治理论') return modName.indexOf('常识') >= 0;
+  if (f === '言语理解') return modName.indexOf('言语') >= 0;
+  if (f === '图形推理') return modName.indexOf('图推') >= 0;
+  if (f === '逻辑判断') return modName.indexOf('判断') >= 0 && modName.indexOf('图推') < 0;
+  if (f === '数量关系') return modName.indexOf('数量') >= 0;
+  if (f === '资料分析') return modName.indexOf('资料') >= 0;
+  return true;
+}
+function setExamXcFilter(f) { examXcFilter = f; renderExam(); }
+function renderExamPlan() {
+  const el = document.getElementById('examPlanList'); if (!el) return;
+  const plans = store.get('luo_exam_plan', []);
+  const today = fmtDate();
+  const row = p => `
+    <div class="flex-between" style="padding:8px;background:var(--bg-soft);border-radius:10px;margin-bottom:6px;gap:6px">
+      <span class="text-sm" style="flex:1;${p.done ? 'text-decoration:line-through;color:#9e9e9e' : ''}">${p.done ? '✅' : '⬜'} ${esc(p.text)}<span class="text-muted"> · ${p.date}</span></span>
+      <button class="btn btn-xs ${p.done ? '' : 'btn-primary'}" onclick="toggleExamPlan(${p.id})">${p.done ? '撤销' : '完成'}</button>
+      <button class="btn btn-xs" onclick="delExamPlan(${p.id})">删</button>
+    </div>`;
+  const todays = plans.filter(p => p.date === today);
+  const older = plans.filter(p => p.date !== today).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 30);
+  el.innerHTML = `
+    <div class="flex-between mb-2" style="gap:6px"><input class="form-input" style="flex:1" id="examPlanInput" placeholder="如：资料分析 2 组 + 言语 20 题"><button class="btn btn-primary" onclick="addExamPlan()">添加</button></div>
+    <div class="text-sm mb-1" style="font-weight:800;color:#1565c0">📅 今日（${today}）</div>
+    ${todays.length ? todays.map(row).join('') : '<div class="text-sm text-muted mb-2">今天还没有计划，添加一个吧</div>'}
+    ${older.length ? '<div class="text-sm mb-1 mt-2" style="font-weight:800">🗂 之前的日子</div>' + older.map(row).join('') : ''}`;
+}
+function addExamPlan() {
+  const inp = document.getElementById('examPlanInput'); if (!inp) return;
+  const v = inp.value.trim(); if (!v) return toast('先写下要完成的任务');
+  const plans = store.get('luo_exam_plan', []);
+  plans.unshift({ id: Date.now(), date: fmtDate(), text: v, done: false });
+  store.set('luo_exam_plan', plans);
+  renderExamPlan();
+  toast('已添加今日计划 💪');
+}
+function toggleExamPlan(pid) {
+  const plans = store.get('luo_exam_plan', []);
+  const p = plans.find(x => x.id === pid); if (!p) return;
+  p.done = !p.done;
+  store.set('luo_exam_plan', plans);
+  renderExamPlan();
+  if (p.done) { addPoints(1, true); toast('完成计划 +1 积分 ✅'); }
+}
+function delExamPlan(pid) {
+  store.set('luo_exam_plan', store.get('luo_exam_plan', []).filter(x => x.id !== pid));
+  renderExamPlan();
+}
+function renderExamCheckin() {
+  const el = document.getElementById('examCheckinCal'); if (!el) return;
+  const days = store.get('luo_exam_checkin', []);
+  const now = new Date(); const y = now.getFullYear(), m = now.getMonth();
+  const first = new Date(y, m, 1).getDay(); const cnt = new Date(y, m + 1, 0).getDate();
+  const tk = todayKey();
+  let cells = ['日','一','二','三','四','五','六'].map(w => `<div class="text-sm text-muted" style="padding:4px 0">${w}</div>`).join('');
+  for (let i = 0; i < first; i++) cells += '<div></div>';
+  for (let d = 1; d <= cnt; d++) {
+    const key = `${y}-${m + 1}-${d}`;
+    const on = days.indexOf(key) >= 0; const isToday = key === tk;
+    cells += `<div onclick="toggleCheckin('${key}')" style="padding:8px 0;border-radius:8px;cursor:pointer;font-size:13px;${on ? 'background:#2e7d32;color:#fff;font-weight:700' : isToday ? 'border:2px solid #1565c0;font-weight:700' : 'background:var(--bg-soft)'}">${on ? '✓' : d}</div>`;
+  }
+  el.innerHTML = `<div class="text-sm mb-2">已累计打卡 <b style="color:#2e7d32">${days.length}</b> 天 · 点击日期打卡 / 取消</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">${cells}</div>`;
+}
+function toggleCheckin(key) {
+  let days = store.get('luo_exam_checkin', []);
+  if (days.indexOf(key) >= 0) days = days.filter(d => d !== key);
+  else { days.push(key); days.sort(); addPoints(1, true); toast('打卡成功 +1 积分 ✅'); }
+  store.set('luo_exam_checkin', days);
+  renderExamCheckin();
+}
+function renderExamTime() {
+  const el = document.getElementById('examTimeBox'); if (!el) return;
+  const t = store.get('luo_exam_time', {});
+  const tk = todayKey();
+  let weekSum = 0; const bars = [];
+  for (let i = 6; i >= 0; i--) {
+    const dd = new Date(); dd.setDate(dd.getDate() - i);
+    const k = `${dd.getFullYear()}-${dd.getMonth() + 1}-${dd.getDate()}`;
+    const v = t[k] || 0;
+    if (i < 7) weekSum += v;
+    bars.push({ v, label: i === 0 ? '今' : (dd.getMonth() + 1) + '/' + dd.getDate() });
+  }
+  const total = Object.values(t).reduce((a, b) => a + b, 0);
+  const maxV = Math.max(60, ...bars.map(b => b.v));
+  el.innerHTML = `
+    <div class="text-sm mb-2">今日 <b style="color:#1565c0">${t[tk] || 0}</b> 分钟 · 近7天 <b>${weekSum}</b> 分钟 · 累计 <b>${total}</b> 分钟（≈${(total / 60).toFixed(1)} 小时）</div>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:100px;margin-bottom:10px">${bars.map(b => `<div style="flex:1;text-align:center"><div class="text-sm text-muted" style="margin-bottom:2px">${b.v || ''}</div><div style="height:${Math.max(4, Math.round(b.v / maxV * 60))}px;background:${b.v ? '#1565c0' : 'var(--bg-soft)'};border-radius:4px 4px 0 0"></div><div class="text-sm text-muted">${b.label}</div></div>`).join('')}</div>
+    <div class="flex-between" style="gap:6px;flex-wrap:wrap">
+      <button class="btn btn-small btn-primary" onclick="addExamTime(30)">+30 分钟</button>
+      <button class="btn btn-small btn-primary" onclick="addExamTime(60)">+1 小时</button>
+      <button class="btn btn-small btn-primary" onclick="addExamTime(120)">+2 小时</button>
+      <button class="btn btn-small btn-outline" onclick="addExamTime(-1)">✏️ 改正今日</button>
+    </div>`;
+}
+function addExamTime(min) {
+  const t = store.get('luo_exam_time', {});
+  const tk = todayKey();
+  if (min < 0) {
+    const v = prompt('今日实际学习多少分钟？（填数字）', t[tk] || 0);
+    if (v == null) return;
+    t[tk] = Math.max(0, parseInt(v, 10) || 0);
+  } else {
+    t[tk] = (t[tk] || 0) + min;
+    addPoints(1, true);
+    toast('已记录学习 ' + min + ' 分钟 +1 积分 ⏱️');
+  }
+  store.set('luo_exam_time', t);
+  renderExamTime();
+}
+const PAPER_MODS = ['言语理解', '判断推理', '数量关系', '资料分析', '常识判断'];
+const PAPER_FULL = { '言语理解': 40, '判断推理': 40, '数量关系': 10, '资料分析': 20, '常识判断': 20 };
+function renderExamPaper() {
+  const el = document.getElementById('examPaperBox'); if (!el) return;
+  const papers = store.get('luo_exam_papers', []);
+  const form = `<div class="mb-2"><input class="form-input mb-2" id="paperName" placeholder="试卷名，如：2025年12月真题卷1">
+    ${PAPER_MODS.map((m, i) => `<div class="flex-between mb-1" style="gap:6px"><span class="text-sm" style="width:76px">${m}</span><input class="form-input" type="number" id="paperGot${i}" placeholder="得分" style="flex:1"><span class="text-sm text-muted">/</span><input class="form-input" type="number" id="paperFull${i}" value="${PAPER_FULL[m]}" style="flex:1"></div>`).join('')}
+    <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="saveExamPaper()">保存本套分析</button></div>`;
+  const list = papers.map(p => {
+    const got = p.s.reduce((a, x) => a + x.got, 0), full = p.s.reduce((a, x) => a + x.full, 0);
+    const pct = full ? Math.round(got / full * 100) : 0;
+    const weakest = p.s.slice().sort((a, b) => (a.got / (a.full || 1)) - (b.got / (b.full || 1)))[0];
+    return `<div class="card-flat mb-2" style="padding:10px">
+      <div class="flex-between mb-1"><b class="text-sm">${esc(p.name)}</b><span class="text-sm" style="font-weight:800;color:${pct >= 65 ? '#2e7d32' : '#e65100'}">${got}/${full} · ${pct}%</span></div>
+      ${p.s.map(x => `<div class="flex-between text-sm text-muted" style="gap:6px"><span style="width:76px">${esc(x.m)}</span><div style="flex:1;height:8px;background:var(--bg-soft);border-radius:4px;overflow:hidden"><div style="height:100%;width:${x.full ? Math.round(x.got / x.full * 100) : 0}%;background:${x.got / (x.full || 1) >= 0.7 ? '#2e7d32' : '#e65100'}"></div></div><span>${x.got}/${x.full}</span></div>`).join('')}
+      <div class="text-sm mt-1" style="color:#e65100">⚠️ 弱项：${esc(weakest ? weakest.m : '—')}（正确率 ${weakest && weakest.full ? Math.round(weakest.got / weakest.full * 100) : 0}%，优先补这里）</div>
+      <button class="btn btn-xs mt-1" onclick="delExamPaper(${p.id})">删除本套</button>
+    </div>`;
+  }).join('');
+  el.innerHTML = form + (papers.length ? '<div class="font-bold mb-1 mt-2">📈 已录试卷（' + papers.length + ' 套）</div>' + list : '<div class="text-sm text-muted mt-2">还没有录入，做完一套卷就来分析弱项</div>');
+}
+function saveExamPaper() {
+  const nameEl = document.getElementById('paperName'); if (!nameEl) return;
+  const name = nameEl.value.trim() || ('试卷 ' + fmtDate());
+  const s = PAPER_MODS.map((m, i) => ({ m, got: parseInt(document.getElementById('paperGot' + i).value, 10) || 0, full: parseInt(document.getElementById('paperFull' + i).value, 10) || 0 }));
+  const papers = store.get('luo_exam_papers', []);
+  papers.unshift({ id: Date.now(), name, date: fmtDate(), s });
+  store.set('luo_exam_papers', papers);
+  renderExamPaper();
+  toast('已保存试卷分析 📊');
+}
+function delExamPaper(pid) {
+  store.set('luo_exam_papers', store.get('luo_exam_papers', []).filter(x => x.id !== pid));
+  renderExamPaper();
+}
+
+/* ================= 四级真题高频词（9 套真题 · 拆音节→找近音→编场景→绑词义） ================= */
+let cet4RealFilter = '全部';
+function renderCet4Real() {
+  const el = document.getElementById('engRealPanel'); if (!el) return;
+  const D = window.CET4_REAL || { sets: [], words: [] };
+  const tags = ['全部', '听力', '阅读', '写译'];
+  const list = D.words.filter(w => cet4RealFilter === '全部' || w.tag === cet4RealFilter);
+  el.innerHTML = `
+    <div class="card mb-2">
+      <div class="font-bold mb-1">📈 四级真题高频考词 · 精讲（${D.words.length} 词持续扩充）</div>
+      <div class="text-sm text-muted">${D.intro || ''}</div>
+      ${D.sets && D.sets.length ? `<div class="text-sm mt-1">${D.sets.map(s => `<span style="display:inline-block;background:var(--bg-soft);border-radius:8px;padding:2px 8px;margin:2px">${esc(s)}</span>`).join('')}</div>` : ''}
+      ${D.method ? `<div class="text-sm mt-2" style="background:#e8f0fe;border-radius:10px;padding:8px"><b>🧠 记忆四步法：拆音节 → 找近音 → 编场景 → 绑词义</b><br>${esc(D.method)}</div>` : ''}
+    </div>
+    <div class="tabs mb-2">${tags.map(t => `<div class="tab ${t === cet4RealFilter ? 'active' : ''}" onclick="setCet4RealFilter('${t}')">${t === '全部' ? '全部' : t + '高频'}</div>`).join('')}</div>
+    ${list.map(w => cet4RealCard(w)).join('') || '<div class="text-sm text-muted">该模块暂无词条</div>'}`;
+}
+function setCet4RealFilter(f) { cet4RealFilter = f; renderCet4Real(); }
+function cet4RealCard(w) {
+  const m = w.mem || {};
+  return `<details class="card" style="margin-bottom:8px">
+    <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:6px">
+      <span><b style="font-size:16px">${esc(w.en)}</b> <span class="text-sm text-muted">${esc(w.pho || '')}</span> <span style="display:inline-block;font-size:11px;background:#1565c0;color:#fff;border-radius:6px;padding:1px 6px;margin-left:4px">${esc(w.tag)}</span></span>
+      <span class="text-sm text-muted" style="text-align:right">${esc(w.cn)}</span>
+    </summary>
+    <div class="text-sm mt-2" style="border-top:1px dashed #e0e0e0;padding-top:8px">
+      <div class="mb-1"><b>词义 / 词性：</b>${esc(w.cn)}</div>
+      ${w.usage ? `<div class="mb-1"><b>用法搭配：</b>${esc(w.usage)}</div>` : ''}
+      ${w.scene ? `<div class="mb-1"><b>真题语境：</b>${esc(w.scene)}</div>` : ''}
+      ${w.syn && w.syn.length ? `<div class="mb-1"><b>同义词：</b>${esc(w.syn.join(' · '))}</div>` : ''}
+      ${w.ant && w.ant.length ? `<div class="mb-1"><b>反义词：</b>${esc(w.ant.join(' · '))}</div>` : ''}
+      ${w.sim && w.sim.length ? `<div class="mb-1"><b>形近词：</b>${esc(w.sim.join(' · '))}</div>` : ''}
+      ${w.root ? `<div class="mb-1"><b>词根词缀：</b>${esc(w.root)}</div>` : ''}
+      ${w.topic ? `<div class="mb-1"><b>模块主题词：</b>${esc(w.topic)}</div>` : ''}
+      <div class="mt-2" style="background:#fff8e1;border-radius:10px;padding:8px">
+        <b>🧠 四步记忆</b>
+        ${m.syl ? `<div class="mt-1"><b>① 拆音节：</b>${esc(m.syl)}</div>` : ''}
+        ${m.near ? `<div><b>② 找近音：</b>${esc(m.near)}</div>` : ''}
+        ${m.story ? `<div><b>③ 编场景：</b>${esc(m.story)}</div>` : ''}
+        ${m.bind ? `<div><b>④ 绑词义：</b>${esc(m.bind)}</div>` : ''}
+      </div>
+    </div>
+  </details>`;
+}
 
 /* ================= Medical ================= */
 /* 医学专业课复习资料（按科目：高频考点/易错/难点/口诀，名词·特性加粗，供自主复习） */
@@ -2553,6 +2790,20 @@ function colorFamily(c) {
   if (/(红|粉|橙|黄|棕)/.test(s)) return '暖亮色';
   return '';
 }
+// 颜色推断：优先用户填写的「颜色」字段，否则从单品名识别（如「白衬衫」→白色）——让配色建议真正贴合实际单品
+const COLOR_WORDS = ['酒红','军绿','米白','藏青','牛仔','navy','denim','黑','白','米','灰','卡其','驼','棕','咖','蓝','青','绿','紫','红','粉','橙','黄','杏','燕麦'];
+function inferColor(it) {
+  const c = (it.color || '').trim(); if (c) return c;
+  const n = it.name || '';
+  for (const w of COLOR_WORDS) if (n.indexOf(w) >= 0) return w + '色';
+  return '';
+}
+// 风格推断：优先用户选的「风格」字段，否则按品类给默认风格——让风格建议与衣物实际风格一致
+const STYLE_OF_CAT = { '衬衣':'通勤/简约', '西装':'通勤/正式', '大衣':'知性/大气', '毛衣':'温柔/知性', '马甲':'复古/层次', '外套':'休闲/层次', '短袖':'休闲/运动', '背心':'运动/叠穿', '长袖':'休闲/基础', '裤子':'休闲/基础' };
+function inferStyle(it) {
+  const s = (it.style || '').trim(); if (s && s !== '其他') return s;
+  return STYLE_OF_CAT[it.category] || '';
+}
 function buildOutfitAdvice(items, season, anchor) {
   const TOP_CATS = ['短袖','背心','长袖','衬衣','外套','西装','马甲','毛衣','大衣'];
   const tops = items.filter(it => TOP_CATS.includes(it.category));
@@ -2561,19 +2812,25 @@ function buildOutfitAdvice(items, season, anchor) {
   const out = items.find(it => ['外套','西装','大衣'].includes(it.category));
   const cap = items.find(it => it.category === '帽子');
   const bag = items.find(it => it.category === '包');
-  const label = (it) => ((it.color || '').trim() ? it.color.trim() + ' ' : '') + it.category;
+  const label = (it) => ((inferColor(it) || '').trim() ? inferColor(it).trim() + ' ' : '') + it.category;
   const names = items.map(label).join(' + ');
   // 少年感总思路（参考黄昭昭：素颜不化妆、不换头、基础款简单搭配也能变高级——显高、显瘦、显白）
   const concept = '少年感思路（参考抖音@黄昭昭：素颜不化妆、不换头，用基础款简单搭配也能让普通衣服变高级——显高、显瘦、显白）：以你这套「' + names + '」为例，核心是“干净+有精神气”，少印花、低饱和、留白，靠版形与比例出彩，不靠妆容和夸张单品。';
-  // 配色
-  const colors = items.map(it => (it.color || '').trim()).filter(Boolean);
+  // 配色（基于每件单品实际颜色：优先你填的「颜色」，否则从名称识别如「白衬衫」→白色）——不再给与衣物对不上的泛泛配色
+  const cInfo = items.map(it => ({ cat: it.category, c: inferColor(it) })).filter(x => x.c);
+  const fams = cInfo.map(x => colorFamily(x.c)).filter(Boolean);
+  const cNames = [...new Set(cInfo.map(x => x.c))].slice(0, 3).join('/');
   let color;
-  if (colors.length) {
-    const fams = colors.map(colorFamily).filter(Boolean);
-    if (new Set(fams).size <= 1) color = '配色以你的「' + [...new Set(colors)].slice(0,3).join('/') + '」为主，同色系顺延最显高显利落；可用' + (out ? '外套的明度差' : '配饰的一点撞色') + '拉开层次。';
-    else color = '你用到了 ' + [...new Set(colors)].slice(0,3).join('/') + '，建议“中性色压阵 + 1 件彩色提亮”，干净不杂乱，少年感最稳。';
+  if (!cInfo.length) {
+    color = '这套单品暂时识别不到颜色（可在衣柜给单品填「颜色」，或把颜色写进名称如「白衬衫」，建议就会按你的真实配色生成）。通用公式：中性色（黑/白/灰/卡其/藏青）打底 + 最多 1 件彩色提亮，少年感干净不杂乱。';
+  } else if (fams.length && new Set(fams).size === 1 && fams[0] === '中性色') {
+    color = '识别到这套以「' + cNames + '」为主——全是中性色，怎么配都不出错：用外套明度差（如深藏青×米白）或一双小白鞋/一顶帽做视觉亮点即可，高级感最稳。';
+  } else if (fams.length && new Set(fams).size === 1) {
+    color = '识别到这套是「' + cNames + '」同色系——同色系顺延最显高显利落：深浅两档制造层次（浅' + (cNames.split('/')[0]) + '内搭 × 深' + (cNames.split('/')[0]) + '下装/外套），再配一双中性色鞋子收尾。';
+  } else if (fams.filter(f => f !== '中性色').length <= 1) {
+    color = '「' + cNames + '」是经典的“中性压阵 + 彩色提亮”组合：彩色只留 1 件当主角（靠近面部更提气色显白），其余全用中性色收，干净有精神气，正是少年感配色。';
   } else {
-    color = '你这套目前没填颜色，建议用「中性色（黑/白/灰/卡其/藏青）为主 + 1 件彩色提亮」：基础款不挑人，少年感也更干净。';
+    color = '「' + cNames + '」里出现了两个彩色系，属于撞色穿法——难度高容易显乱：建议其中 1 件换成中性色，或用白色/灰色内搭、鞋、包做过渡色，避免整身颜色打架。';
   }
   // 版形
   const silhouette = (out ? '廓形/直筒外套敞开穿，内搭合身不臃肿，' : '上装合身有型，') + '上装与下装做"松紧对比"——' + (bottom ? '裤子选直筒或微收，' : '') + '避免上下都宽松显拖沓。';
@@ -2581,9 +2838,27 @@ function buildOutfitAdvice(items, season, anchor) {
   const fabric = season === '夏' ? '夏季优先棉、麻、天丝等透气面料，内搭选轻薄，避免闷热。'
     : season === '冬' ? '冬季用羊毛、呢料、加绒等保暖面料，外套要够厚才有廓形与气场。'
     : '春秋过渡季，薄针织 / 风衣 / 衬衫的叠穿最合适，面料要有层次对比。';
-  // 风格
-  const styles = items.map(it => (it.style||'').trim()).filter(Boolean);
-  const style = (styles[0] ? '以「' + [...new Set(styles)].slice(0,2).join('/') + '」为基调，' : '') + '整体偏少年感：基础款、清爽、有精神气，不化妆也站得住。';
+  // 风格（基于单品风格字段 + 品类推断）：单一风格给贴合建议，检测到混搭则给明确的处理办法——不再风格与衣物对不上
+  const sInfo = items.map(it => ({ cat: it.category, s: inferStyle(it) })).filter(x => x.s);
+  const sSet = [...new Set(sInfo.map(x => x.s))];
+  const STYLE_TIPS = {
+    '通勤/正式': '利落挺括是关键，内搭换白T或针织立刻减龄，西装解一颗扣更松弛。',
+    '通勤/简约': '基础款 + 干净剪裁，配饰做减法，越简单越显质感。',
+    '知性/大气': '长线条（长外套/直筒下装）+ 低饱和色，走动带风。',
+    '温柔/知性': '软面料 + 圆领/针织元素，色调统一在米白/燕麦/浅咖最出效果。',
+    '复古/层次': '马甲/格纹/棕色系是灵魂，配饰略做旧更有味道。',
+    '休闲/层次': '内外两层拉开明度差，外套敞开穿最随性。',
+    '休闲/运动': '卫衣/运动鞋 + 直筒裤，活力少年感；注意别上下都宽松显拖沓。',
+    '运动/叠穿': '背心/T恤叠穿很有少年气，全身颜色控制在 3 个以内。',
+    '休闲/基础': '基础款主打合身，用 1 件有设计感的单品提亮就够。'
+  };
+  let style;
+  if (!sSet.length) style = '整体走少年感基础款路线：清爽、合身、低饱和，不化妆也站得住。';
+  else if (sSet.length === 1) {
+    style = '这套整体是「' + sSet[0] + '」风格（由' + sInfo[0].cat + '等单品判定）。' + (STYLE_TIPS[sSet[0]] || ('以「' + sSet[0] + '」为基调：基础款、清爽、有精神气。'));
+  } else {
+    style = '这套混搭了「' + sSet.slice(0, 2).join('」+「') + '」两种风格：混搭可以，但要有主导——建议占比大的风格为主，另一风格只留 1 件单品点缀，或用中性色外套/鞋子把两种风格“焊”在一起，避免每件各说各话。';
+  }
   // 场合
   const isSuit = items.some(it => it.category === '西装');
   const isSneaker = shoe && /运动|板鞋|小白|休闲鞋|sneaker/i.test((shoe.name||'') + (shoe.style||''));
@@ -2656,7 +2931,7 @@ function genOutfit() {
     // 去重（同一单品不重复出现）
     const seen = new Set();
     const finalItems = items.filter(it => it && !seen.has(it.id) ? (seen.add(it.id), true) : false);
-    gen.push({ id: Date.now() + i, date: targetDate, season, items: finalItems.map(it => ({ id: it.id, name: it.name, img: it.img, category: it.category, color: it.color || '', style: it.style || '' })), note: '', advice: buildOutfitAdvice(finalItems, season, anchor) });
+    gen.push({ id: Date.now() + i, date: targetDate, season, items: finalItems.map(it => ({ id: it.id, name: it.name, img: it.img, category: it.category, color: inferColor(it) || '', style: inferStyle(it) || '' })), note: '', advice: buildOutfitAdvice(finalItems, season, anchor) });
   }
   // 替换目标日期已有的建议，避免重复堆积
   outfitSuggestions = outfitSuggestions.filter(o => o.date !== targetDate).concat(gen);

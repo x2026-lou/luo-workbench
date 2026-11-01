@@ -789,3 +789,8 @@ details[open] summary { margin-bottom:6px; }
 .img-lightbox.show { display: flex; }
 .img-lightbox img { max-width: 94vw; max-height: 86vh; border-radius: 10px; box-shadow: 0 8px 40px rgba(0,0,0,.6); }
 img.zoomable { cursor: zoom-in; }
+
+/* ---- 笔记内单张图片删除 ---- */
+.note-img-wrap { position: relative; display: block; max-width: 100%; }
+.note-img-del { position: absolute; top: 12px; right: 12px; width: 26px; height: 26px; border-radius: 50%; border: none; background: rgba(0,0,0,.55); color: #fff; font-size: 16px; line-height: 1; cursor: pointer; z-index: 2; }
+.note-img-del:active { transform: scale(.9); }

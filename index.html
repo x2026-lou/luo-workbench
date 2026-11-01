@@ -169,6 +169,7 @@
             <div class="tab" data-eng="quiz">随堂测试</div>
             <div class="tab" data-eng="videos">配套视频</div>
             <div class="tab" data-eng="prep">🎯 四六级备考</div>
+            <div class="tab" data-eng="real">📈 真题高频词</div>
           </div>
           <div id="engWordsPanel">
             <div class="word-banner">
@@ -228,6 +229,7 @@
               <div class="know-block"><div class="know-h">▶ 考前一周：只做三件事</div><div class="know-b">①复习错题本；②背作文模板和翻译高频词；③做 1 套最新真题保持手感。不要再刷新题，巩固已会的内容比学新东西更重要。调整作息，考试当天提前到考场。</div></div>
             </div>
           </div>
+          <div id="engRealPanel" style="display:none"></div>
         </div>
 
         <!-- Civil Service -->
@@ -241,6 +243,10 @@
             <div class="tab" data-exam="shenlun">✍️ 申论素材库</div>
             <div class="tab" data-exam="shizheng">📰 每日时政</div>
             <div class="tab" data-exam="quiz">✏️ 每日一测</div>
+            <div class="tab" data-exam="plan">📅 每日计划</div>
+            <div class="tab" data-exam="checkin">✅ 打卡日历</div>
+            <div class="tab" data-exam="time">⏱️ 时长统计</div>
+            <div class="tab" data-exam="paper">📊 试卷分析</div>
             <div class="tab" data-exam="jobs">💼 招聘公告</div>
           </div>
           <div id="examVideoPanel"><div id="examVideoList"></div>
@@ -260,6 +266,18 @@
           <div id="examShenlunPanel" style="display:none"><div id="examShenlun"></div></div>
           <div id="examShizhengPanel" style="display:none"><div id="examShizheng"></div></div>
           <div id="examQuizPanel" style="display:none"><div class="card"><div class="font-bold mb-2">✏️ 行测随堂练习</div><div id="examQuiz"></div></div></div>
+          <div id="examPlanPanel" style="display:none">
+            <div class="card"><div class="font-bold mb-2">📅 考公每日计划</div><div class="text-sm text-muted mb-2">按天列备考任务，完成打勾——政治理论 / 言语理解 / 图形推理 / 逻辑判断 / 数量关系 / 资料分析 六大模块轮流安排。</div><div id="examPlanList"></div></div>
+          </div>
+          <div id="examCheckinPanel" style="display:none">
+            <div class="card"><div class="font-bold mb-2">✅ 打卡日历</div><div id="examCheckinCal"></div></div>
+          </div>
+          <div id="examTimePanel" style="display:none">
+            <div class="card"><div class="font-bold mb-2">⏱️ 学习时长统计</div><div id="examTimeBox"></div></div>
+          </div>
+          <div id="examPaperPanel" style="display:none">
+            <div class="card"><div class="font-bold mb-2">📊 试卷分析</div><div class="text-sm text-muted mb-2">录入每套行测卷各模块得分，自动算总分与正确率，找出弱项模块。</div><div id="examPaperBox"></div></div>
+          </div>
           <div id="examJobsPanel" style="display:none"><div class="card"><div class="font-bold mb-2">📰 适配招聘公告</div><div id="examJobs"></div></div></div>
         </div>
 
@@ -1084,6 +1102,7 @@
   <script src="cet4_core.js?v=37"></script>
   <script src="cet4_full.js?v=37"></script>
   <script src="cet4_enhance.js?v=37"></script>
+  <script src="cet4_real.js?v=37"></script>
 
   <script src="gaokao_core.js?v=37"></script>
   <script src="expansion.js?v=37"></script>
