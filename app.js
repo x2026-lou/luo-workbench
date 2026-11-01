@@ -121,7 +121,7 @@ function renderRich(text) {
   let s = esc(text || '');
   // 链接自动可点击：跳转到对应网页/视频（新标签打开）
   s = s.replace(/(https?:\/\/[^\s<>"']+)/g, (m) => `<a href="${m}" target="_blank" rel="noopener noreferrer">${m}</a>`);
-  s = s.replace(/\[\[IMG:([^\]]+)\]\]/g, (m, src) => `<img src="${src}" style="max-width:100%;border-radius:8px;margin:6px 0;display:block" loading="lazy">`);
+  s = s.replace(/\[\[IMG:([^\]]+)\]\]/g, (m, src) => `<img src="${src}" class="zoomable" style="max-width:100%;border-radius:8px;margin:6px 0;display:block;cursor:zoom-in" loading="lazy">`);
   return s.replace(/\n/g, '<br>');
 }
 let editingNote = { id: null };
@@ -2705,7 +2705,7 @@ function genOutfitHere() {
   out.innerHTML = '<div class="font-bold mb-2 text-sm">🎯 用我的单品生成的穿搭建议（少年感 · 显高显瘦显白）</div>' + list.map((t, idx) => `
     <div class="card mt-2">
       <div class="flex-between mb-2"><span class="font-bold">${esc(t.season)} 穿搭 ${idx + 1}</span><span class="text-sm text-muted">${esc(t.date)}</span></div>
-      <div class="outfit-items">${t.items.map(it => `<img src="${it.img}" class="outfit-thumb" alt="${esc(it.name)}">`).join('')}</div>
+      <div class="outfit-items">${t.items.map(it => `<img src="${it.img}" class="outfit-thumb zoomable" alt="${esc(it.name)}">`).join('')}</div>
       <div class="text-sm mt-2">组合：<b>${t.items.map(it => it.name).join(' + ')}</b></div>
       ${renderOutfitAdvice(t.advice)}
     </div>`).join('');
@@ -2901,6 +2901,25 @@ function freeLocalQuota() {
     toast('已释放本地配额：' + toDel.length + ' 个大键（约 ' + (freed / 1024).toFixed(0) + ' KB）已确认在 IndexedDB，可放心写入');
   } catch (e) { toast('释放失败：' + e.message); }
 }
+// 图片点击放大：点任意带 zoomable 的图片弹出全屏大图，点任意处关闭 —— 笔记/衣柜/穿搭/菜谱照片通用
+function openImg(src) {
+  let lb = document.getElementById('imgLightbox');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'imgLightbox';
+    lb.className = 'img-lightbox';
+    lb.innerHTML = '<img alt="大图预览">';
+    lb.addEventListener('click', () => { lb.classList.remove('show'); lb.querySelector('img').src = ''; });
+    document.body.appendChild(lb);
+  }
+  lb.querySelector('img').src = src;
+  lb.classList.add('show');
+}
+// 用捕获阶段监听，保证在其他处理器之前接管图片点击
+document.addEventListener('click', (e) => {
+  const t = e.target;
+  if (t && t.tagName === 'IMG' && t.classList && t.classList.contains('zoomable')) { e.stopPropagation(); openImg(t.src); }
+}, true);
 // 全面诊断本机数据状态：本地存储占用 / IndexedDB / 自动备份份数 —— 让用户看清「数据到底还在不在」
 function diagnoseStorage() {
   const box = document.getElementById('medDiagBox'); if (!box) return;
@@ -2968,7 +2987,7 @@ function renderOutfit() {
   today.innerHTML = nav + (list.length ? list.map((t, idx) => `
     <div class="card mt-2">
       <div class="flex-between mb-2"><span class="font-bold">${esc(t.season)} 穿搭 ${idx + 1}</span><span class="text-sm text-muted">${esc(t.date)}</span></div>
-      <div class="outfit-items">${t.items.map(it => `<img src="${it.img}" class="outfit-thumb" alt="${esc(it.name)}">`).join('')}</div>
+      <div class="outfit-items">${t.items.map(it => `<img src="${it.img}" class="outfit-thumb zoomable" alt="${esc(it.name)}">`).join('')}</div>
       <div class="text-sm mt-2">组合：<b>${t.items.map(it => it.name).join(' + ')}</b></div>
       ${renderOutfitAdvice(t.advice)}
       <div class="mt-2" style="display:flex;gap:6px;flex-wrap:wrap">
@@ -2981,7 +3000,7 @@ function renderOutfit() {
   hist.innerHTML = older.length ? '<div class="font-bold mb-2 text-sm">📅 历史穿搭记录</div>' + older.map(o => `
     <div class="card-flat">
       <div class="flex-between mb-2"><span class="text-sm text-muted">${esc(o.date)} · ${esc(o.season)}</span><button class="wardrobe-del" style="position:static" onclick="deleteOutfitSuggestion(${o.id})">×</button></div>
-      <div class="outfit-items">${o.items.map(it => `<img src="${it.img}" class="outfit-thumb" alt="${esc(it.name)}">`).join('')}</div>
+      <div class="outfit-items">${o.items.map(it => `<img src="${it.img}" class="outfit-thumb zoomable" alt="${esc(it.name)}">`).join('')}</div>
       <div class="text-sm mt-1"><b>${o.items.map(it => it.name).join(' + ')}</b></div>
       ${renderOutfitAdvice(o.advice)}
       ${o.note ? `<div class="text-sm text-muted mt-1">备注：${esc(o.note)}</div>` : ''}
@@ -3024,7 +3043,7 @@ function renderWardrobe() {
     if (item.category !== currentCat) { currentCat = item.category; html += `<div class="wardrobe-group-title">${esc(item.category)}</div>`; }
     html += `
       <div class="wardrobe-item">
-        <div class="wardrobe-img"><img src="${item.img}" alt="${esc(item.name)}"></div>
+        <div class="wardrobe-img"><img src="${item.img}" class="zoomable" style="cursor:zoom-in" alt="${esc(item.name)}"></div>
         <div class="wardrobe-info">
           <div class="wardrobe-toolbar">
             <select class="wardrobe-cat" onchange="updateWardrobeItem(${item.id}, 'category', this.value)">${WARDROBE_CATEGORIES.map(c => `<option value="${c.k}" ${item.category === c.k ? 'selected' : ''}>${c.k}</option>`).join('')}</select>
@@ -3355,7 +3374,7 @@ function paintRecipePreview() {
   if (!el) return;
   el.innerHTML = pendingRecipePhotos.length
     ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">` + pendingRecipePhotos.map((p, i) =>
-        `<div style="position:relative"><img src="${p}" style="width:88px;height:88px;object-fit:cover;border-radius:10px">
+        `<div style="position:relative"><img src="${p}" class="zoomable" style="width:88px;height:88px;object-fit:cover;border-radius:10px;cursor:zoom-in">
           <button type="button" onclick="removePendingRecipePhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:#e53935;color:#fff;cursor:pointer">×</button></div>`).join('')
         + `</div><div class="text-sm text-muted mt-1">已选 ${pendingRecipePhotos.length} 张，可继续添加</div>`
     : '';
@@ -3379,7 +3398,7 @@ function renderRecipes() {
     const photos = (r.photos && r.photos.length) ? r.photos : (r.photo ? [r.photo] : []);
     return `
     <div class="card-flat">
-      ${photos.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">` + photos.map(p => `<img src="${p}" style="width:100%;max-width:160px;border-radius:10px;object-fit:cover">`).join('') + `</div>` : ''}
+      ${photos.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">` + photos.map(p => `<img src="${p}" class="zoomable" style="width:100%;max-width:160px;border-radius:10px;object-fit:cover;cursor:zoom-in">`).join('') + `</div>` : ''}
       <div class="font-bold mb-1">${r.name}</div>
       ${r.price ? `<div class="text-sm mb-1"><span class="text-orange">物价：</span>${r.price}</div>` : ''}
       ${r.prep ? `<div class="text-sm text-muted" style="white-space:pre-wrap">${r.prep}</div>` : ''}
