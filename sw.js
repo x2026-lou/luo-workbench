@@ -1,4 +1,4 @@
-const CACHE = 'luo-workbench-v29';
+const CACHE = 'luo-workbench-v30';
 // 相对路径：站点部署在 /luo-workbench/ 子路径下，必须用 ./ 才能正确缓存
 const ASSETS = [
   './',
@@ -20,6 +20,10 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE).then(cache => cache.addAll(ASSETS).catch(() => {})).then(() => self.skipWaiting())
   );
+});
+
+self.addEventListener('message', event => {
+  if (event.data === 'skip') self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {

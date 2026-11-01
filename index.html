@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>洛的工作台</title>
-  <link rel="stylesheet" href="style.css?v=37">
+  <link rel="stylesheet" href="style.css?v=38">
 </head>
 <body>
   <div id="app">
@@ -27,6 +27,7 @@
       <div class="nav-list" id="navList"></div>
       <div class="sidebar-footer">
         <button class="sync-btn" onclick="syncCloud()">🔄 同步到手机</button>
+        <button class="sync-btn" onclick="forceUpdate()" style="margin-top:6px;background:#fff3e0;color:#e65100">⬆️ 检查更新</button>
         <div class="sync-hint">完成一项打卡，进度一目了然 ✨</div>
       </div>
     </div>
@@ -1098,18 +1099,20 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=37"></script>
-  <script src="cet4_core.js?v=37"></script>
-  <script src="cet4_full.js?v=37"></script>
-  <script src="cet4_enhance.js?v=37"></script>
-  <script src="cet4_real.js?v=37"></script>
+  <script src="app.js?v=38"></script>
+  <script src="cet4_core.js?v=38"></script>
+  <script src="cet4_full.js?v=38"></script>
+  <script src="cet4_enhance.js?v=38"></script>
+  <script src="cet4_real.js?v=38"></script>
 
-  <script src="gaokao_core.js?v=37"></script>
-  <script src="expansion.js?v=37"></script>
-  <script src="jjwxc_analysis.js?v=37"></script>
+  <script src="gaokao_core.js?v=38"></script>
+  <script src="expansion.js?v=38"></script>
+  <script src="jjwxc_analysis.js?v=38"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=37').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=38').then(reg => {
+        // 已有 waiting 的新 SW 立即激活（跳过等待）
+        if (reg.waiting) reg.waiting.postMessage('skip');
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
@@ -1119,6 +1122,8 @@
             }
           });
         });
+        // 主动检查更新：网络恢复后立即拉取新 SW，不依赖页面导航的自动检查时机
+        setTimeout(() => { reg.update().catch(() => {}); }, 2000);
       }).catch(err => {
         console.error('Service Worker registration failed', err);
       });
@@ -1126,6 +1131,17 @@
       let reloaded = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (reloaded) return; reloaded = true; location.reload();
+      });
+    }
+    // 手动「检查更新」：清空所有 SW 缓存后强制重新拉取最新资源（不会动 IndexedDB 笔记数据）
+    function forceUpdate() {
+      if (!('serviceWorker' in navigator)) { location.reload(true); return; }
+      const clearAll = () => caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k))));
+      navigator.serviceWorker.getRegistration().then(reg => {
+        clearAll().then(() => {
+          if (reg) reg.update().catch(() => {});
+          setTimeout(() => location.reload(true), 600);
+        });
       });
     }
   </script>
