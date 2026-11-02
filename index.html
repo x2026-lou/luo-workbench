@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>洛的工作台</title>
-  <link rel="stylesheet" href="style.css?v=40">
+  <link rel="stylesheet" href="style.css?v=41">
 </head>
 <body>
   <div id="app">
@@ -243,6 +243,10 @@
             <div class="tab active" data-exam="video">🎬 视频课程</div>
             <div class="tab" data-exam="xingce">📐 行测知识库</div>
             <div class="tab" data-exam="shenlun">✍️ 申论素材库</div>
+            <div class="tab" data-exam="maps">🗺 思维导图</div>
+            <div class="tab" data-exam="rmrb">📰 每日拆解</div>
+            <div class="tab" data-exam="kaobian">🎓 考编专区</div>
+            <div class="tab" data-exam="wrong">📕 错题本</div>
             <div class="tab" data-exam="shizheng">📰 每日时政</div>
             <div class="tab" data-exam="quiz">✏️ 每日一测</div>
             <div class="tab" data-exam="plan">📅 每日计划</div>
@@ -266,6 +270,10 @@
           </div>
           <div id="examXingcePanel" style="display:none"><div id="examXingce"></div></div>
           <div id="examShenlunPanel" style="display:none"><div id="examShenlun"></div></div>
+          <div id="examMapsPanel" style="display:none"><div id="examMaps"></div></div>
+          <div id="examRmrbPanel" style="display:none"><div id="examRmrb"></div></div>
+          <div id="examKaoBianPanel" style="display:none"><div id="examKaoBian"></div></div>
+          <div id="examWrongPanel" style="display:none"><div id="examWrong"></div></div>
           <div id="examShizhengPanel" style="display:none"><div id="examShizheng"></div></div>
           <div id="examQuizPanel" style="display:none"><div class="card"><div class="font-bold mb-2">✏️ 行测随堂练习</div><div id="examQuiz"></div></div></div>
           <div id="examPlanPanel" style="display:none">
@@ -1105,19 +1113,21 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=40"></script>
-  <script src="cet4_core.js?v=40"></script>
-  <script src="cet4_full.js?v=40"></script>
-  <script src="cet4_enhance.js?v=40"></script>
-  <script src="cet4_real.js?v=40"></script>
-  <script src="cet4_real_ext.js?v=40"></script>
+  <script src="app.js?v=41"></script>
+  <script src="cet4_core.js?v=41"></script>
+  <script src="cet4_full.js?v=41"></script>
+  <script src="cet4_enhance.js?v=41"></script>
+  <script src="cet4_real.js?v=41"></script>
+  <script src="cet4_real_ext.js?v=41"></script>
+  <script src="med_exam.js?v=41"></script>
+  <script src="exam_ext.js?v=41"></script>
 
-  <script src="gaokao_core.js?v=40"></script>
-  <script src="expansion.js?v=40"></script>
-  <script src="jjwxc_analysis.js?v=40"></script>
+  <script src="gaokao_core.js?v=41"></script>
+  <script src="expansion.js?v=41"></script>
+  <script src="jjwxc_analysis.js?v=41"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=40').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=41').then(reg => {
         // 已有 waiting 的新 SW 立即激活（跳过等待）
         if (reg.waiting) reg.waiting.postMessage('skip');
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新

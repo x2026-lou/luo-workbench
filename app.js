@@ -910,8 +910,14 @@ function renderCheer() {
 }
 
 /* 撒花庆祝：完成打卡 / 任务时给一点正向多巴胺反馈，强化坚持的感觉 */
-function celebrate() {
+function celebrate(msg) {
   try {
+    if (msg) {
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.style.cssText = 'position:fixed;left:50%;top:13%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:8px 16px;border-radius:20px;z-index:9999;font-size:14px;pointer-events:none;max-width:86vw;text-align:center';
+      document.body.appendChild(t); setTimeout(() => t.remove(), 1800);
+    }
     const colors = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#FF9F45', '#C780FA'];
     const cont = document.createElement('div');
     cont.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:9998;overflow:hidden';
@@ -1717,6 +1723,16 @@ const examShizhengData = [
 function renderExam() {
   const vEl = document.getElementById('examVideoList'); if (vEl) vEl.innerHTML = videoList('exam', examVideos);
   const xEl = document.getElementById('examXingce'); if (xEl) xEl.innerHTML = `
+    ${examExt() && examExt().timing ? (() => { const T = examExt().timing;
+      return `<details class="card mb-2" style="background:#e8f0fe;border-radius:10px">
+      <summary style="cursor:pointer;list-style:none"><b>⏰ 考试时间分配表（参考近三年国考真题题量 · 点开照表掐表练）</b></summary>
+      <div class="text-sm mt-2">
+        <div class="font-bold mb-1">📄 行测${T.xingce && T.xingce[0] ? '（' + esc(T.xingce.reduce((s, x) => s + (x.qcount || 0), 0)) + ' 题 / 120 分钟）' : ''}</div>
+        ${(T.xingce || []).map(x => `<div class="mb-1">· <b>${esc(x.mod)}</b>${x.qcount ? ' ' + x.qcount + ' 题' : ''} / 建议 ${esc(x.minutes)} 分钟${x.tip ? ' —— ' + esc(x.tip) : ''}</div>`).join('')}
+        <div class="font-bold mt-2 mb-1">📄 申论（180 分钟）</div>
+        ${(T.shenlun || []).map(x => `<div class="mb-1">· <b>${esc(x.stage)}</b> ${esc(x.minutes)} 分钟${x.tip ? ' —— ' + esc(x.tip) : ''}</div>`).join('')}
+        ${(T.tips || []).length ? `<div class="mt-2" style="background:#fff8e1;border-radius:8px;padding:8px">${T.tips.map(t => '💡 ' + esc(t)).join('<br>')}</div>` : ''}
+      </div></details>`; })() : ''}
     <div class="card mb-2"><div class="font-bold mb-1">📚 六大学习模块（点击卡片查看要点）</div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">${XC_SIX.map(x => `<div onclick="setExamXcFilter('${x.k}')" style="background:var(--bg-soft);border-radius:10px;padding:8px;cursor:pointer;${examXcFilter === x.k ? 'outline:2px solid #1565c0' : ''}"><div class="text-sm" style="font-weight:800">${x.icon} ${x.k}</div><div class="text-sm text-muted" style="font-size:12px;margin-top:2px">${esc(x.tip)}</div></div>`).join('')}</div>
       ${examXcFilter !== '全部' ? `<button class="btn btn-xs mt-2" onclick="setExamXcFilter('全部')">↩ 显示全部知识卡</button>` : ''}
@@ -1761,18 +1777,147 @@ function renderExam() {
     tab.onclick = () => {
       const w = tab.dataset.exam;
       document.querySelectorAll('#examTabs .tab').forEach(t => t.classList.remove('active')); tab.classList.add('active');
-      const map = { video: 'examVideoPanel', xingce: 'examXingcePanel', shenlun: 'examShenlunPanel', shizheng: 'examShizhengPanel', quiz: 'examQuizPanel', plan: 'examPlanPanel', checkin: 'examCheckinPanel', time: 'examTimePanel', paper: 'examPaperPanel', jobs: 'examJobsPanel' };
+      const map = { video: 'examVideoPanel', xingce: 'examXingcePanel', shenlun: 'examShenlunPanel', shizheng: 'examShizhengPanel', quiz: 'examQuizPanel', plan: 'examPlanPanel', checkin: 'examCheckinPanel', time: 'examTimePanel', paper: 'examPaperPanel', jobs: 'examJobsPanel', maps: 'examMapsPanel', rmrb: 'examRmrbPanel', kaobian: 'examKaoBianPanel', wrong: 'examWrongPanel' };
       Object.values(map).forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
       const tgt = document.getElementById(map[w]); if (tgt) tgt.style.display = '';
       if (w === 'plan') renderExamPlan();
       if (w === 'checkin') renderExamCheckin();
       if (w === 'time') renderExamTime();
       if (w === 'paper') renderExamPaper();
+      if (w === 'maps') renderExamMaps();
+      if (w === 'rmrb') renderExamRmrb();
+      if (w === 'kaobian') renderExamKaoBian();
+      if (w === 'wrong') renderExamWrong();
     };
   });
 }
 function answerExam(i) { if (eqAnswered) return; eqAnswered = true; const q = examQuizData[eqIdx]; const opts = document.querySelectorAll('#examQuiz .quiz-opt'); opts[i].classList.add(i === q.a ? 'correct' : 'wrong'); if (i !== q.a) opts[q.a].classList.add('correct'); document.getElementById('examQuizResult').textContent = i === q.a ? '✅ 正确' : '❌ 正确答案：' + q.opts[q.a]; }
 function nextExamQuiz() { eqIdx = (eqIdx + 1) % examQuizData.length; renderExam(); }
+
+/* ================= 考公扩展：思维导图 / 人民日报拆解 / 考编 / 错题本 ================= */
+function examExt() { return window.EXAM_EXT || null; }
+function examMapNode(n, depth) {
+  const colors = ['#1565c0', '#00838f', '#6a1b9a', '#2e7d32', '#c62828', '#ef6c00'];
+  const c = colors[depth % colors.length];
+  return `<div style="margin-left:${depth * 12}px;border-left:2px solid ${c};padding-left:10px;margin-bottom:5px">
+    <div class="text-sm" style="font-weight:${depth === 0 ? 800 : 600};color:${depth === 0 ? c : '#455A64'}">${depth === 0 ? '🔷 ' : depth === 1 ? '▫️ ' : '· '}${esc(n.t)}</div>
+    ${(n.ch || []).map(k => examMapNode(k, depth + 1)).join('')}
+  </div>`;
+}
+function renderExamMaps() {
+  const el = document.getElementById('examMaps'); if (!el) return;
+  const E = examExt(); if (!E || !E.mindmaps || !E.mindmaps.length) { el.innerHTML = '<div class="text-sm text-muted">数据未加载，请刷新重试</div>'; return; }
+  const xg = E.mindmaps.filter(m => /行测|资料|数量|言语|判断|政治|常识/.test(m.title));
+  const sl = E.mindmaps.filter(m => xg.indexOf(m) < 0);
+  el.innerHTML = `
+    <div class="text-sm text-muted mb-2">应试总纲：先记框架再填细节。点开一张导图，按树杈逐层回忆——能复述出来的打勾跳过，卡壳的标星重点背。</div>
+    ${xg.map(m => `<details class="card" style="margin-bottom:10px"><summary style="cursor:pointer;list-style:none"><b>📊 ${esc(m.title)}</b></summary><div class="mt-2">${m.nodes.map(n => examMapNode(n, 0)).join('')}</div></details>`).join('')}
+    <div class="font-bold mt-2 mb-1">✍️ 申论</div>
+    ${sl.map(m => `<details class="card" style="margin-bottom:10px"><summary style="cursor:pointer;list-style:none"><b>🗂 ${esc(m.title)}</b></summary><div class="mt-2">${m.nodes.map(n => examMapNode(n, 0)).join('')}</div></details>`).join('')}`;
+}
+let rmrbShowAll = false;
+function toggleRmrbAll() { rmrbShowAll = !rmrbShowAll; renderExamRmrb(); }
+function renderExamRmrb() {
+  const el = document.getElementById('examRmrb'); if (!el) return;
+  const E = examExt(); if (!E || !E.rmrb) { el.innerHTML = '<div class="text-sm text-muted">数据未加载，请刷新重试</div>'; return; }
+  const list = E.rmrb || [];
+  const daily = seededShuffle(list, 'rmrb_' + todayKey())[0] || list[0];
+  const show = rmrbShowAll ? list : [daily];
+  el.innerHTML = `
+    <div class="card mb-2" style="background:#fff8f0;border:1px solid #f0d9b5">
+      <div class="font-bold mb-1">📰 每日推 1 篇《人民日报》评论拆解（今日 · ${esc(daily.day)}）</div>
+      <div class="text-sm text-muted mb-1">每天只精读这一篇：先自己读 3 分钟，再对照下方拆解。坚持 30 天，大作文结构与立意会有质变。</div>
+    </div>
+    ${show.map(d => `
+    <details class="card" style="margin-bottom:10px" ${rmrbShowAll ? '' : 'open'}>
+      <summary style="cursor:pointer;list-style:none"><b>📄 ${esc(d.title)}</b> <span class="text-sm text-muted">· ${esc(d.day)} · ${esc(d.theme || '')}</span></summary>
+      <div class="text-sm mt-2" style="border-top:1px dashed #e0e0e0;padding-top:8px">
+        ${d.gold && d.gold.length ? `<div class="mb-2" style="background:#fffde7;border-radius:8px;padding:8px"><b style="color:#c62828">💎 金句摘抄</b><br>${d.gold.map(g => '「' + esc(g) + '」').join('<br>')}</div>` : ''}
+        ${d.structure ? `<div class="mb-2"><b>🏗 结构拆解</b><br>${esc(d.structure)}</div>` : ''}
+        ${d.analysis ? `<div class="mb-2"><b>🔍 三问分析</b><br>${esc(d.analysis)}</div>` : ''}
+        ${d.liyi ? `<div style="background:#e8f5e9;border-radius:8px;padding:8px"><b style="color:#2e7d32">✍️ 立意迁移示范</b><br>${esc(d.liyi)}</div>` : ''}
+      </div>
+    </details>`).join('')}
+    <button class="btn btn-small btn-outline mb-2" onclick="toggleRmrbAll()">${rmrbShowAll ? '↩ 收起，只看今日' : '📚 查看全部 ' + list.length + ' 篇拆解'}</button>
+    ${E.liyi && E.liyi.length ? `<details class="card" style="margin-bottom:10px" open><summary style="cursor:pointer;list-style:none"><b>🎯 大作文立意方法（先会立意再动笔）</b></summary><div class="text-sm mt-2">${E.liyi.map(l => `<div class="mb-2"><b>${esc(l.k)}</b><br>${esc(l.v)}</div>`).join('')}</div></details>` : ''}
+    ${E.docs && E.docs.length ? `<details class="card"><summary style="cursor:pointer;list-style:none"><b>📄 七种常见公文格式（点开逐个记）</b></summary><div class="text-sm mt-2">${E.docs.map(d => `<div class="mb-2" style="background:var(--bg-soft);border-radius:8px;padding:8px"><b>${esc(d.name)}</b><br>格式：${esc(d.format)}<br><span class="text-muted">示范：${esc(d.demo)}</span></div>`).join('')}</div></details>` : ''}`;
+}
+let kaoBianTab = '公基';
+function setKaoBianTab(t) { kaoBianTab = t; renderExamKaoBian(); }
+function renderExamKaoBian() {
+  const el = document.getElementById('examKaoBian'); if (!el) return;
+  const E = examExt(); if (!E || !E.kaoBian) { el.innerHTML = '<div class="text-sm text-muted">数据未加载，请刷新重试</div>'; return; }
+  const K = E.kaoBian;
+  const tabs = [['公基', K.gongji], ['职测', K.zhice], ['综应', K.zongying]];
+  const cur = tabs.find(t => t[0] === kaoBianTab) || tabs[0];
+  el.innerHTML = `
+    <div class="card mb-2" style="background:var(--bg-soft)">
+      <div class="font-bold mb-1">🎓 考编专区（事业单位 · 公基 / 职测 / 综应）</div>
+      <div class="text-sm text-muted">与考公最大差异：公基重记忆广度（法律+政治+常识一把抓）、职测题量大时间更紧（重取舍）、综应更贴近岗位实务（重材料加工）。三门先定主攻，再按模块轮换。</div>
+    </div>
+    <div class="tabs mb-2">${tabs.map(t => `<div class="tab ${t[0] === kaoBianTab ? 'active' : ''}" onclick="setKaoBianTab('${t[0]}')">${t[0]}（${t[1].length}）</div>`).join('')}</div>
+    ${cur[1].map(d => `<div class="card" style="margin-bottom:8px"><div class="font-bold mb-1">📌 ${esc(d.k)}</div><div class="text-sm text-muted">${esc(d.v)}</div></div>`).join('')}`;
+}
+/* ---- 错题本（仿真实笔记本样式，支持录入/已掌握/删除/筛选） ---- */
+function getWrongBook() { return store.get('luo_exam_wrongbook', []); }
+function saveWrongBook(b) { store.set('luo_exam_wrongbook', b); }
+let wrongFilter = '全部', wrongSub = '全部';
+function setWrongFilter(f) { wrongFilter = f; renderExamWrong(); }
+function setWrongSub(s) { wrongSub = s; renderExamWrong(); }
+function addWrongNote() {
+  const q = (document.getElementById('wqInput').value || '').trim();
+  if (!q) return toast('先把错题（或题目描述/截图要点）写进来');
+  const why = (document.getElementById('wWhyInput').value || '').trim();
+  const fix = (document.getElementById('wFixInput').value || '').trim();
+  const sub = document.getElementById('wSubSel').value;
+  const b = getWrongBook();
+  b.unshift({ id: 'w' + Date.now().toString(36), sub, q, why, fix, date: fmtDate(), done: false });
+  saveWrongBook(b);
+  document.getElementById('wqInput').value = ''; document.getElementById('wWhyInput').value = ''; document.getElementById('wFixInput').value = '';
+  addPoints(2, true); celebrate('错题已入本 +2 积分 · 复盘是最好的提分 💪');
+  renderExamWrong();
+}
+function toggleWrongDone(id) { const b = getWrongBook(); const it = b.find(x => x.id === id); if (it) { it.done = !it.done; if (it.done) { addPoints(1, true); celebrate('同一类题连续 3 次做对才算真正过关 · +1 积分 ✅'); } saveWrongBook(b); renderExamWrong(); } }
+function delWrongNote(id) { saveWrongBook(getWrongBook().filter(x => x.id !== id)); renderExamWrong(); toast('已从错题本移除'); }
+function renderExamWrong() {
+  const el = document.getElementById('examWrong'); if (!el) return;
+  const subs = ['行测-言语', '行测-资料', '行测-判断', '行测-数量', '行测-常识', '申论', '公基', '职测', '综应', '其他'];
+  const b = getWrongBook();
+  const subList = [...new Set(b.map(x => x.sub))];
+  const list = b.filter(x => (wrongFilter === '全部' || (wrongFilter === '未掌握' ? !x.done : x.done)) && (wrongSub === '全部' || x.sub === wrongSub));
+  const doneN = b.filter(x => x.done).length;
+  el.innerHTML = `
+    <div class="card mb-2" style="background:#fdf6ec;border:1px solid #e8d5b5">
+      <div class="font-bold mb-1">📕 我的错题本（共 ${b.length} 题 · 已攻克 ${doneN}）</div>
+      <div class="text-sm text-muted">错题本是考前最值钱的资料：记<b>错因</b>比记题目更重要。每周日翻一遍，同类错因连续出现 3 次就该专项补漏。</div>
+    </div>
+    <div class="card mb-2" style="background:#fffdf7">
+      <div class="font-bold mb-2">✏️ 记一道错题</div>
+      <div class="mb-1"><select class="form-input" id="wSubSel" style="max-width:180px">${subs.map(s => `<option>${s}</option>`).join('')}</select></div>
+      <textarea class="form-textarea" id="wqInput" rows="2" placeholder="题目 / 错题要点（如：增长率比较题，把增幅当增速选错了）"></textarea>
+      <input class="form-input" id="wWhyInput" placeholder="错因（一句话）：公式记错 / 题干陷阱 / 计算失误 / 知识盲区…" style="margin-top:6px">
+      <textarea class="form-textarea" id="wFixInput" rows="2" placeholder="正确思路 / 以后怎么避免…" style="margin-top:6px"></textarea>
+      <button class="btn btn-primary mt-2" style="width:100%" onclick="addWrongNote()">➕ 写入错题本</button>
+    </div>
+    ${b.length ? `<div class="mb-2" style="display:flex;gap:4px;flex-wrap:wrap">
+      ${['全部', '未掌握', '已掌握'].map(f => `<span onclick="setWrongFilter('${f}')" style="cursor:pointer;background:${wrongFilter === f ? '#c62828' : 'var(--bg-soft)'};color:${wrongFilter === f ? '#fff' : 'inherit'};border-radius:8px;padding:2px 8px" class="text-sm">${f}</span>`).join('')}
+      <span style="opacity:.4">|</span>
+      <span onclick="setWrongSub('全部')" style="cursor:pointer;background:${wrongSub === '全部' ? '#1565c0' : 'var(--bg-soft)'};color:${wrongSub === '全部' ? '#fff' : 'inherit'};border-radius:8px;padding:2px 8px" class="text-sm">全部科目</span>
+      ${subList.map(s => `<span onclick="setWrongSub('${s}')" style="cursor:pointer;background:${wrongSub === s ? '#1565c0' : 'var(--bg-soft)'};color:${wrongSub === s ? '#fff' : 'inherit'};border-radius:8px;padding:2px 8px" class="text-sm">${esc(s)}</span>`).join('')}
+    </div>` : ''}
+    ${list.length ? `<div class="wrongbook">${list.map(x => `
+      <div class="wb-entry ${x.done ? 'wb-done' : ''}">
+        <div class="wb-head" onclick="toggleWrongDone('${x.id}')">
+          <span class="wb-check">${x.done ? '✅' : '⬜'}</span>
+          <span class="wb-sub">${esc(x.sub)}</span>
+          <span class="wb-date">${esc(x.date)}</span>
+        </div>
+        <div class="wb-q">${escB(x.q)}</div>
+        ${x.why ? `<div class="wb-why">💡 错因：${escB(x.why)}</div>` : ''}
+        ${x.fix ? `<div class="wb-fix">🛠 正确思路：${escB(x.fix)}</div>` : ''}
+        <div class="wb-del" onclick="delWrongNote('${x.id}')">🗑 移除</div>
+      </div>`).join('')}</div>` : (b.length ? '<div class="text-sm text-muted">当前筛选下暂无错题</div>' : '<div class="text-sm text-muted">还没有错题，第一道写进来吧——错题本是分数上涨最快的地方。</div>')}`;
+}
 
 /* ================= 考公 · 六大学习模块速览 + 每日计划 / 打卡日历 / 时长统计 / 试卷分析 ================= */
 let examXcFilter = '全部';
@@ -3055,6 +3200,28 @@ function harmonyPick(cands, anchors, seed) {
   const max = Math.max(...scored.map(s => s.sc));
   return seededShuffle(scored.filter(s => s.sc === max).map(s => s.c), seed)[0];
 }
+// 整套和谐度评分（0-100）+ 一句话搭配逻辑：让每套搭配「可解释」——不好看的组合会被扣分并给出修正方向
+function outfitHarmony(items) {
+  const NEUTRAL = '中性色';
+  const fams = items.map(it => ({ cat: it.category, f: colorFamily(inferColor(it) || ''), c: inferColor(it) })).filter(x => x.f);
+  const colored = fams.filter(x => x.f !== NEUTRAL);
+  const styles = [...new Set(items.map(inferStyle).filter(Boolean))];
+  let score = 60; const logic = [];
+  if (colored.length === 0) { score += 10; logic.push('全中性色打底，靠明度差（深浅对比）出层次，最不容易出错'); }
+  else if (colored.length === 1) { score += 8; logic.push('「' + colored[0].c + '」是唯一彩色主角，其余中性色收干净——彩色一件就够，干净才有少年感'); }
+  else { score -= 15; logic.push('⚠️ 出现 ' + colored.map(x => x.c).join('/') + ' 多个彩色系打架，下次留 1 件彩色当主角，其余换黑/白/灰/卡其'); }
+  if (styles.length <= 1) { score += 10; if (styles[0]) logic.push('风格统一「' + styles[0] + '」，整身有主导不散'); }
+  else { score -= 6; logic.push('混搭「' + styles.slice(0, 2).join('」+「') + '」——可以混，但要用中性色外套或鞋把两种风格“焊”住'); }
+  const bottom = items.find(it => wardrobeTypeOf(it.category) === 'bottom');
+  const shoe = items.find(it => wardrobeTypeOf(it.category) === 'shoes');
+  if (bottom && shoe) {
+    const bf = colorFamily(inferColor(bottom) || ''), sf = colorFamily(inferColor(shoe) || '');
+    if (bf && sf && (bf === sf || sf === NEUTRAL)) { score += 6; logic.push('鞋子与下装同色系/中性色顺延，重心稳、显腿长'); }
+    else { score -= 4; logic.push('鞋子与下装颜色打架，换与裤子同色系或中性色的鞋'); }
+  }
+  if (bottom && colored.length && colored[0].cat && wardrobeTypeOf(colored[0].cat) === 'top') { score += 4; logic.push('彩色放上半身（靠近面部提气色显白），下装用中性色压重心'); }
+  return { score: Math.max(20, Math.min(98, score)), logic: logic.join('；') };
+}
 function genOutfit() {
   if (wardrobe.length === 0) return toast('请先在衣柜上传单品');
   wardrobe.forEach(normalizeWardrobeItem);
@@ -3102,7 +3269,9 @@ function genOutfit() {
     // 去重（同一单品不重复出现）
     const seen = new Set();
     const finalItems = items.filter(it => it && !seen.has(it.id) ? (seen.add(it.id), true) : false);
-    gen.push({ id: Date.now() + i, date: targetDate, season, items: finalItems.map(it => ({ id: it.id, name: it.name, img: it.img, category: it.category, color: inferColor(it) || '', style: inferStyle(it) || '' })), note: '', advice: buildOutfitAdvice(finalItems, season, anchor) });
+    const adv = buildOutfitAdvice(finalItems, season, anchor);
+    adv.harmony = outfitHarmony(finalItems);
+    gen.push({ id: Date.now() + i, date: targetDate, season, items: finalItems.map(it => ({ id: it.id, name: it.name, img: it.img, category: it.category, color: inferColor(it) || '', style: inferStyle(it) || '' })), note: '', advice: adv });
   }
   // 替换目标日期已有的建议，避免重复堆积
   outfitSuggestions = outfitSuggestions.filter(o => o.date !== targetDate).concat(gen);
@@ -3118,6 +3287,7 @@ function renderOutfitAdvice(a) {
       <div class="oa-head">💡 穿搭建议与技巧 · 少年感思路</div>
       ${a.concept ? `<div class="oa-row oa-block"><span class="oa-k">🧒 少年感总思路</span><span class="oa-v">${esc(a.concept)}</span></div>` : ''}
       ${a.color ? `<div class="oa-row"><span class="oa-k">🎨 色彩配色</span><span class="oa-v">${esc(a.color)}</span></div>` : ''}
+      ${a.harmony ? `<div class="oa-row oa-block"><span class="oa-k">🧩 搭配逻辑与和谐度（<b style="color:${a.harmony.score >= 75 ? '#2e7d32' : a.harmony.score >= 55 ? '#ef6c00' : '#c62828'}">${a.harmony.score} 分</b>）</span><span class="oa-v">${esc(a.harmony.logic)}</span></div>` : ''}
       ${a.silhouette ? `<div class="oa-row"><span class="oa-k">📐 版形</span><span class="oa-v">${esc(a.silhouette)}</span></div>` : ''}
       ${a.fabric ? `<div class="oa-row"><span class="oa-k">🧵 面料</span><span class="oa-v">${esc(a.fabric)}</span></div>` : ''}
       ${a.style ? `<div class="oa-row"><span class="oa-k">✨ 风格</span><span class="oa-v">${esc(a.style)}</span></div>` : ''}
