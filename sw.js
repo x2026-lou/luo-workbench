@@ -1,4 +1,4 @@
-const CACHE = 'luo-workbench-v30';
+const CACHE = 'luo-workbench-v31';
 // 相对路径：站点部署在 /luo-workbench/ 子路径下，必须用 ./ 才能正确缓存
 const ASSETS = [
   './',
@@ -10,6 +10,7 @@ const ASSETS = [
   './cet4_enhance.js',
   './gaokao_core.js',
   './expansion.js',
+  './cet4_real.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
@@ -37,16 +38,28 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
-  // 网络优先：联网时永远拉最新版本；请求失败（离线）才回退到缓存
-  event.respondWith(
-    fetch(req)
-      .then(res => {
-        if (res && res.status === 200) {
-          const copy = res.clone();
-          caches.open(CACHE).then(cache => cache.put(req, copy)); // 顺手把新版本存入缓存，供离线使用
-        }
-        return res;
-      })
-      .catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
-  );
+  const url = new URL(req.url);
+  const isNav = req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('index.html');
+  if (isNav) {
+    // 导航（HTML）：网络优先，确保第一时间拿到引用了新版本号的最新页面；失败则回退缓存，绝不白屏
+    event.respondWith(
+      fetch(req)
+        .then(res => {
+          if (res && res.status === 200) caches.open(CACHE).then(c => c.put(req, res.clone()));
+          return res;
+        })
+        .catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
+    );
+    return;
+  }
+  // 静态资源（JS/CSS/图片等）：缓存优先 + 后台静默更新 —— 首屏秒开，不再苦等 GitHub 拉取；
+  // 后台把最新版写入缓存，下次打开即为新版本（配合 CACHE 名 bump 的 SW 更新提示）
+  event.respondWith((async () => {
+    const cached = await caches.match(req);
+    const network = fetch(req).then(res => {
+      if (res && res.status === 200) caches.open(CACHE).then(c => c.put(req, res.clone()));
+      return res;
+    }).catch(() => cached);
+    return cached || network;
+  })());
 });

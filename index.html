@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>洛的工作台</title>
-  <link rel="stylesheet" href="style.css?v=38">
+  <link rel="stylesheet" href="style.css?v=39">
 </head>
 <body>
   <div id="app">
@@ -49,6 +49,7 @@
       <div class="content" id="contentArea">
         <!-- Daily Plan -->
         <div class="page active" id="page-daily">
+          <div class="cheer-card" id="cheerCard"></div>
           <div class="section-title"><div class="icon">📅</div>每日计划</div>
           <div class="section-sub">汇总全平台待办，清晰展示每日全部任务</div>
           <div class="stats-row">
@@ -1099,18 +1100,18 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=38"></script>
-  <script src="cet4_core.js?v=38"></script>
-  <script src="cet4_full.js?v=38"></script>
-  <script src="cet4_enhance.js?v=38"></script>
-  <script src="cet4_real.js?v=38"></script>
+  <script src="app.js?v=39"></script>
+  <script src="cet4_core.js?v=39"></script>
+  <script src="cet4_full.js?v=39"></script>
+  <script src="cet4_enhance.js?v=39"></script>
+  <script src="cet4_real.js?v=39"></script>
 
-  <script src="gaokao_core.js?v=38"></script>
-  <script src="expansion.js?v=38"></script>
-  <script src="jjwxc_analysis.js?v=38"></script>
+  <script src="gaokao_core.js?v=39"></script>
+  <script src="expansion.js?v=39"></script>
+  <script src="jjwxc_analysis.js?v=39"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=38').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=39').then(reg => {
         // 已有 waiting 的新 SW 立即激活（跳过等待）
         if (reg.waiting) reg.waiting.postMessage('skip');
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新

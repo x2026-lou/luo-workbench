@@ -861,6 +861,7 @@ function renderTodos() {
   document.getElementById('rewardScore').textContent = todayPoints;
   document.getElementById('rewardTitle').textContent = lvl.title;
   document.getElementById('rewardEval').innerHTML = generateEval(rate, doneCount, totalCount, todayPoints);
+  renderCheer();
 }
 
 function generateEval(rate, done, total, points) {
@@ -883,7 +884,59 @@ function generateEval(rate, done, total, points) {
   return `<b>今日获得 ${points} 积分，完成 ${done}/${total} 项。</b><br>${evalText}${suggestion}`;
 }
 
-function toggleTodo(id) { const t = todos.find(x => x.id === id); if (t) { t.done = !t.done; if (t.done) totalPoints += (t.points || 10); else totalPoints -= (t.points || 10); saveTodos(); } }
+/* ================= 今日激励 / 撒花（动力系统） ================= */
+const CHEERS = [
+  '今天也要闪闪发光呀 ✨', '你比昨天的自己更厉害了 💪', '开始就是胜利，先动起来 🚀',
+  '慢慢来，比较快 🌿', '你坚持的样子真好看 🌟', '每一小步都在靠近目标 🎯',
+  '现在的努力，是未来的底气 📚', '别想太多，先做五分钟 ⏳', '自律给你自由 🕊️',
+  '今天的你，值得被夸奖 👏', '难的题，拆开就不难 🧩', '上岸路上，你从不孤单 🌊'
+];
+function randomCheer() { return CHEERS[Math.floor(Math.random() * CHEERS.length)]; }
+
+function renderCheer() {
+  const el = document.getElementById('cheerCard'); if (!el) return;
+  const d = new Date(); const h = d.getHours();
+  let greet = '晚上好';
+  if (h < 5) greet = '夜深了，注意休息 ☾';
+  else if (h < 11) greet = '早上好 ☀️';
+  else if (h < 13) greet = '中午好 🍚';
+  else if (h < 18) greet = '下午好 ☕';
+  const checkinDays = store.get('luo_exam_checkin', []).length;
+  const fire = checkinDays > 0 ? '🔥 备考打卡已累计 <b>' + checkinDays + '</b> 天' : '今天还没打卡，动动手指点亮第一颗 🔥';
+  const active = todos.filter(t => !t.done).length + mustDos.filter(m => !isMustDone(m.id)).length;
+  el.innerHTML = '<div class="cheer-greet">' + greet + '，洛 👋</div>'
+    + '<div class="cheer-line">' + randomCheer() + '</div>'
+    + '<div class="cheer-meta">' + fire + ' · 当前待办 <b>' + active + '</b> 项</div>';
+}
+
+/* 撒花庆祝：完成打卡 / 任务时给一点正向多巴胺反馈，强化坚持的感觉 */
+function celebrate() {
+  try {
+    const colors = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#FF9F45', '#C780FA'];
+    const cont = document.createElement('div');
+    cont.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:9998;overflow:hidden';
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      const s = 6 + Math.random() * 8;
+      p.style.cssText = 'position:absolute;top:-24px;left:' + (Math.random() * 100) + '%;width:' + s + 'px;height:' + s + 'px;background:' + colors[i % colors.length] + ';border-radius:2px;opacity:.95';
+      p.animate([
+        { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+        { transform: 'translateY(' + (window.innerHeight + 60) + 'px) rotate(' + (360 + Math.random() * 360) + 'deg)', opacity: 0.85 }
+      ], { duration: 900 + Math.random() * 900, easing: 'cubic-bezier(.3,.7,.4,1)' });
+      cont.appendChild(p);
+    }
+    document.body.appendChild(cont);
+    setTimeout(() => cont.remove(), 1900);
+  } catch (e) {}
+}
+
+function toggleTodo(id) {
+  const t = todos.find(x => x.id === id); if (!t) return;
+  t.done = !t.done;
+  if (t.done) { totalPoints += (t.points || 10); celebrate(); toast('✓ 完成：' + t.text + ' · ' + randomCheer()); }
+  else totalPoints -= (t.points || 10);
+  saveTodos();
+}
 function deleteTodo(id) { todos = todos.filter(x => x.id !== id); saveTodos(); }
 function addTodo() {
   const input = document.getElementById('todoInput');
@@ -899,7 +952,7 @@ function toggleMustDo(idx) {
   const m = mustDos[idx]; if (!m) return;
   const map = getMustDoneMap();
   if (map[m.id]) { delete map[m.id]; totalPoints -= m.points; }
-  else { map[m.id] = 1; totalPoints += m.points; }
+  else { map[m.id] = 1; totalPoints += m.points; celebrate(); toast('✓ ' + m.text + ' 完成 +' + m.points + ' 积分 · ' + randomCheer()); }
   store.set(todayMustKey(), map);
   saveTodos();
 }
@@ -1767,9 +1820,10 @@ function renderExamCheckin() {
 function toggleCheckin(key) {
   let days = store.get('luo_exam_checkin', []);
   if (days.indexOf(key) >= 0) days = days.filter(d => d !== key);
-  else { days.push(key); days.sort(); addPoints(1, true); toast('打卡成功 +1 积分 ✅'); }
+  else { days.push(key); days.sort(); addPoints(1, true); celebrate(); toast('打卡成功 +1 积分 ✅ ' + randomCheer()); }
   store.set('luo_exam_checkin', days);
   renderExamCheckin();
+  renderCheer();
 }
 function renderExamTime() {
   const el = document.getElementById('examTimeBox'); if (!el) return;
