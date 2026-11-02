@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>洛的工作台</title>
-  <link rel="stylesheet" href="style.css?v=39">
+  <link rel="stylesheet" href="style.css?v=40">
 </head>
 <body>
   <div id="app">
@@ -289,6 +289,11 @@
           <div class="section-sub">本科全日制医学学位 · 专业课程、笔记与打卡</div>
           <div id="medicalVideoList"></div>
           <div id="medReview" class="mt-3"></div>
+          <div class="card mt-3">
+            <div class="font-bold mb-1">🎓 应试刷题（名词解释 · 简答题 · 案例分析 · 思维导图）</div>
+            <div class="text-sm text-muted mb-2">以应试为导向：先自测回忆，再对照标准答案与评分点；考前配合思维导图串框架。</div>
+            <div id="medExamPanel"></div>
+          </div>
           <div class="card mt-3" style="background:var(--bg-soft)">
             <div class="font-bold mb-2">🩺 医学笔记 · 防丢失工具</div>
             <div class="text-sm text-muted mb-2">自动备份就存在<b>本机浏览器</b>（IndexedDB / 本地存储），<b>不是磁盘上的文件</b>，换手机 / 重装 PWA / 清缓存都会一起清空。若发现笔记变少：</div>
@@ -1100,18 +1105,19 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=39"></script>
-  <script src="cet4_core.js?v=39"></script>
-  <script src="cet4_full.js?v=39"></script>
-  <script src="cet4_enhance.js?v=39"></script>
-  <script src="cet4_real.js?v=39"></script>
+  <script src="app.js?v=40"></script>
+  <script src="cet4_core.js?v=40"></script>
+  <script src="cet4_full.js?v=40"></script>
+  <script src="cet4_enhance.js?v=40"></script>
+  <script src="cet4_real.js?v=40"></script>
+  <script src="cet4_real_ext.js?v=40"></script>
 
-  <script src="gaokao_core.js?v=39"></script>
-  <script src="expansion.js?v=39"></script>
-  <script src="jjwxc_analysis.js?v=39"></script>
+  <script src="gaokao_core.js?v=40"></script>
+  <script src="expansion.js?v=40"></script>
+  <script src="jjwxc_analysis.js?v=40"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=39').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=40').then(reg => {
         // 已有 waiting 的新 SW 立即激活（跳过等待）
         if (reg.waiting) reg.waiting.postMessage('skip');
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新

@@ -1649,23 +1649,45 @@ const examQuizData = [
 let eqIdx = 0, eqAnswered = false;
 const examXingceData = [
   { mod: '言语理解与表达', tip: '逻辑填空看搭配与语境，片段阅读找主旨句——转折/因果/结论后往往是重点；选项对比择优。' },
+  { mod: '言语·逻辑填空', tip: '先读语境定感情色彩与语体，再看选项辨析：优先看尾句与关联词。高频成语按「望文生义/褒贬误用/对象错配」三类整理错题本。' },
+  { mod: '言语·片段阅读', tip: '主旨题找中心句（转折后、结论词后、首尾句）；意图题在主旨基础上合理推一步；细节题回原文逐字比对，警惕偷换范围/时态/概率。' },
+  { mod: '言语·语句表达', tip: '排序题先看选项定首句（背景引入/概念提出适合开头，指代不明、关联词后置的不适合作首句），再按话题一致、逻辑连贯捆绑相邻句。' },
   { mod: '判断推理·图推', tip: '先数“点线角面素”，再看对称/平移/叠加；属性（开闭、曲直、对称）优先于数量。' },
+  { mod: '判断推理·图推进阶', tip: '分组题找共同属性（对称轴方向、封闭面个数、一笔画）；立体图推记「相对面不相邻」，折纸盒用公共边法，剖面图记常见截面形状。' },
   { mod: '判断推理·类比', tip: '先定逻辑关系（并列/包含/对应/因果），再二级辨析词性、感情色彩、程度。' },
+  { mod: '判断推理·定义判断', tip: '抓定义的主体、客体、目的、方式、结果五个要件，逐项对照选项排除；「不符合」题看清问法再作答。' },
+  { mod: '判断推理·逻辑判断', tip: '翻译推理背公式（如果A则B：A→B，逆否等价¬B→¬A）；论证题找前提与结论的论证链条，加强/削弱优先选「搭桥/断桥」项。' },
   { mod: '资料分析', tip: '截位直除、百化分速算；选项差距大先估算。牢记：增长率=(现-基)/基，比重=部分/整体。' },
+  { mod: '资料分析·高频公式', tip: '基期量=现期/(1+r)；增长量=现期×r/(1+r)；两期比重差=a/b ×(a增长率-b增长率)/(1+a增长率)；年均增长率开 n 次方用近似估算。' },
+  { mod: '资料分析·速算技巧', tip: '百化分口诀：1/7≈14.3%、1/8=12.5%、1/9≈11.1%、1/12≈8.3%、1/13≈7.7%；截位看选项：选项首两位不同就截前三位。' },
   { mod: '数量关系', tip: '代入法、赋值法、数字特性（奇偶/倍数/余数）破题；难题适当放弃，保住资料与言语性价比。' },
+  { mod: '数量关系·高频题型', tip: '工程问题赋总量为「1」或时间最小公倍数；行程问题抓 S=v×t 与比例；经济利润盯成本/定价/打折三量；排列组合用分类加法、分步乘法，插空法处理不相邻。' },
   { mod: '常识判断', tip: '时政+法律+科技文史为主，平时按模块积累；考前集中刷当年时政与重要会议文件。' },
+  { mod: '常识·法律模块', tip: '宪法（国家机构职权、公民基本权利）、民法典（物权/合同/人格权/继承）、刑法（正当防卫、刑事责任年龄）、行政法（行政处罚种类与听证）是高频，记关键数字与年限。' },
+  { mod: '常识·科技文史', tip: '近年科技常识爱考航天（空间站/探月/火星）、新能源、AI 大模型；文史抓「最早/第一/之最」类排序题；地理记中国地形三级阶梯、重要河流与气候分界线。' },
   { mod: '行测时间分配', tip: '推荐顺序：常识→言语→资料→判断→数量；资料分析力争 90% 正确率，是提分高地。' },
+  { mod: '行测整套策略', tip: '120 题/120 分钟参考节奏：常识 8 分钟、言语 32 分钟、资料 28 分钟、判断 35 分钟、数量 12 分钟、涂卡 5 分钟；单题超 70 秒果断标记跳过。' },
   { mod: '涂卡与复盘', tip: '做完一个模块涂一次卡，避免最后慌乱；错题本按模块归类，每周复盘易错点。' }
 ];
 const examShenlunData = [
   { k: '大作文框架', v: '开头（背景引入+亮明总论点）→ 分论点1/2/3（论点句+材料论据+分析论证）→ 结尾（回扣主题+升华）。' },
+  { k: '大作文标题模板', v: '对仗式最稳：「以……之光 照……之路」「让……落地生根 使……开花结果」；观点明确、字数 10-16 字，切忌假大空。' },
   { k: '万能金句', v: '“民之所忧，我必念之；民之所盼，我必行之。”“致广大而尽精微。”可用于民生、治理类作文。' },
+  { k: '金句·治理与基层', v: '“基层强则国家强，基层安则天下安。”“上面千条线，下面一根针。”用于基层治理、干部担当类；引用后必须紧跟自己的分析，不能只堆名言。' },
   { k: '案例素材库', v: '脱贫攻坚、生态文明（双碳）、科技创新（新质生产力）、基层治理、文化自信——各备 1-2 个具体事例。' },
+  { k: '案例·人物类', v: '黄文秀（驻村第一书记）、张桂梅（教育扶贫）、袁隆平（粮食安全）、王继才（守岛爱国）——每个记「人物+一句话事迹+可论证的主题」三要素。' },
   { k: '公文写作格式', v: '标题+称谓+正文+落款（单位+日期）。通知/倡议书/讲话稿注意语气与对象差异。' },
+  { k: '公文·常考文种要点', v: '倡议书（背景+倡议内容分条+呼吁结尾）；通知（事由+事项+执行要求）；讲话稿（开场称呼+主体分条+结尾致谢）；短评（观点+论据+结论）。' },
   { k: '归纳概括题', v: '采分点=材料原词原句；分条作答、同义合并；宁多勿漏，字数允许就多写要点。' },
+  { k: '归纳概括·特殊问法', v: '「概括变化/特点/流程」类：变化答「从…到…」，特点用「属性词+解释」，流程按时间/环节顺序串联；问法变了答案结构跟着变。' },
   { k: '对策题', v: '先找问题再提对策，对策要具体可执行（主体+手段+内容+目的），避免“加强宣传”式空话。' },
+  { k: '对策·五大万能角度', v: '思想宣传（教育引导、典型示范）、制度规范（建章立制、监督考核）、资金技术（加大投入、技术升级）、人才队伍（培训引进、激励保障）、监督管理（执法检查、社会监督+舆论监督）。' },
   { k: '综合分析题', v: '是什么（表态）→ 为什么（多角度分析）→ 怎么办（对策），逻辑闭环。' },
-  { k: '卷面与字数', v: '字迹工整、分条清晰；大作文字数宁超勿缺，留 50 字余地，结尾务必收束有力。' }
+  { k: '综合分析·词句理解', v: '理解一句话：先解释字面含义（材料中找近义句），再多角度分析原因/背景/影响，最后总结提升；关键词必须在答案中出现。' },
+  { k: '贯彻执行题', v: '格式分+内容分双保险：标题居中、称谓顶格、落款右下；正文按「发文事由→主体内容→总结呼吁」三段，主体紧扣题干任务关键词。' },
+  { k: '卷面与字数', v: '字迹工整、分条清晰；大作文字数宁超勿缺，留 50 字余地，结尾务必收束有力。' },
+  { k: '申论抄材料心法', v: '小题 80% 答案在材料里：高频词、高层次词（政策词/专家观点）优先抄；口语化表述换成规范词；材料中的案例要「提炼成一句话」而非照搬故事。' },
+  { k: '考前冲刺安排', v: '考前 2 周每天 1 套小题限时练+精读 1 篇人民时评积累规范词；大作文背熟自己的 3 个分论点模板；考前一天只看错题与素材本，不做新题。' }
 ];
 const examShizhengData = [
   { tag: '两会·政府工作报告', t: '关注年度 GDP 目标、就业、民生、扩大内需与科技创新部署，是申论与常识高频考点。' },
@@ -1679,7 +1701,18 @@ const examShizhengData = [
   { tag: '文化自信', t: '文物保护利用、非遗活化、传统文化创造性转化。' },
   { tag: '国家安全', t: '粮食、能源、数据、生物安全等总体国家安全观要点。' },
   { tag: '开放合作', t: '高水平对外开放、共建“一带一路”高质量发展。' },
-  { tag: '应急管理', t: '防灾减灾救灾一体化，基层应急能力提升与巨灾防范。' }
+  { tag: '应急管理', t: '防灾减灾救灾一体化，基层应急能力提升与巨灾防范。' },
+  { tag: '共同富裕', t: '三次分配协调配套，扩大中等收入群体，规范财富积累机制，民生保障与高质量发展并重。' },
+  { tag: '人口与养老', t: '生育支持政策体系、积极应对人口老龄化国家战略，银发经济、社区居家养老服务是热点。' },
+  { tag: '区域发展', t: '京津冀协同、长三角一体化、粤港澳大湾区、成渝双城经济圈四大区域战略定位比较记忆。' },
+  { tag: '数字经济', t: '数字产业化与产业数字化双轮驱动，数据要素市场化配置、平台经济常态化监管。' },
+  { tag: '粮食安全', t: '严守 18 亿亩耕地红线、种业振兴、藏粮于地藏粮于技，大食物观是申论常考角度。' },
+  { tag: '基层减负', t: '整治形式主义为基层减负，规范借调、精简考核指标，让基层干部把精力用在干实事上。' },
+  { tag: '全过程人民民主', t: '人大代表联络站、基层立法联系点、协商民主渠道——制度载体类常识高频。' },
+  { tag: '法治中国', t: '科学立法、严格执法、公正司法、全民守法十六字方针；民法典实施与法治政府建设考核指标。' },
+  { tag: '健康中国', t: '从「以治病为中心」转向「以人民健康为中心」，全民健身、心理服务体系建设、公共卫生补短板。' },
+  { tag: '科技创新自力自强', t: '关键核心技术攻关（芯片/工业软件/高端装备）、国家实验室体系、新型举国体制。' },
+  { tag: '青年与人才', t: '青年发展型城市建设、「揭榜挂帅」人才机制、职业教育与产业工人队伍建设改革。' }
 ];
 function renderExam() {
   const vEl = document.getElementById('examVideoList'); if (vEl) vEl.innerHTML = videoList('exam', examVideos);
@@ -1904,16 +1937,24 @@ function delExamPaper(pid) {
 let cet4RealFilter = '全部';
 function renderCet4Real() {
   const el = document.getElementById('engRealPanel'); if (!el) return;
-  const D = window.CET4_REAL || { sets: [], words: [] };
+  const R = window.CET4_REAL || { sets: [], words: [] };
+  const EXT = window.CET4_REAL_EXT || { words: [], guides: [] };
+  const D = { sets: R.sets || [], intro: R.intro || '', method: R.method || '', words: (R.words || []).concat(EXT.words || []) };
   const tags = ['全部', '听力', '阅读', '写译'];
   const list = D.words.filter(w => cet4RealFilter === '全部' || w.tag === cet4RealFilter);
+  const cnt = t => D.words.filter(w => w.tag === t).length;
   el.innerHTML = `
     <div class="card mb-2">
-      <div class="font-bold mb-1">📈 四级真题高频考词 · 精讲（${D.words.length} 词持续扩充）</div>
+      <div class="font-bold mb-1">📈 四级真题高频考词 · 精讲（共 ${D.words.length} 词：听力 ${cnt('听力')} · 阅读 ${cnt('阅读')} · 写译 ${cnt('写译')}）</div>
       <div class="text-sm text-muted">${D.intro || ''}</div>
       ${D.sets && D.sets.length ? `<div class="text-sm mt-1">${D.sets.map(s => `<span style="display:inline-block;background:var(--bg-soft);border-radius:8px;padding:2px 8px;margin:2px">${esc(s)}</span>`).join('')}</div>` : ''}
       ${D.method ? `<div class="text-sm mt-2" style="background:#e8f0fe;border-radius:10px;padding:8px"><b>🧠 记忆四步法：拆音节 → 找近音 → 编场景 → 绑词义</b><br>${esc(D.method)}</div>` : ''}
     </div>
+    ${EXT.guides && EXT.guides.length ? `
+    <details class="card mb-2" ${cet4RealFilter === '全部' ? '' : ''}>
+      <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center"><b>🧰 五大专项辅助（写作 · 精听 · 阅读 · 正确率 · 翻译）</b><span class="text-sm text-muted">点开</span></summary>
+      <div class="mt-2">${EXT.guides.map(g => `<div class="text-sm" style="background:#f1f8e9;border-radius:10px;padding:8px;margin-bottom:6px"><b>${esc(g.icon || '')} ${esc(g.title)}</b><br>${esc(g.body)}</div>`).join('')}</div>
+    </details>` : ''}
     <div class="tabs mb-2">${tags.map(t => `<div class="tab ${t === cet4RealFilter ? 'active' : ''}" onclick="setCet4RealFilter('${t}')">${t === '全部' ? '全部' : t + '高频'}</div>`).join('')}</div>
     ${list.map(w => cet4RealCard(w)).join('') || '<div class="text-sm text-muted">该模块暂无词条</div>'}`;
 }
@@ -1943,6 +1984,46 @@ function cet4RealCard(w) {
       </div>
     </div>
   </details>`;
+}
+
+/* ================= 医学应试刷题（名词解释 / 简答题 / 案例分析 / 思维导图） ================= */
+let medExamTab = '名词解释';
+let medExamSub = '全部';
+function setMedExamTab(t) { medExamTab = t; renderMedExam(); }
+function setMedExamSub(s) { medExamSub = s; renderMedExam(); }
+function renderMedExam() {
+  const el = document.getElementById('medExamPanel'); if (!el || !window.MED_EXAM) return;
+  const M = window.MED_EXAM;
+  const subs = ['全部', ...new Set([].concat(M.terms.map(t => t.sub), M.short.map(t => t.sub), M.cases.map(t => t.sub)))];
+  let html = `<div class="tabs mb-2">${['名词解释', '简答题', '案例分析', '思维导图'].map(t => `<div class="tab ${t === medExamTab ? 'active' : ''}" onclick="setMedExamTab('${t}')">${t}</div>`).join('')}</div>`;
+  if (medExamTab !== '思维导图') {
+    html += `<div class="text-sm mb-2" style="display:flex;flex-wrap:wrap;gap:4px">${subs.map(s => `<span onclick="setMedExamSub('${s}')" style="cursor:pointer;background:${s === medExamSub ? '#1565c0' : 'var(--bg-soft)'};color:${s === medExamSub ? '#fff' : 'inherit'};border-radius:8px;padding:2px 8px">${esc(s)}</span>`).join('')}</div>`;
+  }
+  if (medExamTab === '名词解释') {
+    const list = M.terms.filter(t => medExamSub === '全部' || t.sub === medExamSub);
+    html += `<div class="text-sm text-muted mb-2">先自己回忆，再点开对照标准答案（共 ${list.length} 条 · 按科目筛选）</div>` +
+      list.map(t => `<details class="card" style="margin-bottom:8px"><summary style="cursor:pointer;list-style:none"><b>${esc(t.term)}</b> <span class="text-sm text-muted">· ${esc(t.sub)}</span></summary><div class="text-sm mt-2" style="border-top:1px dashed #e0e0e0;padding-top:8px"><b style="color:#1565c0">【标准答案】</b><br>${escB(t.def)}</div></details>`).join('');
+  } else if (medExamTab === '简答题') {
+    const list = M.short.filter(t => medExamSub === '全部' || t.sub === medExamSub);
+    html += `<div class="text-sm text-muted mb-2">先在纸上列要点，再点开逐条对得分点（共 ${list.length} 题）</div>` +
+      list.map(t => `<details class="card" style="margin-bottom:8px"><summary style="cursor:pointer;list-style:none"><b>${esc(t.q)}</b> <span class="text-sm text-muted">· ${esc(t.sub)}</span></summary><div class="text-sm mt-2" style="border-top:1px dashed #e0e0e0;padding-top:8px"><b style="color:#00838f">【参考答案 · 得分点】</b><br>${escB(t.a)}</div></details>`).join('');
+  } else if (medExamTab === '案例分析') {
+    const list = M.cases.filter(t => medExamSub === '全部' || t.sub === medExamSub);
+    html += `<div class="text-sm text-muted mb-2">按「诊断→依据→鉴别检查→治疗」四步作答，再看评分点（共 ${list.length} 例）</div>` +
+      list.map(t => `<details class="card" style="margin-bottom:8px"><summary style="cursor:pointer;list-style:none"><b>🏥 ${esc(t.sub)}</b> <span class="text-sm text-muted">${esc((t.stem || '').slice(0, 26))}…</span></summary><div class="text-sm mt-2" style="border-top:1px dashed #e0e0e0;padding-top:8px"><div style="background:var(--bg-soft);border-radius:8px;padding:8px;margin-bottom:6px"><b>【病历】</b>${escB(t.stem)}</div><div class="mb-1"><b>【问题】</b>${escB(t.q)}</div><div style="background:#fff8e1;border-radius:8px;padding:8px"><b style="color:#c62828">【评分要点】</b><br>${escB(t.a)}</div></div></details>`).join('');
+  } else {
+    html += `<div class="text-sm text-muted mb-2">应试总纲：先记框架再填细节（共 ${M.maps.length} 张高频导图）</div>` +
+      M.maps.map(m => `<details class="card" style="margin-bottom:10px"><summary style="cursor:pointer;list-style:none"><b>🗺 ${esc(m.title)}</b></summary><div class="mt-2">${m.nodes.map(n => medMapNode(n, 0)).join('')}</div></details>`).join('');
+  }
+  el.innerHTML = html;
+}
+function medMapNode(n, depth) {
+  const colors = ['#1565c0', '#00838f', '#6a1b9a', '#2e7d32', '#c62828', '#ef6c00'];
+  const c = colors[depth % colors.length];
+  return `<div style="margin-left:${depth * 12}px;border-left:2px solid ${c};padding-left:10px;margin-bottom:5px">
+    <div class="text-sm" style="font-weight:${depth === 0 ? 800 : 600};color:${depth === 0 ? c : '#455A64'}">${depth === 0 ? '🔷 ' : depth === 1 ? '▫️ ' : '· '}${escB(n.t)}</div>
+    ${(n.ch || []).map(k => medMapNode(k, depth + 1)).join('')}
+  </div>`;
 }
 
 /* ================= Medical ================= */
@@ -2384,6 +2465,8 @@ function renderMedical() {
         ${s.mnemonic.map(m => `<div class="text-sm mb-1">🔑 ${escB(m)}</div>`).join('')}
       </div>`).join('')}
   `;
+  // 医学应试刷题（名词解释/简答/案例/思维导图）
+  try { renderMedExam(); } catch (e) {}
   document.getElementById('medNote').value = store.get('luo_med_note', '');
   // 把旧的「单条医学笔记」(luo_med_note) 一次性迁移进受保护的 luo_notes_medical 数组体系，避免两套存储各自丢失
   try {
@@ -2938,6 +3021,40 @@ function buildOutfitAdvice(items, season, anchor) {
   tips.push('整体留白：基础款之间留 1 件"主角单品"，其余做陪衬。');
   return { concept, color, silhouette, fabric, style, occasion, layering, body, tips, reference: OUTFIT_REF };
 }
+// 组合打分：不再随机乱配——候选下装/鞋子/外套与锚定上衣按「色彩和谐 + 风格统一」打分选最优，同分才用种子随机挑（当天稳定、不千篇一律）
+function harmonyPick(cands, anchors, seed) {
+  if (!cands || !cands.length) return null;
+  if (cands.length === 1) return cands[0];
+  const NEUTRAL = '中性色';
+  const aColors = anchors.map(inferColor).filter(Boolean);
+  const aFams = [...new Set(aColors.map(colorFamily).filter(Boolean))];
+  const aStyles = [...new Set(anchors.map(inferStyle).filter(Boolean))];
+  const scored = cands.map(c => {
+    let sc = 0;
+    const cf = colorFamily(inferColor(c) || '');
+    // 色彩：中性色万能；与锚定同色系顺延显高；锚定全中性时一件彩色提亮；锚定已有彩色再引入第二个彩色系显乱
+    if (cf === NEUTRAL) sc += 3;
+    else if (aFams.length && aFams.includes(cf)) sc += 3;
+    else if (!aFams.length || (aFams.length === 1 && aFams[0] === NEUTRAL)) sc += 2;
+    else sc -= 4;
+    // 风格：与锚定一致优先；基础款百搭 +1；正式×运动硬冲突 -2
+    const cs = inferStyle(c);
+    if (cs && aStyles.includes(cs)) sc += 2;
+    else if (cs && /基础/.test(cs)) sc += 1;
+    else if (cs && aStyles.some(s => (/正式|通勤/.test(s) && /运动/.test(cs)) || (/运动/.test(s) && /正式|通勤/.test(cs)))) sc -= 2;
+    // 鞋子特判：正式套装配干净皮鞋加分，运动鞋减分；休闲装配小白鞋/板鞋加分
+    if (c.category === '鞋子' || wardrobeTypeOf(c.category) === 'shoes') {
+      const n = (c.name || '') + (c.style || '');
+      const formal = aStyles.some(s => /正式|通勤/.test(s));
+      if (formal && /皮鞋|乐福|牛津|德比/.test(n)) sc += 3;
+      if (formal && /运动|跑鞋|篮球/.test(n)) sc -= 2;
+      if (!formal && /小白鞋|板鞋|帆布|休闲/.test(n)) sc += 2;
+    }
+    return { c, sc };
+  });
+  const max = Math.max(...scored.map(s => s.sc));
+  return seededShuffle(scored.filter(s => s.sc === max).map(s => s.c), seed)[0];
+}
 function genOutfit() {
   if (wardrobe.length === 0) return toast('请先在衣柜上传单品');
   wardrobe.forEach(normalizeWardrobeItem);
@@ -2967,21 +3084,21 @@ function genOutfit() {
     const items = [];
     // 季节叠穿规则：夏只单穿；春/秋可加外套或马甲；冬叠加更厚
     if (layer === 'outer') {
-      if (season !== '夏' && base.length) items.unshift(seedShuffleMore(base, seed + 'base' + i));
+      if (season !== '夏' && base.length) items.unshift(harmonyPick(base, [anchor], seed + 'base' + i));
       items.push(anchor);
     } else if (layer === 'mid') {
-      if (season === '冬' && base.length) items.unshift(seedShuffleMore(base, seed + 'base' + i));
+      if (season === '冬' && base.length) items.unshift(harmonyPick(base, [anchor], seed + 'base' + i));
       items.push(anchor);
-      if ((season === '冬' || season === '秋') && outer.length) items.push(seedShuffleMore(outer, seed + 'outer' + i));
+      if ((season === '冬' || season === '秋') && outer.length) items.push(harmonyPick(outer, items, seed + 'outer' + i));
     } else {
       items.push(anchor);
-      if (season === '冬' && outer.length) items.push(seedShuffleMore(outer, seed + 'outer' + i));
-      else if (season === '冬' && mid.length) items.push(seedShuffleMore(mid, seed + 'mid' + i));
-      else if ((season === '秋' || season === '春') && (outer.length || mid.length)) items.push(seedShuffleMore(outer.concat(mid), seed + 'layer' + i));
+      if (season === '冬' && outer.length) items.push(harmonyPick(outer, items, seed + 'outer' + i));
+      else if (season === '冬' && mid.length) items.push(harmonyPick(mid, items, seed + 'mid' + i));
+      else if ((season === '秋' || season === '春') && (outer.length || mid.length)) items.push(harmonyPick(outer.concat(mid), items, seed + 'layer' + i));
     }
-    items.push(seedShuffleMore(bottoms, seed + 'bottom' + i));
-    items.push(seedShuffleMore(shoes, seed + 'shoes' + i));
-    if (acc.length) { const a = seedShuffleMore(acc, seed + 'acc' + i); if (a) items.push(a); }
+    items.push(harmonyPick(bottoms, items, seed + 'bottom' + i));
+    items.push(harmonyPick(shoes, items, seed + 'shoes' + i));
+    if (acc.length) { const a = harmonyPick(acc, items, seed + 'acc' + i); if (a) items.push(a); }
     // 去重（同一单品不重复出现）
     const seen = new Set();
     const finalItems = items.filter(it => it && !seen.has(it.id) ? (seen.add(it.id), true) : false);
