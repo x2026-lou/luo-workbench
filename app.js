@@ -1777,7 +1777,7 @@ function renderExam() {
     tab.onclick = () => {
       const w = tab.dataset.exam;
       document.querySelectorAll('#examTabs .tab').forEach(t => t.classList.remove('active')); tab.classList.add('active');
-      const map = { video: 'examVideoPanel', xingce: 'examXingcePanel', shenlun: 'examShenlunPanel', shizheng: 'examShizhengPanel', quiz: 'examQuizPanel', plan: 'examPlanPanel', checkin: 'examCheckinPanel', time: 'examTimePanel', paper: 'examPaperPanel', jobs: 'examJobsPanel', maps: 'examMapsPanel', rmrb: 'examRmrbPanel', kaobian: 'examKaoBianPanel', wrong: 'examWrongPanel' };
+      const map = { video: 'examVideoPanel', xingce: 'examXingcePanel', shenlun: 'examShenlunPanel', shizheng: 'examShizhengPanel', quiz: 'examQuizPanel', plan: 'examPlanPanel', checkin: 'examCheckinPanel', time: 'examTimePanel', paper: 'examPaperPanel', jobs: 'examJobsPanel', maps: 'examMapsPanel', rmrb: 'examRmrbPanel', kaobian: 'examKaoBianPanel', wrong: 'examWrongPanel', tips: 'examTipsPanel' };
       Object.values(map).forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
       const tgt = document.getElementById(map[w]); if (tgt) tgt.style.display = '';
       if (w === 'plan') renderExamPlan();
@@ -1788,6 +1788,7 @@ function renderExam() {
       if (w === 'rmrb') renderExamRmrb();
       if (w === 'kaobian') renderExamKaoBian();
       if (w === 'wrong') renderExamWrong();
+      if (w === 'tips') renderExamTips();
     };
   });
 }
@@ -1856,7 +1857,8 @@ function renderExamKaoBian() {
       <div class="text-sm text-muted">与考公最大差异：公基重记忆广度（法律+政治+常识一把抓）、职测题量大时间更紧（重取舍）、综应更贴近岗位实务（重材料加工）。三门先定主攻，再按模块轮换。</div>
     </div>
     <div class="tabs mb-2">${tabs.map(t => `<div class="tab ${t[0] === kaoBianTab ? 'active' : ''}" onclick="setKaoBianTab('${t[0]}')">${t[0]}（${t[1].length}）</div>`).join('')}</div>
-    ${cur[1].map(d => `<div class="card" style="margin-bottom:8px"><div class="font-bold mb-1">📌 ${esc(d.k)}</div><div class="text-sm text-muted">${esc(d.v)}</div></div>`).join('')}`;
+    ${cur[1].map(d => `<div class="card" style="margin-bottom:8px"><div class="font-bold mb-1">📌 ${esc(d.k)}</div><div class="text-sm text-muted">${esc(d.v)}</div></div>`).join('')}
+    ${window.EXAM_TIPS && window.EXAM_TIPS.kaoBianTips ? `<div class="card mt-2" style="background:#fff8f0;border:1px solid #f0d9b5"><div class="font-bold mb-1">🔥 考编速成法（模仿考公，已平移）</div>${window.EXAM_TIPS.kaoBianTips.map(t => `<div class="text-sm mb-2" style="border-left:3px solid #f0d9b5;padding-left:8px"><b>${esc(t.k)}</b><br>${esc(t.v)}</div>`).join('')}</div>` : ''}`;
 }
 /* ---- 错题本（仿真实笔记本样式，支持录入/已掌握/删除/筛选） ---- */
 function getWrongBook() { return store.get('luo_exam_wrongbook', []); }
@@ -1879,6 +1881,20 @@ function addWrongNote() {
 }
 function toggleWrongDone(id) { const b = getWrongBook(); const it = b.find(x => x.id === id); if (it) { it.done = !it.done; if (it.done) { addPoints(1, true); celebrate('同一类题连续 3 次做对才算真正过关 · +1 积分 ✅'); } saveWrongBook(b); renderExamWrong(); } }
 function delWrongNote(id) { saveWrongBook(getWrongBook().filter(x => x.id !== id)); renderExamWrong(); toast('已从错题本移除'); }
+
+/* ================= 考公/考编：小红书·B站博主高赞经验 + 近三年真题拆解 ================= */
+function renderExamTips() {
+  const el = document.getElementById('examTips'); if (!el) return;
+  const T = window.EXAM_TIPS; if (!T) { el.innerHTML = '<div class="text-sm text-muted">数据未加载，请刷新重试</div>'; return; }
+  const cats = {}; (T.bloggers || []).forEach(b => { const k = (b.k || '综合').replace(/[：:].*/, ''); (cats[k] = cats[k] || []).push(b); });
+  el.innerHTML = `
+    <div class="card mb-2" style="background:#fff4f4;border:1px solid #f3c9c9">
+      <div class="font-bold mb-1">🔥 博主高赞速成法（来自小红书 / B站 高赞经验，已筛选切实可行）</div>
+      <div class="text-sm text-muted">每条都是"具体做法 + 为什么有效"。先挑自己最弱模块的那几条死磕 2 周，比盲目刷题涨分快。</div>
+    </div>
+    ${Object.keys(cats).map(k => `<div class="card mb-2"><div class="font-bold mb-1" style="color:#c2185b">🔸 ${esc(k)}</div>${cats[k].map(b => `<div class="text-sm mb-2" style="border-left:3px solid #f3c9c9;padding-left:8px"><b>${esc(b.k)}</b><br>${esc(b.v)}</div>`).join('')}</div>`).join('')}
+    ${T.recent3 && T.recent3.length ? `<div class="card mb-2"><div class="font-bold mb-2">📊 近三年真题拆解参考（2023-2025 国考 · 省考）</div><div class="text-sm text-muted mb-2">趋势比题本身更重要——看清近年怎么变，复习才不跑偏。</div>${T.recent3.map(r => `<div class="text-sm mb-2" style="background:var(--bg-soft);border-radius:8px;padding:8px"><b>${esc(r.year)} ${esc(r.exam)} · ${esc(r.mod)}</b><br>${esc(r.point)}</div>`).join('')}</div>` : ''}`;
+}
 function renderExamWrong() {
   const el = document.getElementById('examWrong'); if (!el) return;
   const subs = ['行测-言语', '行测-资料', '行测-判断', '行测-数量', '行测-常识', '申论', '公基', '职测', '综应', '其他'];
@@ -3657,8 +3673,10 @@ function renderWardrobe() {
   let currentCat = null;
   sorted.forEach(item => {
     if (item.category !== currentCat) { currentCat = item.category; html += `<div class="wardrobe-group-title">${esc(item.category)}</div>`; }
+    const checked = mixSel.has(item.id);
     html += `
-      <div class="wardrobe-item">
+      <div class="wardrobe-item ${wardrobeMixMode ? 'mixable' : ''} ${checked ? 'mix-on' : ''}">
+        ${wardrobeMixMode ? `<div class="mix-check ${checked ? 'on' : ''}" onclick="toggleMixSel(${item.id})">${checked ? '✓' : ''}</div>` : ''}
         <div class="wardrobe-img"><img src="${item.img}" class="zoomable" style="cursor:zoom-in" alt="${esc(item.name)}"></div>
         <div class="wardrobe-info">
           <div class="wardrobe-toolbar">
@@ -3684,6 +3702,67 @@ function renderWardrobe() {
     </label>`;
   grid.innerHTML = html;
 }
+
+/* ============ 自由搭配（换装游戏）：用户自己勾选单品看组合效果与和谐度 ============ */
+let wardrobeMixMode = store.get('luo_wardrobe_mix_mode', false);
+let mixSel = new Set(store.get('luo_wardrobe_mix', []));
+function toggleWardrobeMix() {
+  wardrobeMixMode = !wardrobeMixMode;
+  store.set('luo_wardrobe_mix_mode', wardrobeMixMode);
+  if (wardrobeMixMode) toast('已开启自由搭配：点单品上的方框勾选，下方实时显示搭配效果');
+  renderWardrobe(); renderWardrobeMix();
+}
+function toggleMixSel(id) {
+  if (mixSel.has(id)) mixSel.delete(id); else mixSel.add(id);
+  store.set('luo_wardrobe_mix', [...mixSel]);
+  renderWardrobe(); renderWardrobeMix();
+}
+function clearMixSel() { mixSel = new Set(); store.set('luo_wardrobe_mix', []); renderWardrobe(); renderWardrobeMix(); }
+function buildMixPreview(items) {
+  const sep = (label, cats) => {
+    const grp = items.filter(it => cats.includes(it.category) || cats.includes(wardrobeTypeOf(it.category)));
+    if (!grp.length) return '';
+    return `<div class="mix-row"><div class="mix-label">${label}</div>${grp.map(it => `<div class="mix-chip" onclick="toggleMixSel(${it.id})"><img src="${it.img}" class="zoomable" style="cursor:zoom-in" alt="${esc(it.name)}"><span class="mix-chip-x" onclick="event.stopPropagation();toggleMixSel(${it.id})">×</span></div>`).join('')}</div>`;
+  };
+  return sep('👕 上装', ['top']) + sep('👖 下装', ['bottom']) + sep('👟 鞋', ['shoes']) + sep('👜 配饰', ['accessory']);
+}
+function renderWardrobeMix() {
+  const el = document.getElementById('wardrobeMix'); if (!el) return;
+  if (!wardrobeMixMode) { el.innerHTML = ''; return; }
+  const sel = wardrobe.filter(it => mixSel.has(it.id));
+  const preview = buildMixPreview(sel);
+  let scoreLine = '', adviceLine = '';
+  if (sel.length >= 2) {
+    const h = outfitHarmony(sel);
+    const adv = buildOutfitAdvice(sel, currentSeason(), sel[0]);
+    scoreLine = `<div class="mix-score" style="color:${h.score >= 75 ? '#2e7d32' : h.score >= 55 ? '#ef6c00' : '#c62828'}">和谐度 <b>${h.score}</b> / 100</div>`;
+    const ks = [adv.color, adv.style, adv.silhouette].filter(Boolean).slice(0, 3);
+    adviceLine = `<div class="mix-advice"><b>🧩 搭配逻辑：</b>${esc(h.logic)}</div>` + (ks.length ? `<div class="mix-advice">${ks.map(k => '· ' + esc(k)).join('<br>')}</div>` : '');
+  }
+  const saved = store.get('luo_my_outfits', []);
+  el.innerHTML = `
+    <div class="card" style="background:#fafafa;border:1px solid #e0e0e0">
+      <div class="font-bold mb-1">🎭 我的自由搭配（点单品勾选 / 再点取消）</div>
+      <div class="text-sm text-muted mb-2">已选 <b>${sel.length}</b> 件。系统按你给单品填的<b>颜色 / 风格</b>实时算和谐度：全中性色、彩色只留一件、鞋裤同色系顺延、风格统一 → 加分；多彩色打架、风格散、鞋裤撞色 → 扣分并提示怎么改。</div>
+      ${sel.length ? `<div class="mix-board">${preview}</div>${scoreLine}${adviceLine}
+        <button class="btn btn-primary btn-small mt-2" onclick="saveMyOutfit()">💾 保存这套搭配</button>` : '<div class="text-sm text-muted">勾选至少 2 件单品看效果~</div>'}
+    </div>
+    ${saved.length ? `<div class="card mt-2"><div class="font-bold mb-2">📁 已保存的搭配（${saved.length} 套）</div>${saved.map(o => `
+      <div class="saved-fit" style="margin-bottom:8px">
+        <div class="saved-thumbs">${o.items.map(i => `<img src="${i.img}" alt="${esc(i.name)}" class="zoomable" style="cursor:zoom-in">`).join('')}</div>
+        <div class="saved-meta"><span style="color:${o.score>=75?'#2e7d32':o.score>=55?'#ef6c00':'#c62828'}">和谐度 ${o.score}</span> · ${esc(o.season)} · ${esc(o.date)} <span class="saved-del" onclick="delMyOutfit('${o.id}')">×</span></div>
+      </div>`).join('')}</div>` : ''}`;
+}
+function saveMyOutfit() {
+  const sel = wardrobe.filter(it => mixSel.has(it.id));
+  if (sel.length < 2) return toast('先勾选至少 2 件单品');
+  const h = outfitHarmony(sel);
+  const saved = store.get('luo_my_outfits', []);
+  saved.unshift({ id: 'o' + Date.now().toString(36), date: fmtDate(), season: currentSeason(), score: h.score, items: sel.map(it => ({ img: it.img, name: it.name, category: it.category, color: it.color || '', style: it.style || '' })) });
+  store.set('luo_my_outfits', saved);
+  renderWardrobeMix(); celebrate('搭配已保存 💾 和谐度 ' + h.score);
+}
+function delMyOutfit(id) { store.set('luo_my_outfits', store.get('luo_my_outfits', []).filter(o => o.id !== id)); renderWardrobeMix(); toast('已删除'); }
 function updateWardrobeItem(id, key, value) {
   const it = wardrobe.find(x => x.id === id); if (!it) return;
   it[key] = value;

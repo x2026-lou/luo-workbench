@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>洛的工作台</title>
-  <link rel="stylesheet" href="style.css?v=41">
+  <link rel="stylesheet" href="style.css?v=42">
 </head>
 <body>
   <div id="app">
@@ -247,6 +247,7 @@
             <div class="tab" data-exam="rmrb">📰 每日拆解</div>
             <div class="tab" data-exam="kaobian">🎓 考编专区</div>
             <div class="tab" data-exam="wrong">📕 错题本</div>
+            <div class="tab" data-exam="tips">🔥 博主经验</div>
             <div class="tab" data-exam="shizheng">📰 每日时政</div>
             <div class="tab" data-exam="quiz">✏️ 每日一测</div>
             <div class="tab" data-exam="plan">📅 每日计划</div>
@@ -274,6 +275,7 @@
           <div id="examRmrbPanel" style="display:none"><div id="examRmrb"></div></div>
           <div id="examKaoBianPanel" style="display:none"><div id="examKaoBian"></div></div>
           <div id="examWrongPanel" style="display:none"><div id="examWrong"></div></div>
+          <div id="examTipsPanel" style="display:none"><div id="examTips"></div></div>
           <div id="examShizhengPanel" style="display:none"><div id="examShizheng"></div></div>
           <div id="examQuizPanel" style="display:none"><div class="card"><div class="font-bold mb-2">✏️ 行测随堂练习</div><div id="examQuiz"></div></div></div>
           <div id="examPlanPanel" style="display:none">
@@ -1003,7 +1005,12 @@
           <div id="dailyReviewWardrobePanel" style="display:none">
             <div class="card">
               <div class="font-bold mb-2">👕 我的电子衣柜</div>
-              <p class="text-sm text-muted mb-3">点下方「📷 拍照/多选」持续上传单品（数量不限），每张图下方可设置分类与季节、收藏或删除；系统会据此生成穿搭建议。</p>
+              <p class="text-sm text-muted mb-3">点下方「📷 拍照/多选」持续上传单品（数量不限），每张图下方可设置分类与季节、收藏或删除；系统会据此生成穿搭建议。也可开「🎭 自由搭配」像换装游戏一样<b>自己勾选单品</b>看组合效果与和谐度。</p>
+              <div class="flex-between mb-2" style="gap:6px;flex-wrap:wrap">
+                <button class="btn btn-primary btn-small" onclick="toggleWardrobeMix()">🎭 自由搭配（换装游戏）</button>
+                <button class="btn btn-outline btn-small" onclick="clearMixSel()">清空选择</button>
+              </div>
+              <div id="wardrobeMix"></div>
               <div class="wardrobe-grid" id="wardrobeGrid"></div>
             </div>
             <div class="card mt-3">
@@ -1113,21 +1120,22 @@
   <div class="offline-banner" id="offlineBanner">📡 当前无网络 · 工作台可正常查看，但 B站/抖音/小红书视频需联网后访问</div>
   <div class="update-bar" id="updateBar" onclick="location.reload()">🔄 发现新版本，点击此处刷新</div>
   <div class="toast" id="toast"></div>
-  <script src="app.js?v=41"></script>
-  <script src="cet4_core.js?v=41"></script>
-  <script src="cet4_full.js?v=41"></script>
-  <script src="cet4_enhance.js?v=41"></script>
-  <script src="cet4_real.js?v=41"></script>
-  <script src="cet4_real_ext.js?v=41"></script>
-  <script src="med_exam.js?v=41"></script>
-  <script src="exam_ext.js?v=41"></script>
+  <script src="app.js?v=42"></script>
+  <script src="cet4_core.js?v=42"></script>
+  <script src="cet4_full.js?v=42"></script>
+  <script src="cet4_enhance.js?v=42"></script>
+  <script src="cet4_real.js?v=42"></script>
+  <script src="cet4_real_ext.js?v=42"></script>
+  <script src="med_exam.js?v=42"></script>
+  <script src="exam_ext.js?v=42"></script>
+  <script src="exam_tips.js?v=42"></script>
 
-  <script src="gaokao_core.js?v=41"></script>
-  <script src="expansion.js?v=41"></script>
-  <script src="jjwxc_analysis.js?v=41"></script>
+  <script src="gaokao_core.js?v=42"></script>
+  <script src="expansion.js?v=42"></script>
+  <script src="jjwxc_analysis.js?v=42"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js?v=41').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=42').then(reg => {
         // 已有 waiting 的新 SW 立即激活（跳过等待）
         if (reg.waiting) reg.waiting.postMessage('skip');
         // 检测到新版本（SW 文件内容变化）且已有旧版本在控制页面时，提示用户刷新
